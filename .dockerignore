@@ -1,0 +1,4 @@
+*.qmd
+*.html
+
+data/*

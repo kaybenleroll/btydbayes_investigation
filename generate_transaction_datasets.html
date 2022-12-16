@@ -2599,11 +2599,14 @@ vertical-align: -.125em;
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#retrieve-online-retail-ii-dataset" id="toc-retrieve-online-retail-ii-dataset" class="nav-link active" data-scroll-target="#retrieve-online-retail-ii-dataset"><span class="toc-section-number">1</span>  Retrieve Online Retail II Dataset</a>
+  <li><a href="#generate-short-timeframe-50k-synthetic-cohort-data" id="toc-generate-short-timeframe-50k-synthetic-cohort-data" class="nav-link active" data-scroll-target="#generate-short-timeframe-50k-synthetic-cohort-data"><span class="toc-section-number">1</span>  Generate Short Timeframe 50K Synthetic Cohort Data</a>
   <ul class="collapse">
-  <li><a href="#parse-the-data" id="toc-parse-the-data" class="nav-link" data-scroll-target="#parse-the-data"><span class="toc-section-number">1.1</span>  Parse the Data</a></li>
+  <li><a href="#write-data-to-disk" id="toc-write-data-to-disk" class="nav-link" data-scroll-target="#write-data-to-disk"><span class="toc-section-number">1.1</span>  Write Data to Disk</a></li>
   </ul></li>
-  <li><a href="#retrieve-cdnow-dataset" id="toc-retrieve-cdnow-dataset" class="nav-link" data-scroll-target="#retrieve-cdnow-dataset"><span class="toc-section-number">2</span>  Retrieve CDNow Dataset</a></li>
+  <li><a href="#generate-long-time-frame-50k-synthetic-cohort-data" id="toc-generate-long-time-frame-50k-synthetic-cohort-data" class="nav-link" data-scroll-target="#generate-long-time-frame-50k-synthetic-cohort-data"><span class="toc-section-number">2</span>  Generate Long Time-frame 50K Synthetic Cohort Data</a>
+  <ul class="collapse">
+  <li><a href="#write-data-to-disk-1" id="toc-write-data-to-disk-1" class="nav-link" data-scroll-target="#write-data-to-disk-1"><span class="toc-section-number">2.1</span>  Write Data to Disk</a></li>
+  </ul></li>
   <li><a href="#r-environment" id="toc-r-environment" class="nav-link" data-scroll-target="#r-environment"><span class="toc-section-number">3</span>  R Environment</a></li>
   </ul>
 </nav>
@@ -2634,168 +2637,174 @@ vertical-align: -.125em;
 
 </header>
 
-<hr>
-<p>All code and data for this workshop is available at the following URL:</p>
-<p><a href="https://github.com/kaybenleroll/btydbayes_investigation" class="uri">https://github.com/kaybenleroll/btydbayes_investigation</a></p>
-<section id="retrieve-online-retail-ii-dataset" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> Retrieve Online Retail II Dataset</h1>
-<p>We now want to retrieve the Online Retail II dataset used for this project, which is available at the UCI Machine Learning Repository.</p>
+<p>In this workbook we use some initial inputs to generate synthetic data to help us explore various customer CLV models.</p>
+<p>In each instance we will create 50,000 customers, as that should be more than enough for any application.</p>
+<p>Should we need a smaller customer count, we can take a subsample from this dataset.</p>
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_url <span class="ot">&lt;-</span> <span class="st">&quot;https://archive.ics.uci.edu/ml/machine-learning-databases/00502/online_retail_II.xlsx&quot;</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>xlsx_datafile     <span class="ot">&lt;-</span> <span class="st">&quot;data/online_retail_II.xlsx&quot;</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file_exists</span>(xlsx_datafile)) {</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">curl_download</span>(</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    data_url,</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">destfile =</span> xlsx_datafile,</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">quiet    =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">mode     =</span> <span class="st">&quot;wb&quot;</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="fu">glue</span>(<span class="st">&quot;Datafile {xlsx_datafile} found. Skipping download.&quot;</span>))</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>n_customers <span class="ot">&lt;-</span> <span class="dv">50000</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Now that we have downloaded the XLSX file, we want to read in the data and parse it.</p>
-<section id="parse-the-data" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="parse-the-data"><span class="header-section-number">1.1</span> Parse the Data</h2>
+<section id="generate-short-timeframe-50k-synthetic-cohort-data" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Generate Short Timeframe 50K Synthetic Cohort Data</h1>
+<p>We now repeat this exercise, but rather than using the new customer data from the transaction dataset, we also create a synthetic set of ‘new customers’ and generate a transaction dataset based on that.</p>
+<p>We use a short time frame from the data, spanning two years, and construct all customers and transactions within that timeframe.</p>
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>retrieve_datafile <span class="ot">&lt;-</span> <span class="st">&quot;data/retail_data_tbl.rds&quot;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>create_excel_datetime <span class="ot">&lt;-</span> <span class="cf">function</span>(x)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  (x <span class="sc">*</span> (<span class="dv">60</span> <span class="sc">*</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">24</span>)) <span class="sc">%&gt;%</span> <span class="fu">as.POSIXct</span>(<span class="at">origin =</span> <span class="st">&quot;1899-12-30&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;GMT&quot;</span>)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>data_cols <span class="ot">&lt;-</span> <span class="fu">cols</span>(</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">.default      =</span> <span class="fu">col_character</span>(),</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">Quantity      =</span> <span class="fu">col_number</span>(),</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">InvoiceDate   =</span> <span class="fu">col_number</span>(),</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Price         =</span> <span class="fu">col_number</span>()</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="ot">&lt;-</span> <span class="fu">excel_sheets</span>(xlsx_datafile) <span class="sc">%&gt;%</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">enframe</span>(<span class="at">name =</span> <span class="cn">NULL</span>, <span class="at">value =</span> <span class="st">&quot;excel_sheet&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> <span class="fu">map</span>(</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      excel_sheet, read_excel,</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">path      =</span> xlsx_datafile,</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">col_types =</span> <span class="st">&quot;text&quot;</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(data) <span class="sc">%&gt;%</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">format_csv</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="at">col_types =</span> data_cols) <span class="sc">%&gt;%</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">InvoiceDate =</span> <span class="fu">create_excel_datetime</span>(InvoiceDate)</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl <span class="ot">&lt;-</span> <span class="fu">generate_customer_cohort_data</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_customers =</span> n_customers,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_date  =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2017-01-01&quot;</span>),</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2019-12-31&quot;</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 1,067,371
-Columns: 9
-$ excel_sheet   &lt;chr&gt; &quot;Year 2009-2010&quot;, &quot;Year 2009-2010&quot;, &quot;Year 2009-2010&quot;, &quot;Y…
-$ Invoice       &lt;chr&gt; &quot;489434&quot;, &quot;489434&quot;, &quot;489434&quot;, &quot;489434&quot;, &quot;489434&quot;, &quot;48943…
-$ StockCode     &lt;chr&gt; &quot;85048&quot;, &quot;79323P&quot;, &quot;79323W&quot;, &quot;22041&quot;, &quot;21232&quot;, &quot;22064&quot;, …
-$ Description   &lt;chr&gt; &quot;15CM CHRISTMAS GLASS BALL 20 LIGHTS&quot;, &quot;PINK CHERRY LIGH…
-$ Quantity      &lt;dbl&gt; 12, 12, 12, 48, 24, 24, 24, 10, 12, 12, 24, 12, 10, 18, …
-$ InvoiceDate   &lt;dttm&gt; 2009-12-01 07:45:00, 2009-12-01 07:45:00, 2009-12-01 07…
-$ Price         &lt;dbl&gt; 6.95, 6.75, 6.75, 2.10, 1.25, 1.65, 1.25, 5.95, 2.55, 3.…
-$ `Customer ID` &lt;chr&gt; &quot;13085&quot;, &quot;13085&quot;, &quot;13085&quot;, &quot;13085&quot;, &quot;13085&quot;, &quot;13085&quot;, &quot;1…
-$ Country       &lt;chr&gt; &quot;United Kingdom&quot;, &quot;United Kingdom&quot;, &quot;United Kingdom&quot;, &quot;U…</code></pre>
-</div>
-</div>
-<p>Finally, we output this data to the disk.</p>
-<div class="cell">
-<details>
-<summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_online_retail_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-</section>
-</section>
-<section id="retrieve-cdnow-dataset" class="level1" data-number="2">
-<h1 data-number="2"><span class="header-section-number">2</span> Retrieve CDNow Dataset</h1>
-<div class="cell">
-<details>
-<summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_url <span class="ot">&lt;-</span> <span class="st">&quot;https://www.brucehardie.com/datasets/CDNOW_master.zip&quot;</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>zip_datafile     <span class="ot">&lt;-</span> <span class="st">&quot;data/cdnow_master.zip&quot;</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="sc">!</span><span class="fu">file_exists</span>(zip_datafile)) {</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">curl_download</span>(</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    data_url,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">destfile =</span> zip_datafile,</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">quiet    =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">mode     =</span> <span class="st">&quot;wb&quot;</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="fu">glue</span>(<span class="st">&quot;Datafile {zip_datafile} found. Skipping download.&quot;</span>))</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-</div>
-<p>Now that we have downloaded the Zip file, we want to extract the data and parse it.</p>
-<div class="cell">
-<details>
-<summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">zipfile =</span> zip_datafile,</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">exdir =</span> <span class="st">&quot;data&quot;</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>cdnow_cols <span class="ot">&lt;-</span> <span class="fu">cols</span>(</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">customer_id =</span> <span class="fu">col_character</span>(),</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">tnx_date    =</span> <span class="fu">col_date</span>(<span class="at">format =</span> <span class="st">&quot;%Y%m%d&quot;</span>),</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cd_count    =</span> <span class="fu">col_integer</span>(),</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">total_spend =</span> <span class="fu">col_number</span>()</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>cdnow_fwf <span class="ot">&lt;-</span> <span class="fu">fwf_cols</span>(</span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">customer_id =</span> <span class="dv">6</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">tnx_date    =</span> <span class="dv">9</span>,</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">cd_count    =</span> <span class="dv">3</span>,</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">total_spend =</span> <span class="dv">8</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="ot">&lt;-</span> <span class="fu">read_fwf</span>(</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;data/CDNOW_master.txt&quot;</span>,</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_positions =</span> cdnow_fwf,</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types     =</span> cdnow_cols,</span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code>Rows: 69,659
+<pre><code>Rows: 50,000
 Columns: 4
-$ customer_id &lt;chr&gt; &quot;00001&quot;, &quot;00002&quot;, &quot;00002&quot;, &quot;00003&quot;, &quot;00003&quot;, &quot;00003&quot;, &quot;000…
-$ tnx_date    &lt;date&gt; 1997-01-01, 1997-01-12, 1997-01-12, 1997-01-02, 1997-03-3…
-$ cd_count    &lt;int&gt; 1, 1, 5, 2, 2, 2, 5, 4, 1, 2, 2, 1, 2, 2, 1, 3, 3, 3, 2, 2…
-$ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96, 16…</code></pre>
+$ customer_id    &lt;chr&gt; &quot;C201701_0001&quot;, &quot;C201701_0002&quot;, &quot;C201701_0003&quot;, &quot;C20170…
+$ cohort_qtr     &lt;chr&gt; &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, …
+$ cohort_ym      &lt;chr&gt; &quot;2017 01&quot;, &quot;2017 01&quot;, &quot;2017 01&quot;, &quot;2017 01&quot;, &quot;2017 01&quot;, …
+$ first_tnx_date &lt;date&gt; 2017-01-01, 2017-01-01, 2017-01-01, 2017-01-01, 2017-0…</code></pre>
 </div>
 </div>
-<p>As before, we now write that data out to disk</p>
+<p>Now that we have generated our cohort data, we move on to generating our transaction data based on the PNBD model.</p>
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_cdnow_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pnbd_params_lst <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">mu_mn       =</span>   <span class="fl">0.10</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">mu_cv       =</span>   <span class="fl">1.00</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_mn   =</span>   <span class="fl">0.25</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_cv   =</span>   <span class="fl">1.00</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiermn  =</span> <span class="fl">100.00</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiercv  =</span>   <span class="fl">1.00</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_custcv  =</span>   <span class="fl">1.00</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_simparams_tbl <span class="ot">&lt;-</span> synthdata_shortframe_cohort_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_simulation_params</span>(</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">params_lst     =</span> pnbd_params_lst</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_shortframe_simparams_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_transaction_data</span>(</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_transaction_metadata</span>()</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 299,546
+Columns: 4
+$ customer_id   &lt;chr&gt; &quot;C201701_0005&quot;, &quot;C201701_0006&quot;, &quot;C201701_0004&quot;, &quot;C201701…
+$ tnx_timestamp &lt;dttm&gt; 2017-01-01 00:21:36, 2017-01-01 00:46:28, 2017-01-01 00…
+$ invoice_id    &lt;chr&gt; &quot;T20170101-0001&quot;, &quot;T20170101-0002&quot;, &quot;T20170101-0003&quot;, &quot;T…
+$ tnx_amount    &lt;dbl&gt; 49.35, 25.11, 8.29, 1534.36, 34.28, 21.15, 144.88, 15.24…</code></pre>
+</div>
+</div>
+<section id="write-data-to-disk" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="write-data-to-disk"><span class="header-section-number">1.1</span> Write Data to Disk</h2>
+<p>We now write this data to disk.</p>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl       <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_cohort_tbl.rds&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_simparams_tbl    <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_simparams_tbl.rds&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_transactions_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+</section>
+</section>
+<section id="generate-long-time-frame-50k-synthetic-cohort-data" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Generate Long Time-frame 50K Synthetic Cohort Data</h1>
+<p>We now repeat the data synthesis but for a much longer period of time, so that the censoring effects of the observation time are less apparent in the dataset.</p>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="ot">&lt;-</span> <span class="fu">generate_customer_cohort_data</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_customers =</span> n_customers,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_date  =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2011-01-01&quot;</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2019-12-31&quot;</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 50,000
+Columns: 4
+$ customer_id    &lt;chr&gt; &quot;C201101_0001&quot;, &quot;C201101_0002&quot;, &quot;C201101_0003&quot;, &quot;C20110…
+$ cohort_qtr     &lt;chr&gt; &quot;2011 Q1&quot;, &quot;2011 Q1&quot;, &quot;2011 Q1&quot;, &quot;2011 Q1&quot;, &quot;2011 Q1&quot;, …
+$ cohort_ym      &lt;chr&gt; &quot;2011 01&quot;, &quot;2011 01&quot;, &quot;2011 01&quot;, &quot;2011 01&quot;, &quot;2011 01&quot;, …
+$ first_tnx_date &lt;date&gt; 2011-01-01, 2011-01-01, 2011-01-01, 2011-01-01, 2011-0…</code></pre>
+</div>
+</div>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>pnbd_params_lst <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">mu_mn       =</span>   <span class="fl">0.10</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">mu_cv       =</span>   <span class="fl">1.00</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_mn   =</span>   <span class="fl">0.25</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_cv   =</span>   <span class="fl">1.00</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiermn  =</span> <span class="fl">100.00</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiercv  =</span>   <span class="fl">1.00</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_custcv  =</span>   <span class="fl">1.00</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_simparams_tbl <span class="ot">&lt;-</span> synthdata_longframe_cohort_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_simulation_params</span>(</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">params_lst     =</span> pnbd_params_lst</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_longframe_simparams_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_transaction_data</span>(</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_transaction_metadata</span>()</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 419,261
+Columns: 4
+$ customer_id   &lt;chr&gt; &quot;C201101_0007&quot;, &quot;C201101_0008&quot;, &quot;C201101_0010&quot;, &quot;C201101…
+$ tnx_timestamp &lt;dttm&gt; 2011-01-01 00:34:56, 2011-01-01 03:24:40, 2011-01-01 03…
+$ invoice_id    &lt;chr&gt; &quot;T20110101-0001&quot;, &quot;T20110101-0002&quot;, &quot;T20110101-0003&quot;, &quot;T…
+$ tnx_amount    &lt;dbl&gt; 91.07, 99.51, 33.48, 602.63, 447.65, 104.85, 1.17, 122.4…</code></pre>
+</div>
+</div>
+<section id="write-data-to-disk-1" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="write-data-to-disk-1"><span class="header-section-number">2.1</span> Write Data to Disk</h2>
+<p>We now write this data to disk.</p>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl       <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_cohort_tbl.rds&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_simparams_tbl    <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_simparams_tbl.rds&quot;</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_transactions_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
 </section>
 <section id="r-environment" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> R Environment</h1>
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">width =</span> 120L)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>─ Session info ───────────────────────────────────────────────────────────────
+<pre><code>─ Session info ───────────────────────────────────────────────────────────────────────────────────────────────────────
  setting  value
  version  R version 4.2.1 (2022-06-23)
  os       Ubuntu 20.04.5 LTS
@@ -2808,84 +2817,94 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
  date     2022-12-16
  pandoc   2.19.2 @ /usr/lib/rstudio-server/bin/quarto/bin/tools/ (via rmarkdown)
 
-─ Packages ───────────────────────────────────────────────────────────────────
- package       * version date (UTC) lib source
- assertthat      0.2.1   2019-03-21 [1] RSPM (R 4.2.0)
- backports       1.4.1   2021-12-13 [1] RSPM (R 4.2.0)
- bit             4.0.4   2020-08-04 [1] RSPM (R 4.2.0)
- bit64           4.0.5   2020-08-30 [1] RSPM (R 4.2.0)
- broom           1.0.1   2022-08-29 [1] RSPM (R 4.2.0)
- cachem          1.0.6   2021-08-19 [1] RSPM (R 4.2.0)
- cellranger      1.1.0   2016-07-27 [1] RSPM (R 4.2.0)
- cli             3.4.1   2022-09-23 [1] RSPM (R 4.2.0)
- colorspace      2.0-3   2022-02-21 [1] RSPM (R 4.2.0)
- conflicted    * 1.1.0   2021-11-26 [1] RSPM (R 4.2.0)
- cowplot       * 1.1.1   2020-12-30 [1] RSPM (R 4.2.0)
- crayon          1.5.2   2022-09-29 [1] RSPM (R 4.2.0)
- curl          * 4.3.3   2022-10-06 [1] RSPM (R 4.2.0)
- DBI             1.1.3   2022-06-18 [1] RSPM (R 4.2.0)
- dbplyr          2.2.1   2022-06-27 [1] RSPM (R 4.2.0)
- digest          0.6.30  2022-10-18 [1] RSPM (R 4.2.0)
- dplyr         * 1.0.10  2022-09-01 [1] RSPM (R 4.2.0)
- ellipsis        0.3.2   2021-04-29 [1] RSPM (R 4.2.0)
- evaluate        0.17    2022-10-07 [1] RSPM (R 4.2.0)
- fansi           1.0.3   2022-03-24 [1] RSPM (R 4.2.0)
- fastmap         1.1.0   2021-01-25 [1] RSPM (R 4.2.0)
- forcats       * 0.5.2   2022-08-19 [1] RSPM (R 4.2.0)
- fs            * 1.5.2   2021-12-08 [1] RSPM (R 4.2.0)
- gargle          1.2.1   2022-09-08 [1] RSPM (R 4.2.0)
- generics        0.1.3   2022-07-05 [1] RSPM (R 4.2.0)
- ggplot2       * 3.3.6   2022-05-03 [1] RSPM (R 4.2.0)
- glue          * 1.6.2   2022-02-24 [1] RSPM (R 4.2.0)
- googledrive     2.0.0   2021-07-08 [1] RSPM (R 4.2.0)
- googlesheets4   1.0.1   2022-08-13 [1] RSPM (R 4.2.0)
- gtable          0.3.1   2022-09-01 [1] RSPM (R 4.2.0)
- haven           2.5.1   2022-08-22 [1] RSPM (R 4.2.0)
- hms             1.1.2   2022-08-19 [1] RSPM (R 4.2.0)
- htmltools       0.5.3   2022-07-18 [1] RSPM (R 4.2.0)
- htmlwidgets     1.5.4   2021-09-08 [1] RSPM (R 4.2.0)
- httr            1.4.4   2022-08-17 [1] RSPM (R 4.2.0)
- jsonlite        1.8.3   2022-10-21 [1] RSPM (R 4.2.0)
- knitr           1.40    2022-08-24 [1] RSPM (R 4.2.0)
- lifecycle       1.0.3   2022-10-07 [1] RSPM (R 4.2.0)
- lubridate       1.8.0   2021-10-07 [1] RSPM (R 4.2.0)
- magrittr      * 2.0.3   2022-03-30 [1] RSPM (R 4.2.0)
- memoise         2.0.1   2021-11-26 [1] RSPM (R 4.2.0)
- modelr          0.1.9   2022-08-19 [1] RSPM (R 4.2.0)
- munsell         0.5.0   2018-06-12 [1] RSPM (R 4.2.0)
- pillar          1.8.1   2022-08-19 [1] RSPM (R 4.2.0)
- pkgconfig       2.0.3   2019-09-22 [1] RSPM (R 4.2.0)
- purrr         * 0.3.5   2022-10-06 [1] RSPM (R 4.2.0)
- R6              2.5.1   2021-08-19 [1] RSPM (R 4.2.0)
- readr         * 2.1.3   2022-10-01 [1] RSPM (R 4.2.0)
- readxl        * 1.4.1   2022-08-17 [1] RSPM (R 4.2.0)
- reprex          2.0.2   2022-08-17 [1] RSPM (R 4.2.0)
- rlang           1.0.6   2022-09-24 [1] RSPM (R 4.2.0)
- rmarkdown       2.17    2022-10-07 [1] RSPM (R 4.2.0)
- rstudioapi      0.14    2022-08-22 [1] RSPM (R 4.2.0)
- rvest           1.0.3   2022-08-19 [1] RSPM (R 4.2.0)
- scales        * 1.2.1   2022-08-20 [1] RSPM (R 4.2.0)
- sessioninfo     1.2.2   2021-12-06 [1] RSPM (R 4.2.0)
- stringi         1.7.8   2022-07-11 [1] RSPM (R 4.2.0)
- stringr       * 1.4.1   2022-08-20 [1] RSPM (R 4.2.0)
- tibble        * 3.1.8   2022-07-22 [1] RSPM (R 4.2.0)
- tidyr         * 1.2.1   2022-09-08 [1] RSPM (R 4.2.0)
- tidyselect      1.2.0   2022-10-10 [1] RSPM (R 4.2.0)
- tidyverse     * 1.3.2   2022-07-18 [1] RSPM (R 4.2.0)
- tzdb            0.3.0   2022-03-28 [1] RSPM (R 4.2.0)
- utf8            1.2.2   2021-07-24 [1] RSPM (R 4.2.0)
- vctrs           0.5.0   2022-10-22 [1] RSPM (R 4.2.0)
- vroom           1.6.0   2022-09-30 [1] RSPM (R 4.2.0)
- withr           2.5.0   2022-03-03 [1] RSPM (R 4.2.0)
- xfun            0.34    2022-10-18 [1] RSPM (R 4.2.0)
- xml2            1.3.3   2021-11-30 [1] RSPM (R 4.2.0)
- yaml            2.3.6   2022-10-18 [1] RSPM (R 4.2.0)
+─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+ package              * version date (UTC) lib source
+ assertthat             0.2.1   2019-03-21 [1] RSPM (R 4.2.0)
+ backports              1.4.1   2021-12-13 [1] RSPM (R 4.2.0)
+ broom                  1.0.1   2022-08-29 [1] RSPM (R 4.2.0)
+ cachem                 1.0.6   2021-08-19 [1] RSPM (R 4.2.0)
+ cellranger             1.1.0   2016-07-27 [1] RSPM (R 4.2.0)
+ cli                    3.4.1   2022-09-23 [1] RSPM (R 4.2.0)
+ colorspace             2.0-3   2022-02-21 [1] RSPM (R 4.2.0)
+ conflicted           * 1.1.0   2021-11-26 [1] RSPM (R 4.2.0)
+ crayon                 1.5.2   2022-09-29 [1] RSPM (R 4.2.0)
+ curl                   4.3.3   2022-10-06 [1] RSPM (R 4.2.0)
+ DBI                    1.1.3   2022-06-18 [1] RSPM (R 4.2.0)
+ dbplyr                 2.2.1   2022-06-27 [1] RSPM (R 4.2.0)
+ digest                 0.6.30  2022-10-18 [1] RSPM (R 4.2.0)
+ dplyr                * 1.0.10  2022-09-01 [1] RSPM (R 4.2.0)
+ ellipsis               0.3.2   2021-04-29 [1] RSPM (R 4.2.0)
+ evaluate               0.17    2022-10-07 [1] RSPM (R 4.2.0)
+ fansi                  1.0.3   2022-03-24 [1] RSPM (R 4.2.0)
+ fastmap                1.1.0   2021-01-25 [1] RSPM (R 4.2.0)
+ forcats              * 0.5.2   2022-08-19 [1] RSPM (R 4.2.0)
+ fs                     1.5.2   2021-12-08 [1] RSPM (R 4.2.0)
+ gargle                 1.2.1   2022-09-08 [1] RSPM (R 4.2.0)
+ generics               0.1.3   2022-07-05 [1] RSPM (R 4.2.0)
+ ggplot2              * 3.3.6   2022-05-03 [1] RSPM (R 4.2.0)
+ glue                 * 1.6.2   2022-02-24 [1] RSPM (R 4.2.0)
+ googledrive            2.0.0   2021-07-08 [1] RSPM (R 4.2.0)
+ googlesheets4          1.0.1   2022-08-13 [1] RSPM (R 4.2.0)
+ gtable                 0.3.1   2022-09-01 [1] RSPM (R 4.2.0)
+ haven                  2.5.1   2022-08-22 [1] RSPM (R 4.2.0)
+ hms                    1.1.2   2022-08-19 [1] RSPM (R 4.2.0)
+ htmltools              0.5.3   2022-07-18 [1] RSPM (R 4.2.0)
+ htmlwidgets            1.5.4   2021-09-08 [1] RSPM (R 4.2.0)
+ httr                   1.4.4   2022-08-17 [1] RSPM (R 4.2.0)
+ jsonlite               1.8.3   2022-10-21 [1] RSPM (R 4.2.0)
+ knitr                  1.40    2022-08-24 [1] RSPM (R 4.2.0)
+ lattice                0.20-45 2021-09-22 [2] CRAN (R 4.2.1)
+ lifecycle              1.0.3   2022-10-07 [1] RSPM (R 4.2.0)
+ lubridate            * 1.8.0   2021-10-07 [1] RSPM (R 4.2.0)
+ magrittr             * 2.0.3   2022-03-30 [1] RSPM (R 4.2.0)
+ memoise                2.0.1   2021-11-26 [1] RSPM (R 4.2.0)
+ modelr                 0.1.9   2022-08-19 [1] RSPM (R 4.2.0)
+ munsell                0.5.0   2018-06-12 [1] RSPM (R 4.2.0)
+ parallelly             1.32.1  2022-07-21 [1] RSPM (R 4.2.0)
+ PerformanceAnalytics * 2.0.4   2020-02-06 [1] RSPM (R 4.2.0)
+ pillar                 1.8.1   2022-08-19 [1] RSPM (R 4.2.0)
+ pkgconfig              2.0.3   2019-09-22 [1] RSPM (R 4.2.0)
+ purrr                * 0.3.5   2022-10-06 [1] RSPM (R 4.2.0)
+ quadprog               1.5-8   2019-11-20 [1] RSPM (R 4.2.0)
+ Quandl                 2.11.0  2021-08-11 [1] RSPM (R 4.2.0)
+ quantmod             * 0.4.20  2022-04-29 [1] RSPM (R 4.2.0)
+ R6                     2.5.1   2021-08-19 [1] RSPM (R 4.2.0)
+ readr                * 2.1.3   2022-10-01 [1] RSPM (R 4.2.0)
+ readxl                 1.4.1   2022-08-17 [1] RSPM (R 4.2.0)
+ reprex                 2.0.2   2022-08-17 [1] RSPM (R 4.2.0)
+ rlang                * 1.0.6   2022-09-24 [1] RSPM (R 4.2.0)
+ rmarkdown              2.17    2022-10-07 [1] RSPM (R 4.2.0)
+ rstudioapi             0.14    2022-08-22 [1] RSPM (R 4.2.0)
+ rvest                  1.0.3   2022-08-19 [1] RSPM (R 4.2.0)
+ scales               * 1.2.1   2022-08-20 [1] RSPM (R 4.2.0)
+ sessioninfo            1.2.2   2021-12-06 [1] RSPM (R 4.2.0)
+ stringi              * 1.7.8   2022-07-11 [1] RSPM (R 4.2.0)
+ stringr              * 1.4.1   2022-08-20 [1] RSPM (R 4.2.0)
+ tibble               * 3.1.8   2022-07-22 [1] RSPM (R 4.2.0)
+ tidyquant            * 1.0.5   2022-09-08 [1] RSPM (R 4.2.0)
+ tidyr                * 1.2.1   2022-09-08 [1] RSPM (R 4.2.0)
+ tidyselect             1.2.0   2022-10-10 [1] RSPM (R 4.2.0)
+ tidyverse            * 1.3.2   2022-07-18 [1] RSPM (R 4.2.0)
+ TTR                  * 0.24.3  2021-12-12 [1] RSPM (R 4.2.0)
+ tzdb                   0.3.0   2022-03-28 [1] RSPM (R 4.2.0)
+ utf8                   1.2.2   2021-07-24 [1] RSPM (R 4.2.0)
+ vctrs                  0.5.0   2022-10-22 [1] RSPM (R 4.2.0)
+ withr                  2.5.0   2022-03-03 [1] RSPM (R 4.2.0)
+ xfun                   0.34    2022-10-18 [1] RSPM (R 4.2.0)
+ xml2                   1.3.3   2021-11-30 [1] RSPM (R 4.2.0)
+ xts                  * 0.12.2  2022-10-16 [1] RSPM (R 4.2.0)
+ yaml                   2.3.6   2022-10-18 [1] RSPM (R 4.2.0)
+ zoo                  * 1.8-11  2022-09-17 [1] RSPM (R 4.2.0)
 
  [1] /usr/local/lib/R/site-library
  [2] /usr/local/lib/R/library
 
-──────────────────────────────────────────────────────────────────────────────</code></pre>
+──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</code></pre>
 </div>
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">width =</span> 80L)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 </section>
 
