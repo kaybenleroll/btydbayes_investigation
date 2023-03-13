@@ -1,0 +1,92 @@
+---
+title: "Construct Hierarchical P/NBD Models"
+author: "Mick Cooney <mickcooney@gmail.com>"
+date: "Last updated: `r format(Sys.time(), '%B %d, %Y')`"
+editor: source
+execute:
+  message: false
+  warning: false
+  error: false
+format:
+  html:
+    light: superhero
+    dark: darkly
+    anchor-sections: true
+    embed-resources: true
+    number-sections: true
+    smooth-scroll: true
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+---
+
+
+```{r import_libraries}
+#| echo: FALSE
+#| message: FALSE
+
+library(conflicted)
+library(tidyverse)
+library(scales)
+library(cowplot)
+library(directlabels)
+library(magrittr)
+library(rlang)
+library(fs)
+library(purrr)
+library(furrr)
+library(glue)
+library(cmdstanr)
+library(brms)
+library(posterior)
+library(bayesplot)
+library(tidybayes)
+
+
+source("lib_utils.R")
+source("lib_btyd.R")
+
+
+conflict_lst <- resolve_conflicts(
+  c("magrittr", "rlang", "dplyr", "readr", "purrr", "ggplot2", "MASS",
+    "fitdistrplus")
+  )
+
+
+knitr::opts_chunk$set(
+  tidy       = FALSE,
+  cache      = FALSE,
+  warning    = FALSE,
+  message    = FALSE,
+  fig.height =     8,
+  fig.width  =    11
+  )
+
+options(
+  width = 80L,
+  warn  = 1,
+  mc.cores = parallel::detectCores()
+  )
+
+theme_set(theme_cowplot())
+
+set.seed(42)
+
+plan(multisession)
+```
+
+
+
+
+# R Environment
+
+```{r show_session_info}
+#| echo: TRUE
+#| message: TRUE
+
+options(width = 120L)
+sessioninfo::session_info()
+options(width = 80L)
+```

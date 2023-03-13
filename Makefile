@@ -30,7 +30,8 @@ all-html: $(HTML_FILES)
 
 .qmd.html:
 	echo "TIMESTAMP:" `date` "- Rendering script $<"  >> output.log 2>&1
-	Rscript -e 'quarto::quarto_render("$<")'          >> output.log 2>&1
+	quarto render $< --to html                        >> output.log 2>&1
+#	Rscript -e 'quarto::quarto_render("$<")'          >> output.log 2>&1
 	echo "TIMESTAMP:" `date` "- Finished $*.html"     >> output.log 2>&1
 
 
@@ -43,6 +44,8 @@ full_deps.dot:
 depgraph: full_deps.png
 
 
+initial_pnbd_models.html: generate_transaction_datasets.html
+construct_hierarchical_pnbd_models.html: initial_pnbd_models.html
 
 
 mrproper: clean-cache clean-data clean-html clean-models

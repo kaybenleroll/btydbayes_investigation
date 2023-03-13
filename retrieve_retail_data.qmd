@@ -105,7 +105,7 @@ parse it.
 retrieve_datafile <- "data/retail_data_tbl.rds"
 
 create_excel_datetime <- function(x)
-  (x * (60 * 60 * 24)) %>% as.POSIXct(origin = "1899-12-30", tz = "GMT")
+  (x * (60 * 60 * 24)) |> as.POSIXct(origin = "1899-12-30", tz = "GMT")
 
 data_cols <- cols(
   .default      = col_character(),
@@ -114,23 +114,23 @@ data_cols <- cols(
   Price         = col_number()
 )
 
-retail_data_tbl <- excel_sheets(xlsx_datafile) %>%
-  enframe(name = NULL, value = "excel_sheet") %>%
+retail_data_tbl <- excel_sheets(xlsx_datafile) |>
+  enframe(name = NULL, value = "excel_sheet") |>
   mutate(
     data = map(
       excel_sheet, read_excel,
       path      = xlsx_datafile,
       col_types = "text"
       )
-    ) %>%
-  unnest(data) %>%
-  format_csv() %>%
-  read_csv(col_types = data_cols) %>%
+    ) |>
+  unnest(data) |>
+  format_csv() |>
+  read_csv(col_types = data_cols) |>
   mutate(
     InvoiceDate = create_excel_datetime(InvoiceDate)
     )
 
-retail_data_tbl %>% glimpse()
+retail_data_tbl |> glimpse()
 ```
 
 
@@ -140,7 +140,7 @@ Finally, we output this data to the disk.
 #| echo: true
 
 
-retail_data_tbl %>% write_rds("data/rawdata_online_retail_tbl.rds")
+retail_data_tbl |> write_rds("data/rawdata_online_retail_tbl.rds")
 ```
 
 
@@ -198,7 +198,7 @@ cdnow_tbl <- read_fwf(
   col_types     = cdnow_cols,
   )
 
-cdnow_tbl %>% glimpse()
+cdnow_tbl |> glimpse()
 ```
 
 As before, we now write that data out to disk
@@ -207,7 +207,7 @@ As before, we now write that data out to disk
 #| echo: true
 
 
-cdnow_tbl %>% write_rds("data/rawdata_cdnow_tbl.rds")
+cdnow_tbl |> write_rds("data/rawdata_cdnow_tbl.rds")
 ```
 
 

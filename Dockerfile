@@ -1,4 +1,4 @@
-FROM rocker/verse:4.2.1
+FROM rocker/tidyverse:4.2.1
 
 RUN apt-get update \
   && apt-get upgrade -y \
@@ -70,8 +70,8 @@ COPY build/docker_install_sys_rpkgs.R /tmp
 RUN Rscript /tmp/docker_install_sys_rpkgs.R
 
 COPY build/test_report.qmd /tmp
-RUN quarto render test_report.qmd --to pdf \
-  && rm -fv /tmp/test_report.pdf
+RUN quarto render test_report.qmd --to html \
+  && rm -fv /tmp/test_report.html
 
 
 RUN git clone https://github.com/lindenb/makefile2graph.git \

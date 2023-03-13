@@ -90,7 +90,7 @@ synthdata_shortframe_cohort_tbl <- generate_customer_cohort_data(
     last_date   = as.Date("2019-12-31")
     )
 
-synthdata_shortframe_cohort_tbl %>% glimpse()
+synthdata_shortframe_cohort_tbl |> glimpse()
 ```
 
 Now that we have generated our cohort data, we move on to generating our
@@ -112,18 +112,18 @@ pnbd_params_lst <- list(
   amt_custcv  =   1.00
   )
 
-synthdata_shortframe_simparams_tbl <- synthdata_shortframe_cohort_tbl %>%
+synthdata_shortframe_simparams_tbl <- synthdata_shortframe_cohort_tbl |>
   generate_pnbd_customer_simulation_params(
     params_lst     = pnbd_params_lst
     )
 
-synthdata_shortframe_transactions_tbl <- synthdata_shortframe_simparams_tbl %>%
+synthdata_shortframe_transactions_tbl <- synthdata_shortframe_simparams_tbl |>
   generate_pnbd_customer_transaction_data(
     final_tnx_date = as.Date("2020-01-01")
-    ) %>%
+    ) |>
   generate_transaction_metadata()
 
-synthdata_shortframe_transactions_tbl %>% glimpse()
+synthdata_shortframe_transactions_tbl |> glimpse()
 ```
 
 
@@ -134,9 +134,9 @@ We now write this data to disk.
 ```{r write_synth_shortframe_data_disk}
 #| echo: true
 
-synthdata_shortframe_cohort_tbl       %>% write_rds("data/synthdata_shortframe_cohort_tbl.rds")
-synthdata_shortframe_simparams_tbl    %>% write_rds("data/synthdata_shortframe_simparams_tbl.rds")
-synthdata_shortframe_transactions_tbl %>% write_rds("data/synthdata_shortframe_transactions_tbl.rds")
+synthdata_shortframe_cohort_tbl       |> write_rds("data/synthdata_shortframe_cohort_tbl.rds")
+synthdata_shortframe_simparams_tbl    |> write_rds("data/synthdata_shortframe_simparams_tbl.rds")
+synthdata_shortframe_transactions_tbl |> write_rds("data/synthdata_shortframe_transactions_tbl.rds")
 ```
 
 
@@ -156,7 +156,7 @@ synthdata_longframe_cohort_tbl <- generate_customer_cohort_data(
     last_date   = as.Date("2019-12-31")
     )
 
-synthdata_longframe_cohort_tbl %>% glimpse()
+synthdata_longframe_cohort_tbl |> glimpse()
 ```
 
 
@@ -177,18 +177,18 @@ pnbd_params_lst <- list(
   )
 
 
-synthdata_longframe_simparams_tbl <- synthdata_longframe_cohort_tbl %>%
+synthdata_longframe_simparams_tbl <- synthdata_longframe_cohort_tbl |>
   generate_pnbd_customer_simulation_params(
     params_lst     = pnbd_params_lst
     )
 
-synthdata_longframe_transactions_tbl <- synthdata_longframe_simparams_tbl %>%
+synthdata_longframe_transactions_tbl <- synthdata_longframe_simparams_tbl |>
   generate_pnbd_customer_transaction_data(
     final_tnx_date = as.Date("2020-01-01")
-    ) %>%
+    ) |>
   generate_transaction_metadata()
 
-synthdata_longframe_transactions_tbl %>% glimpse()
+synthdata_longframe_transactions_tbl |> glimpse()
 ```
 
 
@@ -199,9 +199,9 @@ We now write this data to disk.
 ```{r write_longframe_synth_data_disk}
 #| echo: true
 
-synthdata_longframe_cohort_tbl       %>% write_rds("data/synthdata_longframe_cohort_tbl.rds")
-synthdata_longframe_simparams_tbl    %>% write_rds("data/synthdata_longframe_simparams_tbl.rds")
-synthdata_longframe_transactions_tbl %>% write_rds("data/synthdata_longframe_transactions_tbl.rds")
+synthdata_longframe_cohort_tbl       |> write_rds("data/synthdata_longframe_cohort_tbl.rds")
+synthdata_longframe_simparams_tbl    |> write_rds("data/synthdata_longframe_simparams_tbl.rds")
+synthdata_longframe_transactions_tbl |> write_rds("data/synthdata_longframe_transactions_tbl.rds")
 ```
 
 

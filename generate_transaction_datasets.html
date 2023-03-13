@@ -2659,7 +2659,7 @@ vertical-align: -.125em;
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2019-12-31&quot;</span>)</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 50,000
@@ -2686,18 +2686,18 @@ $ first_tnx_date &lt;date&gt; 2017-01-01, 2017-01-01, 2017-01-01, 2017-01-01, 20
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_custcv  =</span>   <span class="fl">1.00</span></span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_simparams_tbl <span class="ot">&lt;-</span> synthdata_shortframe_cohort_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_simparams_tbl <span class="ot">&lt;-</span> synthdata_shortframe_cohort_tbl <span class="sc">|&gt;</span></span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_simulation_params</span>(</span>
 <span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">params_lst     =</span> pnbd_params_lst</span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_shortframe_simparams_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_shortframe_simparams_tbl <span class="sc">|&gt;</span></span>
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_transaction_data</span>(</span>
 <span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>)</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_transaction_metadata</span>()</span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 299,546
@@ -2714,9 +2714,9 @@ $ tnx_amount    &lt;dbl&gt; 49.35, 25.11, 8.29, 1534.36, 34.28, 21.15, 144.88, 1
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl       <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_cohort_tbl.rds&quot;</span>)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_simparams_tbl    <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_simparams_tbl.rds&quot;</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_transactions_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl       <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_cohort_tbl.rds&quot;</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_simparams_tbl    <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_simparams_tbl.rds&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_shortframe_transactions_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -2733,7 +2733,7 @@ $ tnx_amount    &lt;dbl&gt; 49.35, 25.11, 8.29, 1534.36, 34.28, 21.15, 144.88, 1
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2019-12-31&quot;</span>)</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 50,000
@@ -2760,18 +2760,18 @@ $ first_tnx_date &lt;date&gt; 2011-01-01, 2011-01-01, 2011-01-01, 2011-01-01, 20
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_simparams_tbl <span class="ot">&lt;-</span> synthdata_longframe_cohort_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_simparams_tbl <span class="ot">&lt;-</span> synthdata_longframe_cohort_tbl <span class="sc">|&gt;</span></span>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_simulation_params</span>(</span>
 <span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">params_lst     =</span> pnbd_params_lst</span>
 <span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_longframe_simparams_tbl <span class="sc">%&gt;%</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_longframe_simparams_tbl <span class="sc">|&gt;</span></span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_transaction_data</span>(</span>
 <span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>)</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_transaction_metadata</span>()</span>
 <span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 419,261
@@ -2788,9 +2788,9 @@ $ tnx_amount    &lt;dbl&gt; 91.07, 99.51, 33.48, 602.63, 447.65, 104.85, 1.17, 1
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl       <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_cohort_tbl.rds&quot;</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_simparams_tbl    <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_simparams_tbl.rds&quot;</span>)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_transactions_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl       <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_cohort_tbl.rds&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_simparams_tbl    <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_simparams_tbl.rds&quot;</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/synthdata_longframe_transactions_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -2814,8 +2814,8 @@ $ tnx_amount    &lt;dbl&gt; 91.07, 99.51, 33.48, 602.63, 447.65, 104.85, 1.17, 1
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Etc/UTC
- date     2022-12-16
- pandoc   2.19.2 @ /usr/lib/rstudio-server/bin/quarto/bin/tools/ (via rmarkdown)
+ date     2023-02-10
+ pandoc   2.19.2 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────
  package              * version date (UTC) lib source
@@ -2874,7 +2874,6 @@ $ tnx_amount    &lt;dbl&gt; 91.07, 99.51, 33.48, 602.63, 447.65, 104.85, 1.17, 1
  reprex                 2.0.2   2022-08-17 [1] RSPM (R 4.2.0)
  rlang                * 1.0.6   2022-09-24 [1] RSPM (R 4.2.0)
  rmarkdown              2.17    2022-10-07 [1] RSPM (R 4.2.0)
- rstudioapi             0.14    2022-08-22 [1] RSPM (R 4.2.0)
  rvest                  1.0.3   2022-08-19 [1] RSPM (R 4.2.0)
  scales               * 1.2.1   2022-08-20 [1] RSPM (R 4.2.0)
  sessioninfo            1.2.2   2021-12-06 [1] RSPM (R 4.2.0)

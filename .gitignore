@@ -4,3 +4,10 @@
 .Rproj.user/
 
 temp.R
+
+*_cache/*
+*_files/*
+
+output.log
+
+*.rmarkdown

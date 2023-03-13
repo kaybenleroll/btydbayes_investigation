@@ -2668,7 +2668,7 @@ vertical-align: -.125em;
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>retrieve_datafile <span class="ot">&lt;-</span> <span class="st">&quot;data/retail_data_tbl.rds&quot;</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>create_excel_datetime <span class="ot">&lt;-</span> <span class="cf">function</span>(x)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  (x <span class="sc">*</span> (<span class="dv">60</span> <span class="sc">*</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">24</span>)) <span class="sc">%&gt;%</span> <span class="fu">as.POSIXct</span>(<span class="at">origin =</span> <span class="st">&quot;1899-12-30&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;GMT&quot;</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  (x <span class="sc">*</span> (<span class="dv">60</span> <span class="sc">*</span> <span class="dv">60</span> <span class="sc">*</span> <span class="dv">24</span>)) <span class="sc">|&gt;</span> <span class="fu">as.POSIXct</span>(<span class="at">origin =</span> <span class="st">&quot;1899-12-30&quot;</span>, <span class="at">tz =</span> <span class="st">&quot;GMT&quot;</span>)</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>data_cols <span class="ot">&lt;-</span> <span class="fu">cols</span>(</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">.default      =</span> <span class="fu">col_character</span>(),</span>
@@ -2677,23 +2677,23 @@ vertical-align: -.125em;
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">Price         =</span> <span class="fu">col_number</span>()</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="ot">&lt;-</span> <span class="fu">excel_sheets</span>(xlsx_datafile) <span class="sc">%&gt;%</span></span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">enframe</span>(<span class="at">name =</span> <span class="cn">NULL</span>, <span class="at">value =</span> <span class="st">&quot;excel_sheet&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="ot">&lt;-</span> <span class="fu">excel_sheets</span>(xlsx_datafile) <span class="sc">|&gt;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">enframe</span>(<span class="at">name =</span> <span class="cn">NULL</span>, <span class="at">value =</span> <span class="st">&quot;excel_sheet&quot;</span>) <span class="sc">|&gt;</span></span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> <span class="fu">map</span>(</span>
 <span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      excel_sheet, read_excel,</span>
 <span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">path      =</span> xlsx_datafile,</span>
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">col_types =</span> <span class="st">&quot;text&quot;</span></span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>      )</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(data) <span class="sc">%&gt;%</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">format_csv</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="at">col_types =</span> data_cols) <span class="sc">%&gt;%</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(data) <span class="sc">|&gt;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">format_csv</span>() <span class="sc">|&gt;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(<span class="at">col_types =</span> data_cols) <span class="sc">|&gt;</span></span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
 <span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">InvoiceDate =</span> <span class="fu">create_excel_datetime</span>(InvoiceDate)</span>
 <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 1,067,371
@@ -2713,7 +2713,7 @@ $ Country       &lt;chr&gt; &quot;United Kingdom&quot;, &quot;United Kingdom&quo
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_online_retail_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_online_retail_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -2768,7 +2768,7 @@ $ Country       &lt;chr&gt; &quot;United Kingdom&quot;, &quot;United Kingdom&quo
 <span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">col_types     =</span> cdnow_cols,</span>
 <span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="sc">%&gt;%</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 69,659
@@ -2783,7 +2783,7 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="sc">%&gt;%</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_cdnow_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_cdnow_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -2805,8 +2805,8 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Etc/UTC
- date     2022-12-16
- pandoc   2.19.2 @ /usr/lib/rstudio-server/bin/quarto/bin/tools/ (via rmarkdown)
+ date     2023-03-13
+ pandoc   2.19.2 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package       * version date (UTC) lib source
@@ -2862,7 +2862,6 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
  reprex          2.0.2   2022-08-17 [1] RSPM (R 4.2.0)
  rlang           1.0.6   2022-09-24 [1] RSPM (R 4.2.0)
  rmarkdown       2.17    2022-10-07 [1] RSPM (R 4.2.0)
- rstudioapi      0.14    2022-08-22 [1] RSPM (R 4.2.0)
  rvest           1.0.3   2022-08-19 [1] RSPM (R 4.2.0)
  scales        * 1.2.1   2022-08-20 [1] RSPM (R 4.2.0)
  sessioninfo     1.2.2   2021-12-06 [1] RSPM (R 4.2.0)
