@@ -1015,9 +1015,9 @@ amount, but for these models we set both those values to 1.
 
 plan(multisession)
 
-model_label <- "pnbd_fixed"
+fit_label <- "pnbd_init_fixed"
 
-precompute_dir <- glue("precompute/{model_label}")
+precompute_dir <- glue("precompute/{fit_label}")
 
 ensure_exists_precompute_directory(precompute_dir)
 
@@ -1026,7 +1026,7 @@ pnbd_fixed_validsims_tbl <- pnbd_fixed_valid_lst$validation_tbl |>
   group_nest(customer_id, .key = "cust_params") |>
   mutate(
     sim_file = glue(
-      "{precompute_dir}/sims_{model_label}_{customer_id}.rds"
+      "{precompute_dir}/sims_{fit_label}_{customer_id}.rds"
       ),
     chunk_data = future_map2(
       sim_file, cust_params,
@@ -1232,9 +1232,9 @@ That said, these outputs are useful
 ```{r generate_pnbd_fixed2_validation_transactions}
 #| echo: TRUE
 
-model_label <- "pnbd_fixed2"
+fit_label <- "pnbd_init_fixed2"
 
-precompute_dir <- glue("precompute/{model_label}")
+precompute_dir <- glue("precompute/{fit_label}")
 
 ensure_exists_precompute_directory(precompute_dir)
 
@@ -1243,7 +1243,7 @@ pnbd_fixed2_validsims_tbl <- pnbd_fixed2_valid_lst$validation_tbl |>
   group_nest(customer_id, .key = "cust_params") |>
   mutate(
     sim_file = glue(
-      "{precompute_dir}/sims_{model_label}_{customer_id}.rds"
+      "{precompute_dir}/sims_{fit_label}_{customer_id}.rds"
       ),
     chunk_data = future_map2(
       sim_file, cust_params,
@@ -1497,9 +1497,9 @@ functions, like we did for previous models.
 ```{r generate_pnbd_fixed3_validation_sims}
 #| echo: TRUE
 
-model_label <- "pnbd_fixed3"
+fit_label <- "pnbd_init_fixed3"
 
-precompute_dir <- glue("precompute/{model_label}")
+precompute_dir <- glue("precompute/{fit_label}")
 
 ensure_exists_precompute_directory(precompute_dir)
 
@@ -1509,7 +1509,7 @@ pnbd_fixed3_validsims_tbl <- pnbd_fixed3_validation_tbl |>
   group_nest(customer_id, .key = "cust_params") |>
   mutate(
     sim_file = glue(
-      "{precompute_dir}/sims_{model_label}_{customer_id}.rds"
+      "{precompute_dir}/sims_{fit_label}_{customer_id}.rds"
       ),
     chunk_data = future_map2(
       sim_file, cust_params,

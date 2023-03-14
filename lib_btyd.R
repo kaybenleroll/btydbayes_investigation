@@ -90,6 +90,15 @@ generate_pnbd_customer_simulation_params <- function(customer_cohort_data_tbl,
 
 
 generate_pnbd_customer_transaction_data <- function(sim_params_tbl, final_tnx_date) {
+
+  if(final_tnx_date < sim_params_tbl |> pull(first_tnx_date) |> max()) {
+    warning(glue(
+      "Customer first_tnx_date is greater than the value of final_tnx_date: {final_tnx_date} - returning value FALSE"
+      ))
+
+    return(FALSE)
+  }
+
   customer_transactions_tbl <- sim_params_tbl |>
     mutate(
       sim_data = pmap(

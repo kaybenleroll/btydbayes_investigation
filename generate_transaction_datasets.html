@@ -2655,8 +2655,8 @@ vertical-align: -.125em;
 <summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl <span class="ot">&lt;-</span> <span class="fu">generate_customer_cohort_data</span>(</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_customers =</span> n_customers,</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_date  =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2017-01-01&quot;</span>),</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2019-12-31&quot;</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_date  =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>),</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2022-12-31&quot;</span>)</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2664,10 +2664,10 @@ vertical-align: -.125em;
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 50,000
 Columns: 4
-$ customer_id    &lt;chr&gt; &quot;C201701_0001&quot;, &quot;C201701_0002&quot;, &quot;C201701_0003&quot;, &quot;C20170…
-$ cohort_qtr     &lt;chr&gt; &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, &quot;2017 Q1&quot;, …
-$ cohort_ym      &lt;chr&gt; &quot;2017 01&quot;, &quot;2017 01&quot;, &quot;2017 01&quot;, &quot;2017 01&quot;, &quot;2017 01&quot;, …
-$ first_tnx_date &lt;date&gt; 2017-01-01, 2017-01-01, 2017-01-01, 2017-01-01, 2017-0…</code></pre>
+$ customer_id    &lt;chr&gt; &quot;C202001_0001&quot;, &quot;C202001_0002&quot;, &quot;C202001_0003&quot;, &quot;C20200…
+$ cohort_qtr     &lt;chr&gt; &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, …
+$ cohort_ym      &lt;chr&gt; &quot;2020 01&quot;, &quot;2020 01&quot;, &quot;2020 01&quot;, &quot;2020 01&quot;, &quot;2020 01&quot;, …
+$ first_tnx_date &lt;date&gt; 2020-01-01, 2020-01-01, 2020-01-01, 2020-01-01, 2020-0…</code></pre>
 </div>
 </div>
 <p>Now that we have generated our cohort data, we move on to generating our transaction data based on the PNBD model.</p>
@@ -2693,19 +2693,19 @@ $ first_tnx_date &lt;date&gt; 2017-01-01, 2017-01-01, 2017-01-01, 2017-01-01, 20
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_shortframe_simparams_tbl <span class="sc">|&gt;</span></span>
 <span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_transaction_data</span>(</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2023-01-01&quot;</span>)</span>
 <span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_transaction_metadata</span>()</span>
 <span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 299,546
+<pre><code>Rows: 297,980
 Columns: 4
-$ customer_id   &lt;chr&gt; &quot;C201701_0005&quot;, &quot;C201701_0006&quot;, &quot;C201701_0004&quot;, &quot;C201701…
-$ tnx_timestamp &lt;dttm&gt; 2017-01-01 00:21:36, 2017-01-01 00:46:28, 2017-01-01 00…
-$ invoice_id    &lt;chr&gt; &quot;T20170101-0001&quot;, &quot;T20170101-0002&quot;, &quot;T20170101-0003&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 49.35, 25.11, 8.29, 1534.36, 34.28, 21.15, 144.88, 15.24…</code></pre>
+$ customer_id   &lt;chr&gt; &quot;C202001_0028&quot;, &quot;C202001_0006&quot;, &quot;C202001_0012&quot;, &quot;C202001…
+$ tnx_timestamp &lt;dttm&gt; 2020-01-01 00:59:15, 2020-01-01 01:25:43, 2020-01-01 04…
+$ invoice_id    &lt;chr&gt; &quot;T20200101-0001&quot;, &quot;T20200101-0002&quot;, &quot;T20200101-0003&quot;, &quot;T…
+$ tnx_amount    &lt;dbl&gt; 269.07, 124.62, 20.81, 14.76, 16.02, 19.16, 211.91, 43.9…</code></pre>
 </div>
 </div>
 <section id="write-data-to-disk" class="level2" data-number="1.1">
@@ -2730,7 +2730,7 @@ $ tnx_amount    &lt;dbl&gt; 49.35, 25.11, 8.29, 1534.36, 34.28, 21.15, 144.88, 1
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="ot">&lt;-</span> <span class="fu">generate_customer_cohort_data</span>(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_customers =</span> n_customers,</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_date  =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2011-01-01&quot;</span>),</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2019-12-31&quot;</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2022-12-31&quot;</span>)</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -2767,19 +2767,19 @@ $ first_tnx_date &lt;date&gt; 2011-01-01, 2011-01-01, 2011-01-01, 2011-01-01, 20
 <span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="ot">&lt;-</span> synthdata_longframe_simparams_tbl <span class="sc">|&gt;</span></span>
 <span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_pnbd_customer_transaction_data</span>(</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">final_tnx_date =</span> <span class="fu">as.Date</span>(<span class="st">&quot;2023-01-01&quot;</span>)</span>
 <span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
 <span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">generate_transaction_metadata</span>()</span>
 <span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 419,261
+<pre><code>Rows: 454,892
 Columns: 4
-$ customer_id   &lt;chr&gt; &quot;C201101_0007&quot;, &quot;C201101_0008&quot;, &quot;C201101_0010&quot;, &quot;C201101…
-$ tnx_timestamp &lt;dttm&gt; 2011-01-01 00:34:56, 2011-01-01 03:24:40, 2011-01-01 03…
+$ customer_id   &lt;chr&gt; &quot;C201101_0004&quot;, &quot;C201101_0007&quot;, &quot;C201101_0005&quot;, &quot;C201101…
+$ tnx_timestamp &lt;dttm&gt; 2011-01-01 00:20:49, 2011-01-01 02:33:19, 2011-01-01 05…
 $ invoice_id    &lt;chr&gt; &quot;T20110101-0001&quot;, &quot;T20110101-0002&quot;, &quot;T20110101-0003&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 91.07, 99.51, 33.48, 602.63, 447.65, 104.85, 1.17, 122.4…</code></pre>
+$ tnx_amount    &lt;dbl&gt; 42.68, 84.57, 85.49, 77.98, 566.08, 8.23, 26.07, 1306.61…</code></pre>
 </div>
 </div>
 <section id="write-data-to-disk-1" class="level2" data-number="2.1">
@@ -2814,7 +2814,7 @@ $ tnx_amount    &lt;dbl&gt; 91.07, 99.51, 33.48, 602.63, 447.65, 104.85, 1.17, 1
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Etc/UTC
- date     2023-02-10
+ date     2023-03-14
  pandoc   2.19.2 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -82,7 +82,7 @@ plan(multisession)
 
 # R Environment
 
-```{r show_session_info}
+d```{r show_session_info}
 #| echo: TRUE
 #| message: TRUE
 
