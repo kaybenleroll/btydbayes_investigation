@@ -200,19 +200,21 @@ We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
 
-## Load Long Time-frame Synthetic Data
+## Load Short Time-frame Synthetic Data
+
+We now want to load the short time-frame synthetic data.
 
 
-```{r load_longframe_synthetic_data}
+```{r load_shortframe_synthetic_data}
 #| echo: TRUE
 
-customer_cohortdata_tbl <- read_rds("data/synthdata_longframe_cohort_tbl.rds")
+customer_cohortdata_tbl <- read_rds("data/synthdata_shortframe_cohort_tbl.rds")
 customer_cohortdata_tbl |> glimpse()
 
-customer_simparams_tbl  <- read_rds("data/synthdata_longframe_simparams_tbl.rds")
+customer_simparams_tbl  <- read_rds("data/synthdata_shortframe_simparams_tbl.rds")
 customer_simparams_tbl |> glimpse()
 
-customer_transactions_tbl <- read_rds("data/synthdata_longframe_transactions_tbl.rds")
+customer_transactions_tbl <- read_rds("data/synthdata_shortframe_transactions_tbl.rds")
 customer_transactions_tbl |> glimpse()
 ```
 
@@ -350,7 +352,7 @@ derived values.
 #| echo: TRUE
 
 customer_summarystats_tbl <- customer_transactions_tbl |>
-  calculate_transaction_cbs_data(last_date = as.Date("2018-12-31"))
+  calculate_transaction_cbs_data(last_date = as.Date("2021-12-31"))
 
 customer_summarystats_tbl |> glimpse()
 ```
@@ -410,14 +412,14 @@ ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
 ```{r write_data_disk}
 #| echo: TRUE
 
-id_1000  |> write_rds("data/id_1000.rds")
-id_5000  |> write_rds("data/id_5000.rds")
-id_10000 |> write_rds("data/id_10000.rds")
+id_1000  |> write_rds("data/shortframe_id_1000.rds")
+id_5000  |> write_rds("data/shortframe_id_5000.rds")
+id_10000 |> write_rds("data/shortframe_id_10000.rds")
 
-fit_1000_data_tbl  |> write_rds("data/fit_1000_longframe_data_tbl.rds")
-fit_10000_data_tbl |> write_rds("data/fit_10000_longframe_data_tbl.rds")
+fit_1000_data_tbl  |> write_rds("data/fit_1000_shortframe_data_tbl.rds")
+fit_10000_data_tbl |> write_rds("data/fit_10000_shortframe_data_tbl.rds")
 
-customer_summarystats_tbl |> write_rds("data/customer_summarystats_longframe_tbl.rds")
+customer_summarystats_tbl |> write_rds("data/customer_summarystats_shortframe_tbl.rds")
 ```
 
 
@@ -575,6 +577,7 @@ view.
 
 pnbd_fixed_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
+  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
 ```
@@ -685,6 +688,7 @@ of effective stepsizes.
 
 pnbd_fixed2_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
+  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes for Alternate Priors")
 ```
@@ -844,7 +848,7 @@ likely_active_id <- pnbd_fixed_palive_summary_tbl |>
 
 plot_tbl <- customer_transactions_tbl |>
   filter(
-    tnx_timestamp < as.Date("2019-01-01"),
+    tnx_timestamp < as.Date("2022-01-01"),
     customer_id %in% likely_active_id
     )
 
@@ -874,15 +878,15 @@ likely_active_id <- pnbd_fixed_palive_summary_tbl |>
 
 plot_tbl <- customer_transactions_tbl |>
   filter(
-    tnx_timestamp <  as.Date("2019-01-01"),
-    tnx_timestamp >= as.Date("2018-01-01"),
+    tnx_timestamp <  as.Date("2022-01-01"),
+    tnx_timestamp >= as.Date("2021-01-01"),
     customer_id %in% likely_active_id
     )
 
 ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
   geom_line() +
   geom_point() +
-  geom_vline(aes(xintercept = as.POSIXct("2019-01-01")), colour = "red") +
+  geom_vline(aes(xintercept = as.POSIXct("2022-01-01")), colour = "red") +
   labs(
       x = "Date",
       y = "Customer ID",
@@ -904,14 +908,14 @@ likely_inactive_id <- pnbd_fixed_palive_summary_tbl |>
 
 plot_tbl <- customer_transactions_tbl |>
   filter(
-    tnx_timestamp < as.Date("2019-01-01"),
+    tnx_timestamp < as.Date("2022-01-01"),
     customer_id %in% likely_inactive_id
     )
 
 ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
   geom_line(alpha = 0.1) +
   geom_point(alpha = 0.1, size = 1) +
-  geom_vline(aes(xintercept = as.POSIXct("2019-01-01")), colour = "red") +
+  geom_vline(aes(xintercept = as.POSIXct("2022-01-01")), colour = "red") +
   labs(
       x = "Date",
       y = "Customer",
@@ -955,15 +959,15 @@ plot_tbl <- pnbd_fixed_palive_summary_tbl |>
   select(customer_id, p_alive_range80) |>
   inner_join(customer_transactions_tbl, by = "customer_id") |>
   filter(
-    tnx_timestamp <  as.Date("2019-01-01"),
-    tnx_timestamp >= as.Date("2018-01-01")
+    tnx_timestamp <  as.Date("2022-01-01"),
+    tnx_timestamp >= as.Date("2021-01-01")
     )
 
 
 ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id, colour = p_alive_range80)) +
   geom_line(alpha = 0.5) +
   geom_point(alpha = 0.5, size = 1) +
-  geom_vline(aes(xintercept = as.POSIXct("2019-01-01")), colour = "red") +
+  geom_vline(aes(xintercept = as.POSIXct("2022-01-01")), colour = "red") +
   scale_colour_gradient(low = "blue", high = "red") +
   labs(
       x = "Date",
@@ -1058,9 +1062,9 @@ is not included in the fitted data.
 ```{r calculate_validation_year_statistics}
 #| echo: TRUE
 
-obs_2019_stats_tbl <- customer_transactions_tbl |>
+obs_2022_stats_tbl <- customer_transactions_tbl |>
   filter(
-    tnx_timestamp >= as.POSIXct("2019-01-01")
+    tnx_timestamp >= as.POSIXct("2022-01-01")
     ) |>
   group_by(customer_id) |>
   summarise(
@@ -1071,7 +1075,7 @@ obs_2019_stats_tbl <- customer_transactions_tbl |>
     last_tnx  = max(tnx_timestamp)
     )
 
-obs_2019_stats_tbl |> glimpse()
+obs_2022_stats_tbl |> glimpse()
 ```
 
 We now want to combine this data to start our investigation of the model
@@ -1089,7 +1093,7 @@ pnbd_fixed_1000_validation_tbl <- pnbd_fixed_validsims_tbl |>
     
     sim_count = list(map_int(sim_file, ~ .x |> read_rds() |> nrow()))
     ) |>
-  left_join(obs_2019_stats_tbl, by = "customer_id") |>
+  left_join(obs_2022_stats_tbl, by = "customer_id") |>
   replace_na(list(tnx_count = 0)) |>
   mutate(
     tnx_count_qval = map2_dbl(sim_count, tnx_count, ~ ecdf(.x)(.y))
@@ -1285,7 +1289,7 @@ transacted, comparing the observed amount to that observed in the actual data.
 ```{r construct_pnbd_fixed_tnx_simulations}
 #| echo: TRUE
 
-tnx_data_tbl <- obs_2019_stats_tbl |> 
+tnx_data_tbl <- obs_2022_stats_tbl |> 
   semi_join(pnbd_fixed_validsims_tbl, by = "customer_id")
 
 obs_customer_count  <- tnx_data_tbl |> nrow()
@@ -1334,7 +1338,7 @@ coefficient of variation in our prior parameters.
 ```{r construct_pnbd_fixed2_tnx_simulations}
 #| echo: TRUE
 
-tnx_data_tbl <- obs_2019_stats_tbl |> 
+tnx_data_tbl <- obs_2022_stats_tbl |> 
   semi_join(pnbd_fixed2_validsims_tbl, by = "customer_id")
 
 obs_customer_count  <- tnx_data_tbl |> nrow()
@@ -1447,6 +1451,7 @@ pnbd_fixed3_stanfit$draws() |>
 
 pnbd_fixed3_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
+  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes for Low-CV Priors")
 
@@ -1547,7 +1552,7 @@ pnbd_fixed3_1000_validation_tbl <- pnbd_fixed3_validsims_tbl |>
     
     sim_count = list(map_int(sim_file, ~ .x |> read_rds() |> nrow()))
     ) |>
-  left_join(obs_2019_stats_tbl, by = "customer_id") |>
+  left_join(obs_2022_stats_tbl, by = "customer_id") |>
   replace_na(list(tnx_count = 0)) |>
   mutate(
     tnx_count_qval = map2_dbl(sim_count, tnx_count, ~ ecdf(.x)(.y))
@@ -1585,7 +1590,7 @@ simulations by looking at transaction counts.
 ```{r construct_pnbd_fixed3_tnx_simulations}
 #| echo: TRUE
 
-tnx_data_tbl <- obs_2019_stats_tbl |> 
+tnx_data_tbl <- obs_2022_stats_tbl |> 
   semi_join(pnbd_fixed3_validsims_tbl, by = "customer_id")
 
 obs_customer_count  <- tnx_data_tbl |> nrow()

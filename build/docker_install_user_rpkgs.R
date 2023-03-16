@@ -1,6 +1,6 @@
 remotes::install_github(
   "paul-buerkner/brms",
-  ref     = "v2.18.0",
+  ref     = "v2.19.0",
   upgrade = "always"
 )
 

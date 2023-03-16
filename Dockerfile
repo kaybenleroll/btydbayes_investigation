@@ -1,4 +1,4 @@
-FROM rocker/tidyverse:4.2.1
+FROM rocker/tidyverse:4.2.2
 
 RUN apt-get update \
   && apt-get upgrade -y \
@@ -8,7 +8,6 @@ RUN apt-get update \
     ditaa \
     graphviz \
     htop \
-    less \
     libclang-dev \
     libglpk-dev \
     libgsl-dev \
