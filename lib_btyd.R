@@ -1,5 +1,8 @@
 
 
+
+rbernoulli <- function(n, p = 0.5) stats::runif(n) > (1 - p)
+
 calculate_transaction_cbs_data <- function(tnx_data_tbl, last_date) {
   cbs_data_tbl <- tnx_data_tbl |>
     filter(tnx_timestamp <= last_date) |>
@@ -230,8 +233,8 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
 
 
 run_pnbd_simulations_chunk <- function(
-    sim_file, param_tbl, start_dttm = as.POSIXct("2019-01-01"),
-    end_dttm   = as.POSIXct("2020-01-01")) {
+    sim_file, param_tbl, start_dttm, end_dttm
+    ) {
 
   calc_file <- !file_exists(sim_file)
 

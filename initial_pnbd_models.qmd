@@ -199,6 +199,15 @@ $$
 We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
+```{r set_start_end_dates}
+use_fit_start_date <- as.Date("2020-01-01")
+use_fit_end_date   <- as.Date("2021-12-31")
+
+use_valid_start_date <- as.Date("2022-01-01")
+use_valid_end_date   <- as.Date("2022-12-31")
+```
+
+
 
 ## Load Short Time-frame Synthetic Data
 
@@ -352,7 +361,7 @@ derived values.
 #| echo: TRUE
 
 customer_summarystats_tbl <- customer_transactions_tbl |>
-  calculate_transaction_cbs_data(last_date = as.Date("2021-12-31"))
+  calculate_transaction_cbs_data(last_date = use_fit_end_date)
 
 customer_summarystats_tbl |> glimpse()
 ```
@@ -439,6 +448,15 @@ stan_modeldir <- "stan_models"
 stan_codedir  <-   "stan_code"
 ```
 
+We also want to set a number of overall parameters for this workbook
+
+To start the fit data, we want to use the 1,000 customers.
+
+```{r select_fit_dataset}
+use_fit_data_tbl <- fit_1000_data_tbl
+```
+
+
 
 We start with the Stan model.
 
@@ -474,6 +492,8 @@ pnbd_fixed_stanmodel <- cmdstan_model(
 
 We then use this compiled model with our data to produce a fit of the data.
 
+
+
 ```{r fit_pnbd_fixed_stanmodel}
 #| echo: TRUE
 #| cache: TRUE
@@ -481,7 +501,7 @@ We then use this compiled model with our data to produce a fit of the data.
 stan_modelname <- "pnbd_fixed"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 
-stan_data_lst <- fit_1000_data_tbl |>
+stan_data_lst <- use_fit_data_tbl |>
   select(customer_id, x, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
@@ -614,7 +634,7 @@ base.
 
 pnbd_fixed_valid_lst <- create_pnbd_posterior_validation_data(
   stanfit       = pnbd_fixed_stanfit,
-  data_tbl      = fit_1000_data_tbl,
+  data_tbl      = use_fit_data_tbl,
   simparams_tbl = customer_simparams_tbl
   )
 
@@ -643,7 +663,7 @@ used by Stan.
 stan_modelname <- "pnbd_fixed2"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 
-stan_data_lst <- fit_1000_data_tbl |>
+stan_data_lst <- use_fit_data_tbl |>
   select(customer_id, x, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
@@ -710,7 +730,7 @@ base.
 
 pnbd_fixed2_valid_lst <- create_pnbd_posterior_validation_data(
   stanfit       = pnbd_fixed2_stanfit,
-  data_tbl      = fit_1000_data_tbl,
+  data_tbl      = use_fit_data_tbl,
   simparams_tbl = customer_simparams_tbl
   )
 
@@ -1036,10 +1056,13 @@ pnbd_fixed_validsims_tbl <- pnbd_fixed_valid_lst$validation_tbl |>
       sim_file, cust_params,
       run_pnbd_simulations_chunk,
 
+      start_dttm = as.POSIXct(use_valid_start_date),
+      end_dttm   = as.POSIXct(use_valid_end_date),
+      
       .options = furrr_options(
         globals  = c(
-          "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
-          "generate_pnbd_validation_transactions"
+          "rbernoulli", "calculate_event_times", "rgamma_mucv",
+          "gamma_mucv2shaperate", "generate_pnbd_validation_transactions"
           ),
         packages   = c("tidyverse", "fs"),
         scheduling = Inf,
@@ -1253,6 +1276,9 @@ pnbd_fixed2_validsims_tbl <- pnbd_fixed2_valid_lst$validation_tbl |>
       sim_file, cust_params,
       run_pnbd_simulations_chunk,
 
+      start_dttm = as.POSIXct(use_valid_start_date),
+      end_dttm   = as.POSIXct(use_valid_end_date),
+      
       .options = furrr_options(
         globals  = c(
           "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
@@ -1402,7 +1428,7 @@ transaction counts though, this may not be a problem.
 stan_modelname <- "pnbd_fixed3"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 
-stan_data_lst <- fit_1000_data_tbl |>
+stan_data_lst <- use_fit_data_tbl |>
   select(customer_id, x, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
@@ -1469,7 +1495,7 @@ We now construct our posterior dataset.
 #| echo: TRUE
 
 pnbd_fixed3_validation_tbl <- pnbd_fixed3_stanfit |>
-  recover_types(fit_1000_data_tbl) |>
+  recover_types(use_fit_data_tbl) |>
   spread_draws(lambda[customer_id], mu[customer_id], p_alive[customer_id]) |>
   ungroup() |>
   select(customer_id, draw_id = .draw, post_lambda = lambda, post_mu = mu, p_alive)
@@ -1520,6 +1546,9 @@ pnbd_fixed3_validsims_tbl <- pnbd_fixed3_validation_tbl |>
       sim_file, cust_params,
       run_pnbd_simulations_chunk,
 
+      start_dttm = as.POSIXct(use_valid_start_date),
+      end_dttm   = as.POSIXct(use_valid_end_date),
+      
       .options = furrr_options(
         globals  = c(
           "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
