@@ -498,7 +498,7 @@ We then use this compiled model with our data to produce a fit of the data.
 #| echo: TRUE
 #| cache: TRUE
 
-stan_modelname <- "pnbd_fixed"
+stan_modelname <- "pnbd_init_fixed"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 
 stan_data_lst <- use_fit_data_tbl |>
@@ -660,7 +660,7 @@ used by Stan.
 #| echo: TRUE
 #| cache: TRUE
 
-stan_modelname <- "pnbd_fixed2"
+stan_modelname <- "pnbd_init_fixed2"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 
 stan_data_lst <- use_fit_data_tbl |>
@@ -1425,7 +1425,7 @@ transaction counts though, this may not be a problem.
 #| echo: TRUE
 #| cache: TRUE
 
-stan_modelname <- "pnbd_fixed3"
+stan_modelname <- "pnbd_init_fixed3"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 
 stan_data_lst <- use_fit_data_tbl |>

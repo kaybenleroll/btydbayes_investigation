@@ -243,15 +243,15 @@ run_pnbd_simulations_chunk <- function(
       mutate(
         sim_data = pmap(
           list(
-            p_alive  = p_alive,
-            lambda   = post_lambda,
-            mu       = post_mu
+            p_alive    = p_alive,
+            lambda     = post_lambda,
+            mu         = post_mu,
+            start_dttm = first_tnx_date
             ),
           generate_pnbd_validation_transactions,
 
           tnx_mu     = 1,
           tnx_cv     = 1,
-          start_dttm = start_dttm,
           end_dttm   = end_dttm
           ),
         sim_tnx_count = map_int(sim_data, nrow),
@@ -300,7 +300,7 @@ generate_pnbd_validation_transactions <- function(p_alive, lambda, mu, tnx_mu, t
         ) |>
       filter(
         tnx_timestamp <= end_dttm
-      )
+        )
 
   } else {
     tnxdata_tbl <- tibble(
@@ -314,3 +314,17 @@ generate_pnbd_validation_transactions <- function(p_alive, lambda, mu, tnx_mu, t
   return(tnxdata_tbl)
 }
 
+
+construct_pnbd_posterior_statistics <- function(stanfit, fitdata_tbl) {
+  post_stats_tbl <- stanfit |>
+    recover_types(fitdata_tbl) |>
+    spread_draws(lambda[customer_id], mu[customer_id], p_alive[customer_id]) |>
+    ungroup() |>
+    inner_join(fitdata_tbl, by = "customer_id") |>
+    select(
+      customer_id, first_tnx_date, draw_id = .draw,
+      post_lambda = lambda, post_mu = mu, p_alive
+      )
+
+  return(post_stats_tbl)
+}
