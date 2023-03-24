@@ -125,10 +125,13 @@ data.
 
 We also want to calculate summary statistics for the validation period as well.
 
+As before, we begin with 1,000 customers - purely to shorten the computation
+time as we experiment and explore the model.
+
 ```{r load_modelling_fit_data}
 #| echo: true
 
-cust_id <- read_rds("data/shortframe_id_10000.rds")
+cust_id <- read_rds("data/shortframe_id_1000.rds")
 
 customer_fit_stats_tbl <- customer_transactions_tbl |>
   calculate_transaction_cbs_data(last_date = use_fit_end_date) |>
@@ -312,6 +315,23 @@ compare this simulated data against the data we fit. This procedure is similar
 to what we did before but now we focus on in sample data rather than using
 validation data.
 
+
+```{r calculate_pnbd_posterior_simstats}
+#| echo: TRUE
+#| cache: TRUE
+
+sim_stats_tbl <- construct_pnbd_posterior_statistics(
+  stanfit         = pnbd_nonhier_fixed_stanfit,
+  fitdata_tbl     = customer_fit_stats_tbl
+  )
+
+sim_stats_tbl |> glimpse()
+```
+
+We then use these posterior statistics as inputs to our simulations to help
+us assess the in-sample quality of fit.
+
+
 ```{r generate_pnbd_nonhier_fixed_fitdata_transactions}
 #| echo: TRUE
 
@@ -323,45 +343,80 @@ precompute_dir <- glue("precompute/{fit_label}")
 
 ensure_exists_precompute_directory(precompute_dir)
 
-sim_stats_tbl <- construct_pnbd_posterior_statistics(
-  stanfit         = pnbd_nonhier_fixed_stanfit,
-  fitdata_tbl     = customer_fit_stats_tbl
-  )
 
+precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
+  as.character() |>
+  enframe(name = NULL, value = "sim_file")
 
-pnbd_nonhier_fixed_validsims_tbl <- sim_stats_tbl |>
+pnbd_nonhier_fixed_validsims_index_tbl <- sim_stats_tbl |>
   group_nest(customer_id, .key = "cust_params") |>
-  head(10) |>
   mutate(
     sim_file = glue(
       "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
-      ),
-    chunk_data = future_map2(
-      sim_file, cust_params,
-      run_pnbd_simulations_chunk,
+      )
+    )
 
-      end_dttm   = as.POSIXct(use_fit_end_date),
-      
-      .options = furrr_options(
-        globals  = c(
-          "rbernoulli", "calculate_event_times", "rgamma_mucv",
-          "gamma_mucv2shaperate", "generate_pnbd_validation_transactions"
+
+runsims_tbl <- pnbd_nonhier_fixed_validsims_index_tbl |>
+  anti_join(precomputed_tbl, by = "sim_file")
+
+if(nrow(runsims_tbl) > 0) {
+  pnbd_nonhier_fixed_validsims_index_tbl <- runsims_tbl |>
+    mutate(
+      chunk_data = future_map2(
+        sim_file, cust_params,
+        run_pnbd_simulations_chunk,
+
+        end_dttm   = as.POSIXct(use_fit_end_date),
+
+        .options = furrr_options(
+          globals  = c(
+            "rbernoulli", "calculate_event_times", "rgamma_mucv",
+            "gamma_mucv2shaperate", "generate_pnbd_validation_transactions"
+            ),
+          packages   = c("tidyverse", "fs"),
+          scheduling = Inf,
+          seed       = 421
           ),
+        .progress = TRUE
+        )
+      )
+}
+
+
+pnbd_nonhier_fixed_validsims_index_tbl |> glimpse()
+```
+
+We now want to load up the summary statistics for each of our customers for
+later analysis.
+
+
+```{r retrieve_pnbd_nonhier_fixed_simstats}
+#| echo: TRUE
+
+retrieve_sim_stats <- ~ .x |>
+  read_rds() |>
+  select(draw_id, sim_tnx_count, sim_tnx_last)
+
+
+pnbd_nonhier_fixed_simstats_tbl <- pnbd_nonhier_fixed_validsims_index_tbl |>
+  mutate(
+    sim_data = future_map(
+      sim_file, retrieve_sim_stats,
+
+      .options = furrr_options(
+        globals    = FALSE,
         packages   = c("tidyverse", "fs"),
-        scheduling = Inf,
-        seed       = 421
+        scheduling = Inf
         ),
       .progress = TRUE
       )
     ) |>
-  select(-cust_params) |>
-  unnest(chunk_data)
+  select(customer_id, sim_data) |>
+  unnest(sim_data)
 
-
-pnbd_nonhier_fixed_validsims_tbl |> glimpse()
+pnbd_nonhier_fixed_simstats_tbl |> glimpse()
 ```
-
-
 
 
 
