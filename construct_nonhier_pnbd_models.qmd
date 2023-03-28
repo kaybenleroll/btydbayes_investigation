@@ -90,10 +90,10 @@ We start with the synthetic data over the short time frame to begin.
 
 ```{r set_start_end_dates}
 use_fit_start_date <- as.Date("2020-01-01")
-use_fit_end_date   <- as.Date("2021-12-31")
+use_fit_end_date   <- as.Date("2022-01-01")
 
 use_valid_start_date <- as.Date("2022-01-01")
-use_valid_end_date   <- as.Date("2022-12-31")
+use_valid_end_date   <- as.Date("2023-01-01")
 ```
 
 
@@ -349,6 +349,15 @@ precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   enframe(name = NULL, value = "sim_file")
 
 pnbd_nonhier_fixed_validsims_index_tbl <- sim_stats_tbl |>
+  mutate(
+    start_dttm = first_tnx_date,
+    end_dttm   = as.Date("")
+    end_dttm   = c(),
+    lambda     = post_lambda,
+    mu         = post_mu,
+    tnx_mu     = 1,
+    tnx_cv     = 1
+    ) |>
   group_nest(customer_id, .key = "cust_params") |>
   mutate(
     sim_file = glue(
@@ -360,6 +369,8 @@ pnbd_nonhier_fixed_validsims_index_tbl <- sim_stats_tbl |>
 runsims_tbl <- pnbd_nonhier_fixed_validsims_index_tbl |>
   anti_join(precomputed_tbl, by = "sim_file")
 
+
+
 if(nrow(runsims_tbl) > 0) {
   pnbd_nonhier_fixed_validsims_index_tbl <- runsims_tbl |>
     mutate(
@@ -367,12 +378,10 @@ if(nrow(runsims_tbl) > 0) {
         sim_file, cust_params,
         run_pnbd_simulations_chunk,
 
-        end_dttm   = as.POSIXct(use_fit_end_date),
-
         .options = furrr_options(
           globals  = c(
-            "rbernoulli", "calculate_event_times", "rgamma_mucv",
-            "gamma_mucv2shaperate", "generate_pnbd_validation_transactions"
+            "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
+            "generate_pnbd_validation_transactions"
             ),
           packages   = c("tidyverse", "fs"),
           scheduling = Inf,
