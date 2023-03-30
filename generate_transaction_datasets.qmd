@@ -152,6 +152,9 @@ dataset.
 ```{r generate_longframe_synth_cohort}
 #| echo: true
 
+first_tnx_date <- as.Date("2010-01-01")
+final_tnx_date <- as.Date("2023-01-01")
+
 synthdata_longframe_cohort_tbl <- generate_customer_cohort_data(
     n_customers = n_customers,
     first_date  = first_tnx_date,

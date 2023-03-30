@@ -319,3 +319,197 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
 }
 
 
+run_model_assessment <- function(
+    model_stanfit, insample_tbl, outsample_tbl, fit_label,
+    fit_end_dttm, valid_start_dttm, valid_end_dttm,
+    sim_seed = 420) {
+
+
+  message(glue("Creating simulation stats from Bayesian posterior"))
+
+  model_simstats_tbl <- construct_pnbd_posterior_statistics(
+    stanfit         = model_stanfit,
+    fitdata_tbl     = insample_tbl
+    )
+
+  precompute_dir <- glue("precompute/{fit_label}")
+
+  ensure_exists_precompute_directory(precompute_dir)
+
+
+  message(glue("Creating simulation stats for in-sample validation"))
+
+  model_fitsims_index_tbl <- model_simstats_tbl |>
+    mutate(
+      start_dttm = first_tnx_date,
+      end_dttm   = fit_end_dttm,
+      lambda     = post_lambda,
+      mu         = post_mu,
+      p_alive    = 1,      ### In-sample validation, so customer begins active
+      tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
+      tnx_cv     = 1       ###
+      ) |>
+    group_nest(customer_id, .key = "cust_params") |>
+    mutate(
+      sim_file = glue(
+        "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
+        )
+      )
+
+
+  message(glue("Creating simulation stats for out-sample validation"))
+
+  model_validsims_index_tbl <- model_simstats_tbl |>
+    mutate(
+      start_dttm = valid_start_dttm,
+      end_dttm   = valid_end_dttm,
+      lambda     = post_lambda,
+      mu         = post_mu,
+      tnx_mu     = 1,      ### We are not simulating tnx size
+      tnx_cv     = 1       ###
+      ) |>
+    group_nest(customer_id, .key = "cust_params") |>
+    mutate(
+      sim_file = glue(
+        "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
+        )
+      )
+
+
+
+  message(glue("Preparing to run insample simulations"))
+
+  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
+    as.character() |>
+    enframe(name = NULL, value = "sim_file")
+
+
+  runsims_tbl <- model_fitsims_index_tbl |>
+    anti_join(precomputed_tbl, by = "sim_file")
+
+  n_sims <- runsims_tbl |> nrow()
+
+  if(n_sims > 0) {
+    message(glue("Running {n_sims} simulations"))
+
+    plan(multisession)
+
+    model_fitsims_index_tbl <- runsims_tbl |>
+      mutate(
+        chunk_data = future_map2_int(
+          cust_params, sim_file,
+          run_simulations_chunk,
+
+          sim_func = generate_pnbd_validation_transactions,
+
+          .options = furrr_options(
+            globals  = c(
+              "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
+              "generate_pnbd_validation_transactions"
+              ),
+            packages   = c("tidyverse", "fs"),
+            scheduling = Inf,
+            seed       = sim_seed + 1
+            ),
+
+          .progress = TRUE
+          )
+        )
+  }
+
+
+  message(glue("Preparing to run out-of-sample simulations"))
+
+  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
+    as.character() |>
+    enframe(name = NULL, value = "sim_file")
+
+
+  runsims_tbl <- model_validsims_index_tbl |>
+    anti_join(precomputed_tbl, by = "sim_file")
+
+  n_sims <- runsims_tbl |> nrow()
+
+  if(n_sims > 0) {
+    message(glue("Running {n_sims} simulations"))
+
+    plan(multisession)
+
+    model_validsims_index_tbl <- runsims_tbl |>
+      mutate(
+        chunk_data = future_map2_int(
+          cust_params, sim_file,
+          run_simulations_chunk,
+
+          sim_func = generate_pnbd_validation_transactions,
+
+          .options = furrr_options(
+            globals  = c(
+              "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
+              "generate_pnbd_validation_transactions"
+              ),
+            packages   = c("tidyverse", "fs"),
+            scheduling = Inf,
+            seed       = 421
+            ),
+
+          .progress = TRUE
+          )
+        )
+  }
+
+
+  message(glue("Retrieving model_fit_simstats data"))
+
+  retrieve_sim_stats <- ~ .x |>
+    read_rds() |>
+    select(draw_id, sim_tnx_count, sim_tnx_last)
+
+
+  model_fit_simstats_tbl <- model_fitsims_index_tbl |>
+    mutate(
+      sim_data = future_map(
+        sim_file, retrieve_sim_stats,
+
+        .options = furrr_options(
+          globals    = FALSE,
+          packages   = c("tidyverse", "fs"),
+          scheduling = Inf
+          ),
+        .progress = TRUE
+        )
+      ) |>
+    select(customer_id, sim_data) |>
+    unnest(sim_data)
+
+
+  message(glue("Retrieving model_valid_simstats data"))
+
+  model_valid_simstats_tbl <- model_validsims_index_tbl |>
+    mutate(
+      sim_data = future_map(
+        sim_file, retrieve_sim_stats,
+
+        .options = furrr_options(
+          globals    = FALSE,
+          packages   = c("tidyverse", "fs"),
+          scheduling = Inf
+          ),
+        .progress = TRUE
+        )
+      ) |>
+    select(customer_id, sim_data) |>
+    unnest(sim_data)
+
+
+  assessment_lst <- list(
+    model_simstats_tbl       = model_simstats_tbl,
+    model_fit_simstats_tbl   = model_fit_simstats_tbl,
+    model_valid_simstats_tbl = model_valid_simstats_tbl
+  )
+
+
+  return(assessment_lst)
+}
+
+
