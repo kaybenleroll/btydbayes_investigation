@@ -187,14 +187,15 @@ customer_fit_stats_tbl |> glimpse()
 
 
 customer_valid_stats_tbl <- customer_transactions_tbl |>
+  drop_na(customer_id) |>
   filter(
     tnx_timestamp > (use_valid_start_date |> as.POSIXct())
     ) |>
   summarise(
     tnx_count = n(),
     tnx_last_interval = difftime(
-        use_valid_end_date,
         max(tnx_timestamp),
+        use_valid_start_date,
         units = "weeks"
         ) |>
       as.numeric(),
