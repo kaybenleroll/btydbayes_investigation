@@ -2740,22 +2740,25 @@ $ tnx_amount    &lt;dbl&gt; 269.07, 124.62, 20.81, 14.76, 16.02, 19.16, 211.91, 
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="ot">&lt;-</span> <span class="fu">generate_customer_cohort_data</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_customers =</span> n_customers,</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_date  =</span> first_tnx_date,</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> final_tnx_date,</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">id_prefix   =</span> <span class="st">&quot;LFC&quot;</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>first_tnx_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2010-01-01&quot;</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>final_tnx_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2023-01-01&quot;</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="ot">&lt;-</span> <span class="fu">generate_customer_cohort_data</span>(</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_customers =</span> n_customers,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">first_date  =</span> first_tnx_date,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">last_date   =</span> final_tnx_date,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">id_prefix   =</span> <span class="st">&quot;LFC&quot;</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 50,000
 Columns: 4
-$ customer_id    &lt;chr&gt; &quot;LFC202001_0001&quot;, &quot;LFC202001_0002&quot;, &quot;LFC202001_0003&quot;, &quot;…
-$ cohort_qtr     &lt;chr&gt; &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, …
-$ cohort_ym      &lt;chr&gt; &quot;2020 01&quot;, &quot;2020 01&quot;, &quot;2020 01&quot;, &quot;2020 01&quot;, &quot;2020 01&quot;, …
-$ first_tnx_date &lt;date&gt; 2020-01-01, 2020-01-01, 2020-01-01, 2020-01-01, 2020-0…</code></pre>
+$ customer_id    &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0002&quot;, &quot;LFC201001_0003&quot;, &quot;…
+$ cohort_qtr     &lt;chr&gt; &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, …
+$ cohort_ym      &lt;chr&gt; &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, …
+$ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-01, 2010-01-01, 2010-01-01, 2010-0…</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -2786,12 +2789,12 @@ $ first_tnx_date &lt;date&gt; 2020-01-01, 2020-01-01, 2020-01-01, 2020-01-01, 20
 <span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 297,863
+<pre><code>Rows: 461,430
 Columns: 4
-$ customer_id   &lt;chr&gt; &quot;LFC202001_0012&quot;, &quot;LFC202001_0006&quot;, &quot;LFC202001_0036&quot;, &quot;L…
-$ tnx_timestamp &lt;dttm&gt; 2020-01-01 00:02:58, 2020-01-01 00:19:59, 2020-01-01 00…
-$ invoice_id    &lt;chr&gt; &quot;T20200101-0001&quot;, &quot;T20200101-0002&quot;, &quot;T20200101-0003&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 55.13, 147.09, 21.97, 3.82, 35.09, 38.56, 4.00, 332.40, …</code></pre>
+$ customer_id   &lt;chr&gt; &quot;LFC201001_0003&quot;, &quot;LFC201001_0002&quot;, &quot;LFC201001_0004&quot;, &quot;L…
+$ tnx_timestamp &lt;dttm&gt; 2010-01-01 08:49:10, 2010-01-01 10:00:52, 2010-01-01 11…
+$ invoice_id    &lt;chr&gt; &quot;T20100101-0001&quot;, &quot;T20100101-0002&quot;, &quot;T20100101-0003&quot;, &quot;T…
+$ tnx_amount    &lt;dbl&gt; 5.80, 84.34, 6.71, 17.90, 98.92, 91.74, 122.70, 198.48, …</code></pre>
 </div>
 </div>
 <section id="write-data-to-disk-1" class="level2" data-number="2.1">
@@ -2826,7 +2829,7 @@ $ tnx_amount    &lt;dbl&gt; 55.13, 147.09, 21.97, 3.82, 35.09, 38.56, 4.00, 332.
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Etc/UTC
- date     2023-03-27
+ date     2023-03-30
  pandoc   2.19.2 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────

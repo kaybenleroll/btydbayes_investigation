@@ -325,7 +325,10 @@ run_model_assessment <- function(
     sim_seed = 420) {
 
 
-  message(glue("Creating simulation stats from Bayesian posterior"))
+  syslog(
+    glue("Calculating the posterior statistics"),
+    level = "INFO"
+    )
 
   model_simstats_tbl <- construct_pnbd_posterior_statistics(
     stanfit         = model_stanfit,
@@ -337,7 +340,10 @@ run_model_assessment <- function(
   ensure_exists_precompute_directory(precompute_dir)
 
 
-  message(glue("Creating simulation stats for in-sample validation"))
+  syslog(
+    glue("Setting up model_fitsims_index_tbl"),
+    level = "INFO"
+  )
 
   model_fitsims_index_tbl <- model_simstats_tbl |>
     mutate(
@@ -357,8 +363,10 @@ run_model_assessment <- function(
       )
 
 
-  message(glue("Creating simulation stats for out-sample validation"))
-
+  syslog(
+    glue("Setting up model_validsims_index_tbl"),
+    level = "INFO"
+  )
   model_validsims_index_tbl <- model_simstats_tbl |>
     mutate(
       start_dttm = valid_start_dttm,
@@ -377,7 +385,10 @@ run_model_assessment <- function(
 
 
 
-  message(glue("Preparing to run insample simulations"))
+  syslog(
+    glue("Configuring the insample validation simulations"),
+    level = "INFO"
+    )
 
   precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
     as.character() |>
@@ -390,7 +401,11 @@ run_model_assessment <- function(
   n_sims <- runsims_tbl |> nrow()
 
   if(n_sims > 0) {
-    message(glue("Running {n_sims} simulations"))
+
+    syslog(
+      glue("Running {n_sims} in-sample simulations to {precompute_dir}"),
+      level = "INFO"
+    )
 
     plan(multisession)
 
@@ -418,7 +433,10 @@ run_model_assessment <- function(
   }
 
 
-  message(glue("Preparing to run out-of-sample simulations"))
+  syslog(
+    glue("Configuring the out-of-sample validation simulations"),
+    level = "INFO"
+    )
 
   precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
     as.character() |>
@@ -431,7 +449,10 @@ run_model_assessment <- function(
   n_sims <- runsims_tbl |> nrow()
 
   if(n_sims > 0) {
-    message(glue("Running {n_sims} simulations"))
+    syslog(
+      glue("Running {n_sims} out-of-sample simulations to {precompute_dir}"),
+      level = "INFO"
+    )
 
     plan(multisession)
 
@@ -459,7 +480,10 @@ run_model_assessment <- function(
   }
 
 
-  message(glue("Retrieving model_fit_simstats data"))
+  syslog(
+    glue("Loading the calculated simulations"),
+    level = "INFO"
+    )
 
   retrieve_sim_stats <- ~ .x |>
     read_rds() |>
@@ -482,8 +506,6 @@ run_model_assessment <- function(
     select(customer_id, sim_data) |>
     unnest(sim_data)
 
-
-  message(glue("Retrieving model_valid_simstats data"))
 
   model_valid_simstats_tbl <- model_validsims_index_tbl |>
     mutate(
@@ -513,3 +535,102 @@ run_model_assessment <- function(
 }
 
 
+create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
+
+
+  ##
+  ## First we check the counts of customer with more than 1 transaction
+  ##
+  obs_customer_count <- obsdata_tbl |>
+    filter(tnx_count > 0) |>
+    nrow()
+
+  sim_data_tbl <- simdata_tbl |>
+    filter(sim_tnx_count > 0) |>
+    count(draw_id, name = "sim_customer_count")
+
+  multi_customer_count_plot <- ggplot(sim_data_tbl) +
+    geom_histogram(aes(x = sim_customer_count), bins = 50) +
+    geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
+    labs(
+      x = "Count of Multi-transaction Customers",
+      y = "Frequency",
+      title = "Comparison Plot of Simulated vs Observed Customer Counts",
+      subtitle = "(observed value in red)"
+      )
+
+
+  ##
+  ## Check the total count of transactions
+  ##
+  obs_total_count <- obsdata_tbl |>
+    pull(tnx_count) |>
+    sum()
+
+  sim_data_tbl <- simdata_tbl |>
+    count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
+
+
+  total_tnxcount_plot <- ggplot(sim_data_tbl) +
+    geom_histogram(aes(x = sim_total_count), bins = 50) +
+    geom_vline(aes(xintercept = obs_total_count), colour = "red") +
+    labs(
+      x = "Count of Total Transactions",
+      y = "Frequency",
+      title = "Comparison Plot of Simulated vs Observed Total Counts",
+      subtitle = "(observed value in red)"
+      )
+
+
+  ###
+  ### Check the quantiles of the transaction counts
+  ###
+
+  obs_quantiles_tbl <- obsdata_tbl |>
+    filter(tnx_count > 0) |>
+    reframe(
+      prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
+      prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
+      )
+
+  sim_data_tbl <- simdata_tbl |>
+    filter(sim_tnx_count > 0) |>
+    group_by(draw_id) |>
+    summarise(
+      p10 = quantile(sim_tnx_count, 0.10),
+      p25 = quantile(sim_tnx_count, 0.25),
+      p50 = quantile(sim_tnx_count, 0.50),
+      p75 = quantile(sim_tnx_count, 0.75),
+      p90 = quantile(sim_tnx_count, 0.90),
+      p99 = quantile(sim_tnx_count, 0.99)
+      ) |>
+    pivot_longer(
+      cols = !draw_id,
+      names_to  = "prob_label",
+      values_to = "sim_prob_values"
+      ) |>
+    inner_join(obs_quantiles_tbl, by = "prob_label")
+
+  customer_tnxquant_plot <- ggplot(sim_data_tbl) +
+    geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
+    geom_vline(aes(xintercept = prob_value), colour = "red") +
+    facet_wrap(vars(prob_label), nrow = 2, scales = "free") +
+    labs(
+      x = "Quantile of Counts",
+      y = "Frequency",
+      title = "Comparison Plots of Transaction Count Quantiles"
+      )
+
+
+  ###
+  ### Return these plots
+  ###
+
+  assess_plots_lst <- list(
+    multi_plot = multi_customer_count_plot,
+    total_plot = total_tnxcount_plot,
+    quant_plot = customer_tnxquant_plot
+    )
+
+  return(assess_plots_lst)
+}

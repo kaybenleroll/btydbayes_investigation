@@ -45,8 +45,7 @@ depgraph: full_deps.png
 
 
 initial_pnbd_models.html: generate_transaction_datasets.html
-construct_nonhier_pnbd_models.html: initial_pnbd_models.html
-construct_hierarchical_pnbd_models.html: initial_pnbd_models.html
+construct_longsynth_fixed_pnbd_models.html: initial_pnbd_models.html
 
 
 mrproper: clean-cache clean-data clean-html clean-precompute clean-models

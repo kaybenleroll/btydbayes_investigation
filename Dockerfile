@@ -1,6 +1,10 @@
 FROM rocker/tidyverse:4.2.2
 
-RUN apt-get update \
+ENV TZ=Europe/Dublin
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+  && echo $TZ > /etc/timezone \
+  && apt-get update \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
     byobu \
@@ -8,6 +12,7 @@ RUN apt-get update \
     ditaa \
     graphviz \
     htop \
+    less \
     libclang-dev \
     libglpk-dev \
     libgsl-dev \
@@ -53,6 +58,7 @@ RUN apt-get update \
     rfm \
     rstan \
     rstanarm \
+    rsyslog \
     sessioninfo \
     shinybrms \
     shinystan \

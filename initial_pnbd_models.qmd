@@ -1143,7 +1143,7 @@ sensitive this process is to the prior parameters.
 
 # Fit Alternate Prior Model.
 
-We want to try an alternate prior model with a larger co-efficient of variation
+We want to try an alternate prior model with a smaller co-efficient of variation
 to see what impact it has on our procedures.
 
 

@@ -34,6 +34,7 @@ library(cowplot)
 library(directlabels)
 library(magrittr)
 library(rlang)
+library(rsyslog)
 library(fs)
 library(purrr)
 library(furrr)
@@ -73,6 +74,8 @@ options(
 theme_set(theme_cowplot())
 
 set.seed(42)
+
+open_syslog("construct_longsynth_fixed_pnbd_models")
 
 plan(multisession)
 ```
@@ -373,7 +376,394 @@ pnbd_long_fixed1_stanfit |>
 ```
 
 
-# Assess 
+## Assess the Model
+
+As we intend to run the same logic to assess each of our models, we have
+combined all this logic into a single function `run_model_assessment`, to 
+run the simulations and combine the datasets.
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_long_fixed1_fit_assessment}
+#| echo: TRUE
+
+assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_long_fixed1_stanfit,
+  insample_tbl     = customer_fit_stats_tbl,
+  outsample_tbl    = customer_valid_stats_tbl,
+  fit_label        = "pnbd_long_fixed",
+  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
+  sim_seed         = 420
+  )
+
+obs_fitdata_tbl <- customer_fit_stats_tbl |>
+  rename(tnx_count = x)
+  
+insample_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = obs_fitdata_tbl,
+  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  )
+
+insample_plots_lst$multi_plot |> print()
+insample_plots_lst$total_plot |> print()
+insample_plots_lst$quant_plot |> print()
+```
+
+This fit looks reasonable and appears to capture most of the aspects of the
+data used to fit it. Given that this is a synthetic dataset, this is not
+surprising, but at least we appreciate that our model is valid.
+
+
+### Check Out-of-Sample Data Validation
+
+We now repeat for the out-of-sample data.
+
+```{r run_pnbd_long_fixed1_valid_assessment}
+#| echo: TRUE
+
+### We need to add all the zero count customers into the valid data
+obs_validdata_tbl <- customer_fit_stats_tbl |>
+  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
+  transmute(customer_id, tnx_count = 0) |>
+  bind_rows(customer_valid_stats_tbl) |>
+  arrange(customer_id)
+
+
+outsample_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = obs_validdata_tbl,
+  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  )
+
+outsample_plots_lst$multi_plot |> print()
+outsample_plots_lst$total_plot |> print()
+outsample_plots_lst$quant_plot |> print()
+```
+
+As for our short time frame data, overall our model is working well.
+
+
+## Write to Disk
+
+We save this data to disk as we may want to load this data later for comparison.
+
+```{r write_pnbd_long_fixed1_disk}
+#| echo: TRUE
+
+assess_data_lst |> write_rds("data/pnbd_long_fixed1_assess_data_lst.rds")
+```
+
+
+
+# Fit Alternate Prior Model.
+
+We want to try an alternate prior model with a smaller co-efficient of variation
+to see what impact it has on our procedures.
+
+
+```{r fit_pnbd_long_fixed2_stanmodel}
+#| echo: TRUE
+#| cache: TRUE
+
+stan_modelname <- "pnbd_long_fixed2"
+stanfit_prefix <- str_c("fit_", stan_modelname) 
+
+stan_data_lst <- customer_fit_stats_tbl |>
+  select(customer_id, x, t_x, T_cal) |>
+  compose_data(
+    lambda_mn = 0.25,
+    lambda_cv = 0.50,
+    
+    mu_mn     = 0.10,
+    mu_cv     = 0.50,
+    )
+
+pnbd_long_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
+  data            =                stan_data_lst,
+  chains          =                            4,
+  iter_warmup     =                          500,
+  iter_sampling   =                          500,
+  seed            =                         4202,
+  save_warmup     =                         TRUE,
+  output_dir      =                stan_modeldir,
+  output_basename =               stanfit_prefix,
+  )
+
+pnbd_long_fixed2_stanfit$summary()
+```
+
+
+We have some basic HMC-based validity statistics we can check.
+
+```{r calculate_pnbd_long_fixed2_hmc_diagnostics}
+#| echo: TRUE
+
+pnbd_long_fixed2_stanfit$cmdstan_diagnose()
+```
+
+
+## Visual Diagnostics of the Sample Validity
+
+Now that we have a sample from the posterior distribution we need to create a
+few different visualisations of the diagnostics.
+
+```{r plot_pnbd_long_fixed2_lambda_traceplots}
+#| echo: TRUE
+
+parameter_subset <- c(
+  "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
+  "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
+  )
+
+pnbd_long_fixed2_stanfit$draws(inc_warmup = FALSE) |>
+  mcmc_trace(pars = parameter_subset) +
+  expand_limits(y = 0) +
+  labs(
+    x = "Iteration",
+    y = "Value",
+    title = "Traceplot of Sample of Lambda and Mu Values"
+    ) +
+  theme(axis.text.x = element_text(size = 10))
+```
+
+
+We want to check the $N_{eff}$ statistics also.
+
+
+```{r plot_pnbd_long_fixed2_parameter_neffratio}
+#| echo: TRUE
+
+pnbd_long_fixed2_stanfit |>
+  neff_ratio(pars = c("lambda", "mu")) |>
+  as.numeric() |>
+  mcmc_neff() +
+    ggtitle("Plot of Parameter Effective Sample Sizes")
+```
+
+
+## Assess the Model
+
+As we intend to run the same logic to assess each of our models, we have
+combined all this logic into a single function `run_model_assessment`, to 
+run the simulations and combine the datasets.
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_long_fixed2_fit_assessment}
+#| echo: TRUE
+
+assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_long_fixed2_stanfit,
+  insample_tbl     = customer_fit_stats_tbl,
+  outsample_tbl    = customer_valid_stats_tbl,
+  fit_label        = "pnbd_long_fixed2",
+  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
+  sim_seed         = 420
+  )
+
+obs_fitdata_tbl <- customer_fit_stats_tbl |>
+  rename(tnx_count = x)
+  
+insample_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = obs_fitdata_tbl,
+  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  )
+
+insample_plots_lst$multi_plot |> print()
+insample_plots_lst$total_plot |> print()
+insample_plots_lst$quant_plot |> print()
+```
+
+This fit looks reasonable and appears to capture most of the aspects of the
+data used to fit it. Given that this is a synthetic dataset, this is not
+surprising, but at least we appreciate that our model is valid.
+
+
+### Check Out-of-Sample Data Validation
+
+We now repeat for the out-of-sample data.
+
+```{r run_pnbd_long_fixed2_valid_assessment}
+#| echo: TRUE
+
+### We need to add all the zero count customers into the valid data
+obs_validdata_tbl <- customer_fit_stats_tbl |>
+  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
+  transmute(customer_id, tnx_count = 0) |>
+  bind_rows(customer_valid_stats_tbl) |>
+  arrange(customer_id)
+
+
+outsample_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = obs_validdata_tbl,
+  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  )
+
+outsample_plots_lst$multi_plot |> print()
+outsample_plots_lst$total_plot |> print()
+outsample_plots_lst$quant_plot |> print()
+```
+
+
+# Fit Tight-Lifetime Model
+
+We now want to try a model where we use priors with a tighter coefficient of
+variation for lifetime but keep the CoV for transaction frequency.
+
+
+```{r fit_pnbd_long_fixed4_stanmodel}
+#| echo: TRUE
+#| cache: TRUE
+
+stan_modelname <- "pnbd_long_fixed4"
+stanfit_prefix <- str_c("fit_", stan_modelname) 
+
+stan_data_lst <- customer_fit_stats_tbl |>
+  select(customer_id, x, t_x, T_cal) |>
+  compose_data(
+    lambda_mn = 0.25,
+    lambda_cv = 1.00,
+    
+    mu_mn     = 0.10,
+    mu_cv     = 0.50,
+    )
+
+pnbd_long_fixed4_stanfit <- pnbd_fixed_stanmodel$sample(
+  data            =                stan_data_lst,
+  chains          =                            4,
+  iter_warmup     =                          500,
+  iter_sampling   =                          500,
+  seed            =                         4202,
+  save_warmup     =                         TRUE,
+  output_dir      =                stan_modeldir,
+  output_basename =               stanfit_prefix,
+  )
+
+pnbd_long_fixed4_stanfit$summary()
+```
+
+
+We have some basic HMC-based validity statistics we can check.
+
+```{r calculate_pnbd_long_fixed4_hmc_diagnostics}
+#| echo: TRUE
+
+pnbd_long_fixed4_stanfit$cmdstan_diagnose()
+```
+
+
+## Visual Diagnostics of the Sample Validity
+
+Now that we have a sample from the posterior distribution we need to create a
+few different visualisations of the diagnostics.
+
+```{r plot_pnbd_long_fixed4_lambda_traceplots}
+#| echo: TRUE
+
+parameter_subset <- c(
+  "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
+  "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
+  )
+
+pnbd_long_fixed4_stanfit$draws(inc_warmup = FALSE) |>
+  mcmc_trace(pars = parameter_subset) +
+  expand_limits(y = 0) +
+  labs(
+    x = "Iteration",
+    y = "Value",
+    title = "Traceplot of Sample of Lambda and Mu Values"
+    ) +
+  theme(axis.text.x = element_text(size = 10))
+```
+
+
+We want to check the $N_{eff}$ statistics also.
+
+
+```{r plot_pnbd_long_fixed4_parameter_neffratio}
+#| echo: TRUE
+
+pnbd_long_fixed4_stanfit |>
+  neff_ratio(pars = c("lambda", "mu")) |>
+  as.numeric() |>
+  mcmc_neff() +
+    ggtitle("Plot of Parameter Effective Sample Sizes")
+```
+
+
+## Assess the Model
+
+As we intend to run the same logic to assess each of our models, we have
+combined all this logic into a single function `run_model_assessment`, to 
+run the simulations and combine the datasets.
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_long_fixed4_fit_assessment}
+#| echo: TRUE
+
+assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_long_fixed4_stanfit,
+  insample_tbl     = customer_fit_stats_tbl,
+  outsample_tbl    = customer_valid_stats_tbl,
+  fit_label        = "pnbd_long_fixed4",
+  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
+  sim_seed         = 420
+  )
+
+obs_fitdata_tbl <- customer_fit_stats_tbl |>
+  rename(tnx_count = x)
+  
+insample_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = obs_fitdata_tbl,
+  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  )
+
+insample_plots_lst$multi_plot |> print()
+insample_plots_lst$total_plot |> print()
+insample_plots_lst$quant_plot |> print()
+```
+
+This fit looks reasonable and appears to capture most of the aspects of the
+data used to fit it. Given that this is a synthetic dataset, this is not
+surprising, but at least we appreciate that our model is valid.
+
+
+### Check Out-of-Sample Data Validation
+
+We now repeat for the out-of-sample data.
+
+```{r run_pnbd_long_fixed4_valid_assessment}
+#| echo: TRUE
+
+### We need to add all the zero count customers into the valid data
+obs_validdata_tbl <- customer_fit_stats_tbl |>
+  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
+  transmute(customer_id, tnx_count = 0) |>
+  bind_rows(customer_valid_stats_tbl) |>
+  arrange(customer_id)
+
+
+outsample_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = obs_validdata_tbl,
+  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  )
+
+outsample_plots_lst$multi_plot |> print()
+outsample_plots_lst$total_plot |> print()
+outsample_plots_lst$quant_plot |> print()
+```
 
 
 
