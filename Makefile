@@ -44,6 +44,9 @@ full_deps.dot:
 depgraph: full_deps.png
 
 
+exploring_online_retail_transactions.html: retrieve_retail_data.html
+construct_onlineretail_fixed_pnbd_models.html: exploring_online_retail_transactions.html
+
 initial_pnbd_models.html: generate_transaction_datasets.html
 construct_longsynth_fixed_pnbd_models.html: initial_pnbd_models.html
 
