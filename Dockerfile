@@ -69,6 +69,8 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     timetk
 
 
+COPY build/logging.conf /etc/rstudio/
+
 WORKDIR /tmp
 
 COPY build/docker_install_sys_rpkgs.R /tmp
