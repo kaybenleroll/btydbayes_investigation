@@ -432,6 +432,16 @@ customer_summarystats_tbl |> write_rds("data/customer_summarystats_shortframe_tb
 
 # Fit Initial P/NBD Model
 
+```{r create_log_initial_pnbd_model}
+#| echo: TRUE
+
+syslog(
+  glue("Creating the first P/NBD model"),
+  level = "INFO"
+  )
+```
+
+
 We now construct our Stan model and prepare to fit it with our synthetic
 dataset.
 
@@ -1139,6 +1149,17 @@ sensitive this process is to the prior parameters.
 
 # Fit Alternate Prior Model.
 
+```{r create_log_initial_pnbd_model_fixed2}
+#| echo: TRUE
+
+syslog(
+  glue("Creating the second P/NBD model (lower CoV)"),
+  level = "INFO"
+  )
+```
+
+
+
 We want to try an alternate prior model with a smaller co-efficient of variation
 to see what impact it has on our procedures.
 
@@ -1688,6 +1709,17 @@ priors to see how they work.
 
 
 # Fit Higher-CV Prior Model.
+
+```{r create_log_initial_pnbd_model_fixed3}
+#| echo: TRUE
+
+syslog(
+  glue("Creating the third P/NBD model (higher CoV)"),
+  level = "INFO"
+  )
+```
+
+
 
 We want to try an alternate prior model with a larger co-efficient of variation
 to see what impact it has on our procedures.
