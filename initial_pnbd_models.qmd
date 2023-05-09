@@ -55,25 +55,19 @@ conflict_lst <- resolve_conflicts(
   )
 
 
-knitr::opts_chunk$set(
-  tidy       = FALSE,
-  cache      = FALSE,
-  warning    = FALSE,
-  message    = FALSE,
-  fig.height =     8,
-  fig.width  =    11
-  )
-
 options(
   width = 80L,
   warn  = 1,
   mc.cores = parallel::detectCores()
   )
 
-theme_set(theme_cowplot())
 
 set.seed(42)
+stanfit_seed <- 4000
 
+open_syslog("initial_pnbd_models")
+
+theme_set(theme_cowplot())
 plan(multisession)
 ```
 
@@ -527,6 +521,7 @@ We then use this compiled model with our data to produce a fit of the data.
 
 stan_modelname <- "pnbd_init_fixed"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
+stanfit_seed   <- stanfit_seed + 1
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -543,7 +538,7 @@ pnbd_init_fixed_stanfit <- pnbd_fixed_stanmodel$sample(
   chains          =                            4,
   iter_warmup     =                          500,
   iter_sampling   =                          500,
-  seed            =                         4201,
+  seed            =                 stanfit_seed,
   save_warmup     =                         TRUE,
   output_dir      =                stan_modeldir,
   output_basename =               stanfit_prefix,
@@ -1153,6 +1148,7 @@ to see what impact it has on our procedures.
 
 stan_modelname <- "pnbd_init_fixed2"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
+stanfit_seed   <- stanfit_seed + 1
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -1169,7 +1165,7 @@ pnbd_init_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
   chains          =                            4,
   iter_warmup     =                          500,
   iter_sampling   =                          500,
-  seed            =                         4202,
+  seed            =                 stanfit_seed,
   save_warmup     =                         TRUE,
   output_dir      =                stan_modeldir,
   output_basename =               stanfit_prefix,
@@ -1701,7 +1697,9 @@ to see what impact it has on our procedures.
 #| cache: TRUE
 
 stan_modelname <- "pnbd_init_fixed3"
-stanfit_prefix <- str_c("fit_", stan_modelname) 
+stanfit_prefix <- str_c("fit_", stan_modelname)
+stanfit_seed   <- stanfit_seed + 1
+
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -1718,7 +1716,7 @@ pnbd_init_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
   chains          =                            4,
   iter_warmup     =                          500,
   iter_sampling   =                          500,
-  seed            =                         4203,
+  seed            =                 stanfit_seed,
   save_warmup     =                         TRUE,
   output_dir      =                stan_modeldir,
   output_basename =               stanfit_prefix,

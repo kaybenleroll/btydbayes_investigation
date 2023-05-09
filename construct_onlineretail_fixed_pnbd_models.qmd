@@ -1,5 +1,5 @@
 ---
-title: "Construct Non-Hierarchical P/NBD Model for Long Timeframe Synthetic Data"
+title: "Construct Non-Hierarchical P/NBD Model for Online Retail Transaction Data"
 author: "Mick Cooney <mickcooney@gmail.com>"
 date: "Last updated: `r format(Sys.time(), '%B %d, %Y')`"
 editor: source
@@ -56,27 +56,19 @@ conflict_lst <- resolve_conflicts(
   )
 
 
-knitr::opts_chunk$set(
-  tidy       = FALSE,
-  cache      = FALSE,
-  warning    = FALSE,
-  message    = FALSE,
-  fig.height =     8,
-  fig.width  =    11
-  )
-
 options(
   width = 80L,
   warn  = 1,
   mc.cores = parallel::detectCores()
   )
 
-theme_set(theme_cowplot())
 
 set.seed(42)
+stanfit_seed <- 5000
 
-open_syslog("construct_longsynth_fixed_pnbd_models")
+open_syslog("construct_onlineretail_fixed_pnbd_models")
 
+theme_set(theme_cowplot())
 plan(multisession)
 ```
 

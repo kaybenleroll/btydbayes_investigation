@@ -55,28 +55,19 @@ conflict_lst <- resolve_conflicts(
     "fitdistrplus")
   )
 
-
-knitr::opts_chunk$set(
-  tidy       = FALSE,
-  cache      = FALSE,
-  warning    = FALSE,
-  message    = FALSE,
-  fig.height =     8,
-  fig.width  =    11
-  )
-
 options(
   width = 80L,
   warn  = 1,
   mc.cores = parallel::detectCores()
   )
 
-theme_set(theme_cowplot())
 
 set.seed(42)
+stanfit_seed <- 4200
 
 open_syslog("construct_longsynth_fixed_pnbd_models")
 
+theme_set(theme_cowplot())
 plan(multisession)
 ```
 
@@ -299,7 +290,9 @@ We then use this compiled model with our data to produce a fit of the data.
 #| cache: TRUE
 
 stan_modelname <- "pnbd_long_fixed"
-stanfit_prefix <- str_c("fit_", stan_modelname) 
+stanfit_prefix <- str_c("fit_", stan_modelname)
+stanfit_seed   <- stanfit_seed + 1
+
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -316,7 +309,7 @@ pnbd_long_fixed1_stanfit <- pnbd_fixed_stanmodel$sample(
   chains          =                            4,
   iter_warmup     =                          500,
   iter_sampling   =                          500,
-  seed            =                         4201,
+  seed            =                 stanfit_seed,
   save_warmup     =                         TRUE,
   output_dir      =                stan_modeldir,
   output_basename =               stanfit_prefix,
@@ -397,7 +390,7 @@ assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 420
+  sim_seed         = 4200
   )
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
@@ -469,7 +462,9 @@ to see what impact it has on our procedures.
 #| cache: TRUE
 
 stan_modelname <- "pnbd_long_fixed2"
-stanfit_prefix <- str_c("fit_", stan_modelname) 
+stanfit_prefix <- str_c("fit_", stan_modelname)
+stanfit_seed   <- stanfit_seed + 1
+
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -486,7 +481,7 @@ pnbd_long_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
   chains          =                            4,
   iter_warmup     =                          500,
   iter_sampling   =                          500,
-  seed            =                         4202,
+  seed            =                 stanfit_seed,
   save_warmup     =                         TRUE,
   output_dir      =                stan_modeldir,
   output_basename =               stanfit_prefix,
@@ -565,7 +560,7 @@ assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 420
+  sim_seed         = 4210
   )
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
@@ -623,7 +618,9 @@ variation for lifetime but keep the CoV for transaction frequency.
 #| cache: TRUE
 
 stan_modelname <- "pnbd_long_fixed4"
-stanfit_prefix <- str_c("fit_", stan_modelname) 
+stanfit_prefix <- str_c("fit_", stan_modelname)
+stanfit_seed   <- stanfit_seed + 1
+
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -640,7 +637,7 @@ pnbd_long_fixed4_stanfit <- pnbd_fixed_stanmodel$sample(
   chains          =                            4,
   iter_warmup     =                          500,
   iter_sampling   =                          500,
-  seed            =                         4202,
+  seed            =                 stanfit_seed,
   save_warmup     =                         TRUE,
   output_dir      =                stan_modeldir,
   output_basename =               stanfit_prefix,
@@ -719,7 +716,7 @@ assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 420
+  sim_seed         = 4220
   )
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>

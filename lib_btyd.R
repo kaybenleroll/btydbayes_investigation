@@ -362,11 +362,11 @@ run_model_assessment <- function(
         )
       )
 
-
   syslog(
     glue("Setting up model_validsims_index_tbl"),
     level = "INFO"
-  )
+    )
+
   model_validsims_index_tbl <- model_simstats_tbl |>
     mutate(
       start_dttm = valid_start_dttm,
@@ -471,7 +471,7 @@ run_model_assessment <- function(
               ),
             packages   = c("tidyverse", "fs"),
             scheduling = Inf,
-            seed       = 421
+            seed       = sim_seed + 2
             ),
 
           .progress = TRUE
@@ -492,15 +492,10 @@ run_model_assessment <- function(
 
   model_fit_simstats_tbl <- model_fitsims_index_tbl |>
     mutate(
-      sim_data = future_map(
+      sim_data = map(
         sim_file, retrieve_sim_stats,
 
-        .options = furrr_options(
-          globals    = FALSE,
-          packages   = c("tidyverse", "fs"),
-          scheduling = Inf
-          ),
-        .progress = TRUE
+        .progress = "retrieve_fit_stats"
         )
       ) |>
     select(customer_id, sim_data) |>
@@ -509,15 +504,10 @@ run_model_assessment <- function(
 
   model_valid_simstats_tbl <- model_validsims_index_tbl |>
     mutate(
-      sim_data = future_map(
+      sim_data = map(
         sim_file, retrieve_sim_stats,
 
-        .options = furrr_options(
-          globals    = FALSE,
-          packages   = c("tidyverse", "fs"),
-          scheduling = Inf
-          ),
-        .progress = TRUE
+        .progress = "retrieve_valid_stats"
         )
       ) |>
     select(customer_id, sim_data) |>
@@ -528,7 +518,7 @@ run_model_assessment <- function(
     model_simstats_tbl       = model_simstats_tbl,
     model_fit_simstats_tbl   = model_fit_simstats_tbl,
     model_valid_simstats_tbl = model_valid_simstats_tbl
-  )
+    )
 
 
   return(assessment_lst)
