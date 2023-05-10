@@ -200,24 +200,7 @@ ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
 ```
 
 
-## Write Data
 
-```{r write_data_disk}
-#| echo: TRUE
-
-id_1000  |> write_rds("data/longframe_id_1000.rds")
-id_5000  |> write_rds("data/longframe_id_5000.rds")
-id_10000 |> write_rds("data/longframe_id_10000.rds")
-
-fit_1000_data_tbl  |> write_rds("data/fit_1000_longframe_data_tbl.rds")
-fit_10000_data_tbl |> write_rds("data/fit_10000_longframe_data_tbl.rds")
-
-customer_summarystats_tbl |> write_rds("data/customer_summarystats_longframe_tbl.rds")
-```
-
-
-
-# Fit First P/NBD Model
 
 We now construct our Stan model and prepare to fit it with our synthetic
 dataset.
@@ -262,6 +245,45 @@ customer_valid_stats_tbl <- customer_transactions_tbl |>
 customer_valid_stats_tbl |> glimpse()
 ```
 
+
+
+## Write Data
+
+```{r write_data_disk}
+#| echo: TRUE
+
+id_1000  |> write_rds("data/longframe_id_1000.rds")
+id_5000  |> write_rds("data/longframe_id_5000.rds")
+id_10000 |> write_rds("data/longframe_id_10000.rds")
+
+fit_1000_data_tbl  |> write_rds("data/fit_1000_longframe_data_tbl.rds")
+fit_10000_data_tbl |> write_rds("data/fit_10000_longframe_data_tbl.rds")
+
+customer_summarystats_tbl |> write_rds("data/customer_summarystats_longframe_tbl.rds")
+```
+
+Now we want to save this data to disk if we want to use it again.
+
+```{r}
+#| echo: TRUE
+
+obs_fitdata_tbl <- customer_fit_stats_tbl |>
+  rename(tnx_count = x)
+  
+### We need to add all the zero count customers into the valid data
+obs_validdata_tbl <- customer_fit_stats_tbl |>
+  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
+  transmute(customer_id, tnx_count = 0) |>
+  bind_rows(customer_valid_stats_tbl) |>
+  arrange(customer_id)
+
+
+obs_fitdata_tbl   |> write_rds("data/longsynth_obs_fitdata_tbl.rds")
+obs_validdata_tbl |> write_rds("data/longsynth_obs_validdata_tbl.rds")
+```
+
+
+# Fit First P/NBD Model
 
 
 ## Compile and Fit Stan Model
@@ -390,12 +412,9 @@ assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4200
+  sim_seed         = 4210
   )
 
-obs_fitdata_tbl <- customer_fit_stats_tbl |>
-  rename(tnx_count = x)
-  
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
   simdata_tbl = assess_data_lst$model_fit_simstats_tbl
@@ -417,14 +436,6 @@ We now repeat for the out-of-sample data.
 
 ```{r run_pnbd_long_fixed1_valid_assessment}
 #| echo: TRUE
-
-### We need to add all the zero count customers into the valid data
-obs_validdata_tbl <- customer_fit_stats_tbl |>
-  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
-  transmute(customer_id, tnx_count = 0) |>
-  bind_rows(customer_valid_stats_tbl) |>
-  arrange(customer_id)
-
 
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
@@ -560,12 +571,9 @@ assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4210
+  sim_seed         = 4220
   )
 
-obs_fitdata_tbl <- customer_fit_stats_tbl |>
-  rename(tnx_count = x)
-  
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
   simdata_tbl = assess_data_lst$model_fit_simstats_tbl
@@ -588,14 +596,6 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_long_fixed2_valid_assessment}
 #| echo: TRUE
 
-### We need to add all the zero count customers into the valid data
-obs_validdata_tbl <- customer_fit_stats_tbl |>
-  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
-  transmute(customer_id, tnx_count = 0) |>
-  bind_rows(customer_valid_stats_tbl) |>
-  arrange(customer_id)
-
-
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
   simdata_tbl = assess_data_lst$model_valid_simstats_tbl
@@ -607,17 +607,28 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 
+## Write to Disk
+
+We save this data to disk as we may want to load this data later for comparison.
+
+```{r write_pnbd_long_fixed2_disk}
+#| echo: TRUE
+
+assess_data_lst |> write_rds("data/pnbd_long_fixed2_assess_data_lst.rds")
+```
+
+
 # Fit Tight-Lifetime Model
 
 We now want to try a model where we use priors with a tighter coefficient of
 variation for lifetime but keep the CoV for transaction frequency.
 
 
-```{r fit_pnbd_long_fixed4_stanmodel}
+```{r fit_pnbd_long_fixed3_stanmodel}
 #| echo: TRUE
 #| cache: TRUE
 
-stan_modelname <- "pnbd_long_fixed4"
+stan_modelname <- "pnbd_long_fixed3"
 stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_seed   <- stanfit_seed + 1
 
@@ -632,7 +643,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 0.50,
     )
 
-pnbd_long_fixed4_stanfit <- pnbd_fixed_stanmodel$sample(
+pnbd_long_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
   data            =                stan_data_lst,
   chains          =                            4,
   iter_warmup     =                          500,
@@ -643,16 +654,16 @@ pnbd_long_fixed4_stanfit <- pnbd_fixed_stanmodel$sample(
   output_basename =               stanfit_prefix,
   )
 
-pnbd_long_fixed4_stanfit$summary()
+pnbd_long_fixed3_stanfit$summary()
 ```
 
 
 We have some basic HMC-based validity statistics we can check.
 
-```{r calculate_pnbd_long_fixed4_hmc_diagnostics}
+```{r calculate_pnbd_long_fixed3_hmc_diagnostics}
 #| echo: TRUE
 
-pnbd_long_fixed4_stanfit$cmdstan_diagnose()
+pnbd_long_fixed3_stanfit$cmdstan_diagnose()
 ```
 
 
@@ -661,7 +672,7 @@ pnbd_long_fixed4_stanfit$cmdstan_diagnose()
 Now that we have a sample from the posterior distribution we need to create a
 few different visualisations of the diagnostics.
 
-```{r plot_pnbd_long_fixed4_lambda_traceplots}
+```{r plot_pnbd_long_fixed3_lambda_traceplots}
 #| echo: TRUE
 
 parameter_subset <- c(
@@ -669,7 +680,7 @@ parameter_subset <- c(
   "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
   )
 
-pnbd_long_fixed4_stanfit$draws(inc_warmup = FALSE) |>
+pnbd_long_fixed3_stanfit$draws(inc_warmup = FALSE) |>
   mcmc_trace(pars = parameter_subset) +
   expand_limits(y = 0) +
   labs(
@@ -684,10 +695,10 @@ pnbd_long_fixed4_stanfit$draws(inc_warmup = FALSE) |>
 We want to check the $N_{eff}$ statistics also.
 
 
-```{r plot_pnbd_long_fixed4_parameter_neffratio}
+```{r plot_pnbd_long_fixed3_parameter_neffratio}
 #| echo: TRUE
 
-pnbd_long_fixed4_stanfit |>
+pnbd_long_fixed3_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
   as.numeric() |>
   mcmc_neff() +
@@ -705,23 +716,20 @@ run the simulations and combine the datasets.
 
 We first check the model against the in-sample data.
 
-```{r run_pnbd_long_fixed4_fit_assessment}
+```{r run_pnbd_long_fixed3_fit_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_long_fixed4_stanfit,
+  model_stanfit    = pnbd_long_fixed3_stanfit,
   insample_tbl     = customer_fit_stats_tbl,
   outsample_tbl    = customer_valid_stats_tbl,
-  fit_label        = "pnbd_long_fixed4",
+  fit_label        = "pnbd_long_fixed3",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4220
+  sim_seed         = 4230
   )
 
-obs_fitdata_tbl <- customer_fit_stats_tbl |>
-  rename(tnx_count = x)
-  
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
   simdata_tbl = assess_data_lst$model_fit_simstats_tbl
@@ -741,16 +749,8 @@ surprising, but at least we appreciate that our model is valid.
 
 We now repeat for the out-of-sample data.
 
-```{r run_pnbd_long_fixed4_valid_assessment}
+```{r run_pnbd_long_fixed3_valid_assessment}
 #| echo: TRUE
-
-### We need to add all the zero count customers into the valid data
-obs_validdata_tbl <- customer_fit_stats_tbl |>
-  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
-  transmute(customer_id, tnx_count = 0) |>
-  bind_rows(customer_valid_stats_tbl) |>
-  arrange(customer_id)
-
 
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
