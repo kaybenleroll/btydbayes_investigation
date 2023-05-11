@@ -1,0 +1,222 @@
+---
+title: "Retrieve BTYD Data"
+author: "Mick Cooney <mickcooney@gmail.com>"
+editor: source
+execute:
+  message: false
+  warning: false
+  error: false
+format:
+  html:
+    light: superhero
+    dark: darkly
+    anchor-sections: true
+    embed-resources: true
+    number-sections: true
+    smooth-scroll: true
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+---
+
+```{r knit_opts}
+#| include: false
+
+
+library(conflicted)
+library(tidyverse)
+library(magrittr)
+library(readxl)
+library(scales)
+library(cowplot)
+library(curl)
+library(glue)
+library(fs)
+
+
+source("lib_utils.R")
+
+
+conflict_lst <- resolve_conflicts(
+  c("xml2", "magrittr", "rlang", "dplyr", "readr", "purrr", "ggplot2")
+  )
+
+
+options(
+  width = 80L,
+  warn  = 1,
+  mc.cores = parallel::detectCores()
+  )
+
+theme_set(theme_cowplot())
+
+set.seed(42)
+```
+
+
+
+---
+
+
+All code and data for this workshop is available at the following URL:
+
+<https://github.com/kaybenleroll/btydbayes_investigation>
+
+
+
+# Retrieve Online Retail II Dataset
+
+We now want to retrieve the Online Retail II dataset used for this project,
+which is available at the UCI Machine Learning Repository.
+
+```{r retrieve_online_retail_data}
+#| echo: true
+
+
+data_url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/00502/online_retail_II.xlsx"
+
+xlsx_datafile     <- "data/online_retail_II.xlsx"
+
+if(!file_exists(xlsx_datafile)) {
+  curl_download(
+    data_url,
+    destfile = xlsx_datafile,
+    quiet    = FALSE,
+    mode     = "wb"
+    )
+} else {
+  message(glue("Datafile {xlsx_datafile} found. Skipping download."))
+}
+```
+
+Now that we have downloaded the XLSX file, we want to read in the data and
+parse it.
+
+
+## Parse the Data
+
+
+```{r load_parse_data}
+#| echo: true
+
+
+retrieve_datafile <- "data/retail_data_tbl.rds"
+
+create_excel_datetime <- function(x)
+  (x * (60 * 60 * 24)) |> as.POSIXct(origin = "1899-12-30", tz = "GMT")
+
+data_cols <- cols(
+  .default      = col_character(),
+  Quantity      = col_number(),
+  InvoiceDate   = col_number(),
+  Price         = col_number()
+)
+
+retail_data_tbl <- excel_sheets(xlsx_datafile) |>
+  enframe(name = NULL, value = "excel_sheet") |>
+  mutate(
+    data = map(
+      excel_sheet, read_excel,
+      path      = xlsx_datafile,
+      col_types = "text"
+      )
+    ) |>
+  unnest(data) |>
+  format_csv() |>
+  read_csv(col_types = data_cols) |>
+  mutate(
+    InvoiceDate = create_excel_datetime(InvoiceDate)
+    )
+
+retail_data_tbl |> glimpse()
+```
+
+
+Finally, we output this data to the disk.
+
+```{r write_online_retail_data_to_disk}
+#| echo: true
+
+
+retail_data_tbl |> write_rds("data/rawdata_online_retail_tbl.rds")
+```
+
+
+# Retrieve CDNow Dataset
+
+```{r retrieve_cdnow_data}
+#| echo: true
+
+
+data_url <- "https://www.brucehardie.com/datasets/CDNOW_master.zip"
+
+zip_datafile     <- "data/cdnow_master.zip"
+
+if(!file_exists(zip_datafile)) {
+  curl_download(
+    data_url,
+    destfile = zip_datafile,
+    quiet    = FALSE,
+    mode     = "wb"
+    )
+} else {
+  message(glue("Datafile {zip_datafile} found. Skipping download."))
+}
+```
+
+Now that we have downloaded the Zip file, we want to extract the data and parse
+it.
+
+```{r extract_parse_cdnow_data}
+#| echo: true
+
+
+unzip(
+  zipfile = zip_datafile,
+  exdir = "data"
+  )
+
+cdnow_cols <- cols(
+  customer_id = col_character(),
+  tnx_date    = col_date(format = "%Y%m%d"),
+  cd_count    = col_integer(),
+  total_spend = col_number()
+  )
+
+cdnow_fwf <- fwf_cols(
+  customer_id = 6,
+  tnx_date    = 9,
+  cd_count    = 3,
+  total_spend = 8
+  )
+
+cdnow_tbl <- read_fwf(
+  "data/CDNOW_master.txt",
+  col_positions = cdnow_fwf,
+  col_types     = cdnow_cols,
+  )
+
+cdnow_tbl |> glimpse()
+```
+
+As before, we now write that data out to disk
+
+```{r write_cdnow_data_to_disk}
+#| echo: true
+
+
+cdnow_tbl |> write_rds("data/rawdata_cdnow_tbl.rds")
+```
+
+
+# R Environment
+
+```{r show_session_info}
+#| echo: true
+#| message: false
+
+
+sessioninfo::session_info()
+```

@@ -1,0 +1,221 @@
+---
+title: "Retrieve BTYD Data"
+author: "Mick Cooney <mickcooney@gmail.com>"
+editor: source
+execute:
+  message: false
+  warning: false
+  error: false
+format:
+  html:
+    light: superhero
+    dark: darkly
+    anchor-sections: true
+    embed-resources: true
+    number-sections: true
+    smooth-scroll: true
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-summary: "Show code"
+---
+
+```{r knit_opts}
+#| include: false
+
+
+library(conflicted)
+library(tidyverse)
+library(scales)
+library(magrittr)
+library(rlang)
+library(purrr)
+library(glue)
+library(stringi)
+library(tidyquant)
+
+
+source("lib_utils.R")
+source("lib_btyd.R")
+
+
+conflict_lst <- resolve_conflicts(
+  c("xml2", "magrittr", "rlang", "dplyr", "readr", "purrr", "ggplot2")
+  )
+
+
+options(
+  width = 80L,
+  warn  = 1,
+  mc.cores = parallelly::availableCores()
+  )
+
+set.seed(42)
+
+```
+
+
+In this workbook we use some initial inputs to generate synthetic data to help
+us explore various customer CLV  models.
+
+In each instance we will create 50,000 customers, as that should be more than
+enough for any application.
+
+Should we need a smaller customer count, we can take a subsample from this
+dataset.
+
+```{r set_n_customers}
+#| echo: true
+
+n_customers <- 50000
+
+first_tnx_date <- as.Date("2020-01-01")
+final_tnx_date <- as.Date("2023-01-01")
+```
+
+
+# Generate Short Timeframe 50K Synthetic Cohort Data
+
+We now repeat this exercise, but rather than using the new customer data from
+the transaction dataset, we also create a synthetic set of 'new customers' and
+generate a transaction dataset based on that.
+
+We use a short time frame from the data, spanning two years, and construct all
+customers and transactions within that timeframe.
+
+```{r generate_shortframe_synthetic_cohort}
+#| echo: true
+
+synthdata_shortframe_cohort_tbl <- generate_customer_cohort_data(
+    n_customers = n_customers,
+    first_date  = first_tnx_date,
+    last_date   = final_tnx_date,
+    id_prefix   = "SFC"
+    )
+
+synthdata_shortframe_cohort_tbl |> glimpse()
+```
+
+Now that we have generated our cohort data, we move on to generating our
+transaction data based on the PNBD model.
+
+
+```{r calculate_shortframe_synth_customer_data}
+#| echo: true
+
+pnbd_params_lst <- list(
+  mu_mn       =   0.10,
+  mu_cv       =   1.00,
+
+  lambda_mn   =   0.25,
+  lambda_cv   =   1.00,
+
+  amt_hiermn  = 100.00,
+  amt_hiercv  =   1.00,
+  amt_custcv  =   1.00
+  )
+
+synthdata_shortframe_simparams_tbl <- synthdata_shortframe_cohort_tbl |>
+  generate_pnbd_customer_simulation_params(
+    params_lst     = pnbd_params_lst
+    )
+
+synthdata_shortframe_transactions_tbl <- synthdata_shortframe_simparams_tbl |>
+  generate_pnbd_customer_transaction_data(final_tnx_date = final_tnx_date) |>
+  generate_transaction_metadata()
+
+synthdata_shortframe_transactions_tbl |> glimpse()
+```
+
+
+## Write Data to Disk
+
+We now write this data to disk.
+
+```{r write_synth_shortframe_data_disk}
+#| echo: true
+
+synthdata_shortframe_cohort_tbl       |> write_rds("data/synthdata_shortframe_cohort_tbl.rds")
+synthdata_shortframe_simparams_tbl    |> write_rds("data/synthdata_shortframe_simparams_tbl.rds")
+synthdata_shortframe_transactions_tbl |> write_rds("data/synthdata_shortframe_transactions_tbl.rds")
+```
+
+
+
+# Generate Long Time-frame 50K Synthetic Cohort Data
+
+We now repeat the data synthesis but for a much longer period of time, so
+that the censoring effects of the observation time are less apparent in the
+dataset.
+
+```{r generate_longframe_synth_cohort}
+#| echo: true
+
+first_tnx_date <- as.Date("2010-01-01")
+final_tnx_date <- as.Date("2023-01-01")
+
+synthdata_longframe_cohort_tbl <- generate_customer_cohort_data(
+    n_customers = n_customers,
+    first_date  = first_tnx_date,
+    last_date   = final_tnx_date,
+    id_prefix   = "LFC"
+    )
+
+synthdata_longframe_cohort_tbl |> glimpse()
+```
+
+
+
+```{r calculate_longframe_synth_customer_data}
+#| echo: true
+
+pnbd_params_lst <- list(
+  mu_mn       =   0.10,
+  mu_cv       =   1.00,
+
+  lambda_mn   =   0.25,
+  lambda_cv   =   1.00,
+
+  amt_hiermn  = 100.00,
+  amt_hiercv  =   1.00,
+  amt_custcv  =   1.00
+  )
+
+
+synthdata_longframe_simparams_tbl <- synthdata_longframe_cohort_tbl |>
+  generate_pnbd_customer_simulation_params(
+    params_lst     = pnbd_params_lst
+    )
+
+synthdata_longframe_transactions_tbl <- synthdata_longframe_simparams_tbl |>
+  generate_pnbd_customer_transaction_data(final_tnx_date = final_tnx_date) |>
+  generate_transaction_metadata()
+
+synthdata_longframe_transactions_tbl |> glimpse()
+```
+
+
+## Write Data to Disk
+
+We now write this data to disk.
+
+```{r write_longframe_synth_data_disk}
+#| echo: true
+
+synthdata_longframe_cohort_tbl       |> write_rds("data/synthdata_longframe_cohort_tbl.rds")
+synthdata_longframe_simparams_tbl    |> write_rds("data/synthdata_longframe_simparams_tbl.rds")
+synthdata_longframe_transactions_tbl |> write_rds("data/synthdata_longframe_transactions_tbl.rds")
+```
+
+
+
+
+
+# R Environment
+
+```{r show_session_info, echo=TRUE, message=TRUE}
+options(width = 120L)
+sessioninfo::session_info()
+options(width = 80L)
+```
