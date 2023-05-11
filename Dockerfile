@@ -1,6 +1,10 @@
-FROM rocker/tidyverse:4.2.1
+FROM rocker/tidyverse:4.2.3
 
-RUN apt-get update \
+ENV TZ=Europe/Dublin
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+  && echo $TZ > /etc/timezone \
+  && apt-get update \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
     byobu \
@@ -55,6 +59,7 @@ RUN apt-get update \
     rfm \
     rstan \
     rstanarm \
+    rsyslog \
     sessioninfo \
     shinybrms \
     shinystan \
@@ -65,15 +70,12 @@ RUN apt-get update \
     timetk
 
 
+COPY build/logging.conf /etc/rstudio/
+
 WORKDIR /tmp
 
 COPY build/docker_install_sys_rpkgs.R /tmp
 RUN Rscript /tmp/docker_install_sys_rpkgs.R
-
-COPY build/test_report.qmd /tmp
-RUN quarto render test_report.qmd --to html \
-  && rm -fv /tmp/test_report.html
-
 
 RUN git clone https://github.com/lindenb/makefile2graph.git \
   && cd makefile2graph \
@@ -104,5 +106,6 @@ RUN Rscript /tmp/docker_install_user_rpkgs.R
 
 USER root
 
-RUN chown -R rstudio:rstudio /home/rstudio
+RUN chown -R rstudio:rstudio /home/rstudio \
+  && chmod ugo+rx /home/rstudio
 

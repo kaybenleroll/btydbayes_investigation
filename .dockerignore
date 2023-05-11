@@ -1,4 +1,12 @@
+.Rproj.user/*
+
 *.qmd
 *.html
 
 data/*
+precompute/*
+
+stan_models/*
+
+*_cache/*
+*_files/*
