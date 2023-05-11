@@ -15,6 +15,7 @@ RUN apt-get update \
     libnlopt-dev \
     p7zip-full \
     pbzip2 \
+    rsyslog \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p $HOME/.R \
