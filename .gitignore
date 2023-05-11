@@ -11,3 +11,5 @@ temp.R
 output.log
 
 *.rmarkdown
+*.dot
+

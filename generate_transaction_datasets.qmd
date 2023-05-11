@@ -69,6 +69,9 @@ dataset.
 #| echo: true
 
 n_customers <- 50000
+
+first_tnx_date <- as.Date("2020-01-01")
+final_tnx_date <- as.Date("2023-01-01")
 ```
 
 
@@ -86,8 +89,9 @@ customers and transactions within that timeframe.
 
 synthdata_shortframe_cohort_tbl <- generate_customer_cohort_data(
     n_customers = n_customers,
-    first_date  = as.Date("2017-01-01"),
-    last_date   = as.Date("2019-12-31")
+    first_date  = first_tnx_date,
+    last_date   = final_tnx_date,
+    id_prefix   = "SFC"
     )
 
 synthdata_shortframe_cohort_tbl |> glimpse()
@@ -118,9 +122,7 @@ synthdata_shortframe_simparams_tbl <- synthdata_shortframe_cohort_tbl |>
     )
 
 synthdata_shortframe_transactions_tbl <- synthdata_shortframe_simparams_tbl |>
-  generate_pnbd_customer_transaction_data(
-    final_tnx_date = as.Date("2020-01-01")
-    ) |>
+  generate_pnbd_customer_transaction_data(final_tnx_date = final_tnx_date) |>
   generate_transaction_metadata()
 
 synthdata_shortframe_transactions_tbl |> glimpse()
@@ -150,10 +152,14 @@ dataset.
 ```{r generate_longframe_synth_cohort}
 #| echo: true
 
+first_tnx_date <- as.Date("2010-01-01")
+final_tnx_date <- as.Date("2023-01-01")
+
 synthdata_longframe_cohort_tbl <- generate_customer_cohort_data(
     n_customers = n_customers,
-    first_date  = as.Date("2011-01-01"),
-    last_date   = as.Date("2019-12-31")
+    first_date  = first_tnx_date,
+    last_date   = final_tnx_date,
+    id_prefix   = "LFC"
     )
 
 synthdata_longframe_cohort_tbl |> glimpse()
@@ -183,9 +189,7 @@ synthdata_longframe_simparams_tbl <- synthdata_longframe_cohort_tbl |>
     )
 
 synthdata_longframe_transactions_tbl <- synthdata_longframe_simparams_tbl |>
-  generate_pnbd_customer_transaction_data(
-    final_tnx_date = as.Date("2020-01-01")
-    ) |>
+  generate_pnbd_customer_transaction_data(final_tnx_date = final_tnx_date) |>
   generate_transaction_metadata()
 
 synthdata_longframe_transactions_tbl |> glimpse()

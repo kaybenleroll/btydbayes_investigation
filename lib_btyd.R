@@ -1,5 +1,4 @@
 
-
 calculate_transaction_cbs_data <- function(tnx_data_tbl, last_date) {
   cbs_data_tbl <- tnx_data_tbl |>
     filter(tnx_timestamp <= last_date) |>
@@ -20,8 +19,8 @@ calculate_transaction_cbs_data <- function(tnx_data_tbl, last_date) {
 
 
 
-generate_customer_cohort_data <- function(n_customers, first_date, last_date) {
-  tnx_dates <- seq(first_date, last_date, by = "day")
+generate_customer_cohort_data <- function(n_customers, first_date, last_date, id_prefix = "C") {
+  tnx_dates <- seq(first_date, last_date - 1, by = "day")
 
   customer_cohort_tbl <- tnx_dates |>
     enframe(name = NULL, value = "first_tnx_date") |>
@@ -29,7 +28,7 @@ generate_customer_cohort_data <- function(n_customers, first_date, last_date) {
     arrange(first_tnx_date) |>
     group_by(format(first_tnx_date, "%Y%m")) |>
     mutate(
-      customer_id = sprintf("C%s_%04d", format(first_tnx_date, "%Y%m"), 1:n()),
+      customer_id = sprintf("%s%s_%04d", id_prefix, format(first_tnx_date, "%Y%m"), 1:n()),
       cohort_qtr  = first_tnx_date |> as.yearqtr() |> as.character(),
       cohort_ym   = first_tnx_date |> format("%Y %m")
       ) |>
@@ -90,6 +89,15 @@ generate_pnbd_customer_simulation_params <- function(customer_cohort_data_tbl,
 
 
 generate_pnbd_customer_transaction_data <- function(sim_params_tbl, final_tnx_date) {
+
+  if(final_tnx_date < sim_params_tbl |> pull(first_tnx_date) |> max()) {
+    warning(glue(
+      "Customer first_tnx_date is greater than the value of final_tnx_date: {final_tnx_date} - returning value FALSE"
+      ))
+
+    return(FALSE)
+  }
+
   customer_transactions_tbl <- sim_params_tbl |>
     mutate(
       sim_data = pmap(
@@ -108,7 +116,9 @@ generate_pnbd_customer_transaction_data <- function(sim_params_tbl, final_tnx_da
     select(
       customer_id, cohort_qtr, cohort_ym, sim_data
       ) |>
-    unnest(sim_data)
+    unnest(sim_data) |>
+    filter(tnx_timestamp < final_tnx_date)
+
 
   return(customer_transactions_tbl)
 }
@@ -220,57 +230,63 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
 }
 
 
-run_pnbd_simulations_chunk <- function(
-    sim_file, param_tbl, start_dttm = as.POSIXct("2019-01-01"),
-    end_dttm   = as.POSIXct("2020-01-01")) {
+construct_pnbd_posterior_statistics <- function(stanfit, fitdata_tbl) {
+  post_stats_tbl <- stanfit |>
+    recover_types(fitdata_tbl) |>
+    spread_draws(lambda[customer_id], mu[customer_id], p_alive[customer_id]) |>
+    ungroup() |>
+    inner_join(fitdata_tbl, by = "customer_id") |>
+    select(
+      customer_id, first_tnx_date, draw_id = .draw,
+      post_lambda = lambda, post_mu = mu, p_alive
+    )
 
-  calc_file <- !file_exists(sim_file)
-
-  if(calc_file) {
-    simdata_tbl <- param_tbl |>
-      mutate(
-        sim_data = pmap(
-          list(
-            p_alive  = p_alive,
-            lambda   = post_lambda,
-            mu       = post_mu
-            ),
-          generate_pnbd_validation_transactions,
-
-          tnx_mu     = 1,
-          tnx_cv     = 1,
-          start_dttm = start_dttm,
-          end_dttm   = end_dttm
-          ),
-        sim_tnx_count = map_int(sim_data, nrow),
-        max_data = map(
-          sim_data,
-          ~ .x |>
-            slice_max(n = 1, order_by = tnx_timestamp, with_ties = FALSE) |>
-            select(sim_tnx_last = tnx_timestamp)
-          )
-        ) |>
-      unnest(max_data, keep_empty = TRUE)
-
-    simdata_tbl |> write_rds(sim_file)
-  }
-
-
-  return(calc_file)
+  return(post_stats_tbl)
 }
 
 
-generate_pnbd_validation_transactions <- function(p_alive, lambda, mu, tnx_mu, tnx_cv, start_dttm, end_dttm) {
+run_simulations_chunk <- function(sim_param_tbl, sim_file, sim_func) {
 
-  customer_active <- rbernoulli(n = 1, p = p_alive)
+  simdata_tbl <- sim_param_tbl |>
+    group_nest(draw_id, .key = "sim_params") |>
+    mutate(
+      sim_data      = map(sim_params, sim_func),
+      sim_tnx_count = map_int(sim_data, nrow),
+      last_data = map(
+        sim_data,
+        ~ .x |>
+          slice_max(n = 1, order_by = tnx_timestamp, with_ties = FALSE) |>
+          select(sim_tnx_last = tnx_timestamp)
+        )
+      ) |>
+    unnest(last_data, keep_empty = TRUE) |>
+    unnest(sim_params)
 
-  max_obs <- difftime(end_dttm, start_dttm, units = "weeks")
+  simdata_tbl |> write_rds(sim_file)
+
+  return(simdata_tbl |> nrow())
+}
+
+
+generate_pnbd_validation_transactions <- function(sim_params_tbl) {
+
+  start_dttm <- sim_params_tbl$start_dttm
+  end_dttm   <- sim_params_tbl$end_dttm
+  p_alive    <- sim_params_tbl$p_alive
+  lambda     <- sim_params_tbl$lambda
+  mu         <- sim_params_tbl$mu
+  tnx_mu     <- sim_params_tbl$tnx_mu
+  tnx_cv     <- sim_params_tbl$tnx_cv
+
+
+  extra_tau    <- rexp(n = 1, rate = mu)
+  max_observed <- difftime(end_dttm, start_dttm, units = "weeks")
+
+  customer_active <- stats::runif(1) > (1 - p_alive)
 
 
   if(customer_active) {
-    tau <- rexp(n = 1, rate = mu)
-
-    obs_time <- min(tau, max_obs)
+    obs_time <- min(extra_tau, max_observed)
 
     tnx_intervals <- calculate_event_times(
       rate       = lambda,
@@ -288,7 +304,7 @@ generate_pnbd_validation_transactions <- function(p_alive, lambda, mu, tnx_mu, t
         ) |>
       filter(
         tnx_timestamp <= end_dttm
-      )
+        )
 
   } else {
     tnxdata_tbl <- tibble(
@@ -302,3 +318,309 @@ generate_pnbd_validation_transactions <- function(p_alive, lambda, mu, tnx_mu, t
   return(tnxdata_tbl)
 }
 
+
+run_model_assessment <- function(
+    model_stanfit, insample_tbl, outsample_tbl, fit_label,
+    fit_end_dttm, valid_start_dttm, valid_end_dttm,
+    sim_seed = 420) {
+
+
+  syslog(
+    glue("Calculating the posterior statistics"),
+    level = "INFO"
+    )
+
+  model_simstats_tbl <- construct_pnbd_posterior_statistics(
+    stanfit         = model_stanfit,
+    fitdata_tbl     = insample_tbl
+    )
+
+  precompute_dir <- glue("precompute/{fit_label}")
+
+  ensure_exists_precompute_directory(precompute_dir)
+
+
+  syslog(
+    glue("Setting up model_fitsims_index_tbl"),
+    level = "INFO"
+  )
+
+  model_fitsims_index_tbl <- model_simstats_tbl |>
+    mutate(
+      start_dttm = first_tnx_date,
+      end_dttm   = fit_end_dttm,
+      lambda     = post_lambda,
+      mu         = post_mu,
+      p_alive    = 1,      ### In-sample validation, so customer begins active
+      tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
+      tnx_cv     = 1       ###
+      ) |>
+    group_nest(customer_id, .key = "cust_params") |>
+    mutate(
+      sim_file = glue(
+        "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
+        )
+      )
+
+  syslog(
+    glue("Setting up model_validsims_index_tbl"),
+    level = "INFO"
+    )
+
+  model_validsims_index_tbl <- model_simstats_tbl |>
+    mutate(
+      start_dttm = valid_start_dttm,
+      end_dttm   = valid_end_dttm,
+      lambda     = post_lambda,
+      mu         = post_mu,
+      tnx_mu     = 1,      ### We are not simulating tnx size
+      tnx_cv     = 1       ###
+      ) |>
+    group_nest(customer_id, .key = "cust_params") |>
+    mutate(
+      sim_file = glue(
+        "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
+        )
+      )
+
+
+
+  syslog(
+    glue("Configuring the insample validation simulations"),
+    level = "INFO"
+    )
+
+  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
+    as.character() |>
+    enframe(name = NULL, value = "sim_file")
+
+
+  runsims_tbl <- model_fitsims_index_tbl |>
+    anti_join(precomputed_tbl, by = "sim_file")
+
+  n_sims <- runsims_tbl |> nrow()
+
+  if(n_sims > 0) {
+
+    syslog(
+      glue("Running {n_sims} in-sample simulations to {precompute_dir}"),
+      level = "INFO"
+    )
+
+    plan(multisession)
+
+    model_fitsims_index_tbl <- runsims_tbl |>
+      mutate(
+        chunk_data = future_map2_int(
+          cust_params, sim_file,
+          run_simulations_chunk,
+
+          sim_func = generate_pnbd_validation_transactions,
+
+          .options = furrr_options(
+            globals  = c(
+              "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
+              "generate_pnbd_validation_transactions"
+              ),
+            packages   = c("tidyverse", "fs"),
+            scheduling = Inf,
+            seed       = sim_seed + 1
+            ),
+
+          .progress = TRUE
+          )
+        )
+  }
+
+
+  syslog(
+    glue("Configuring the out-of-sample validation simulations"),
+    level = "INFO"
+    )
+
+  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
+    as.character() |>
+    enframe(name = NULL, value = "sim_file")
+
+
+  runsims_tbl <- model_validsims_index_tbl |>
+    anti_join(precomputed_tbl, by = "sim_file")
+
+  n_sims <- runsims_tbl |> nrow()
+
+  if(n_sims > 0) {
+    syslog(
+      glue("Running {n_sims} out-of-sample simulations to {precompute_dir}"),
+      level = "INFO"
+    )
+
+    plan(multisession)
+
+    model_validsims_index_tbl <- runsims_tbl |>
+      mutate(
+        chunk_data = future_map2_int(
+          cust_params, sim_file,
+          run_simulations_chunk,
+
+          sim_func = generate_pnbd_validation_transactions,
+
+          .options = furrr_options(
+            globals  = c(
+              "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
+              "generate_pnbd_validation_transactions"
+              ),
+            packages   = c("tidyverse", "fs"),
+            scheduling = Inf,
+            seed       = sim_seed + 2
+            ),
+
+          .progress = TRUE
+          )
+        )
+  }
+
+
+  syslog(
+    glue("Loading the calculated simulations"),
+    level = "INFO"
+    )
+
+  retrieve_sim_stats <- ~ .x |>
+    read_rds() |>
+    select(draw_id, sim_tnx_count, sim_tnx_last)
+
+
+  model_fit_simstats_tbl <- model_fitsims_index_tbl |>
+    mutate(
+      sim_data = map(
+        sim_file, retrieve_sim_stats,
+
+        .progress = "retrieve_fit_stats"
+        )
+      ) |>
+    select(customer_id, sim_data) |>
+    unnest(sim_data)
+
+
+  model_valid_simstats_tbl <- model_validsims_index_tbl |>
+    mutate(
+      sim_data = map(
+        sim_file, retrieve_sim_stats,
+
+        .progress = "retrieve_valid_stats"
+        )
+      ) |>
+    select(customer_id, sim_data) |>
+    unnest(sim_data)
+
+
+  assessment_lst <- list(
+    model_simstats_tbl       = model_simstats_tbl,
+    model_fit_simstats_tbl   = model_fit_simstats_tbl,
+    model_valid_simstats_tbl = model_valid_simstats_tbl
+    )
+
+
+  return(assessment_lst)
+}
+
+
+create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
+
+
+  ##
+  ## First we check the counts of customer with more than 1 transaction
+  ##
+  obs_customer_count <- obsdata_tbl |>
+    filter(tnx_count > 0) |>
+    nrow()
+
+  sim_data_tbl <- simdata_tbl |>
+    filter(sim_tnx_count > 0) |>
+    count(draw_id, name = "sim_customer_count")
+
+  multi_customer_count_plot <- ggplot(sim_data_tbl) +
+    geom_histogram(aes(x = sim_customer_count), bins = 50) +
+    geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
+    labs(
+      x = "Count of Multi-transaction Customers",
+      y = "Frequency",
+      title = "Comparison Plot of Simulated vs Observed Customer Counts",
+      subtitle = "(observed value in red)"
+      )
+
+
+  ##
+  ## Check the total count of transactions
+  ##
+  obs_total_count <- obsdata_tbl |>
+    pull(tnx_count) |>
+    sum()
+
+  sim_data_tbl <- simdata_tbl |>
+    count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
+
+
+  total_tnxcount_plot <- ggplot(sim_data_tbl) +
+    geom_histogram(aes(x = sim_total_count), bins = 50) +
+    geom_vline(aes(xintercept = obs_total_count), colour = "red") +
+    labs(
+      x = "Count of Total Transactions",
+      y = "Frequency",
+      title = "Comparison Plot of Simulated vs Observed Total Counts",
+      subtitle = "(observed value in red)"
+      )
+
+
+  ###
+  ### Check the quantiles of the transaction counts
+  ###
+
+  obs_quantiles_tbl <- obsdata_tbl |>
+    filter(tnx_count > 0) |>
+    reframe(
+      prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
+      prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
+      )
+
+  sim_data_tbl <- simdata_tbl |>
+    filter(sim_tnx_count > 0) |>
+    group_by(draw_id) |>
+    summarise(
+      p10 = quantile(sim_tnx_count, 0.10),
+      p25 = quantile(sim_tnx_count, 0.25),
+      p50 = quantile(sim_tnx_count, 0.50),
+      p75 = quantile(sim_tnx_count, 0.75),
+      p90 = quantile(sim_tnx_count, 0.90),
+      p99 = quantile(sim_tnx_count, 0.99)
+      ) |>
+    pivot_longer(
+      cols = !draw_id,
+      names_to  = "prob_label",
+      values_to = "sim_prob_values"
+      ) |>
+    inner_join(obs_quantiles_tbl, by = "prob_label")
+
+  customer_tnxquant_plot <- ggplot(sim_data_tbl) +
+    geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
+    geom_vline(aes(xintercept = prob_value), colour = "red") +
+    facet_wrap(vars(prob_label), nrow = 2, scales = "free") +
+    labs(
+      x = "Quantile of Counts",
+      y = "Frequency",
+      title = "Comparison Plots of Transaction Count Quantiles"
+      )
+
+
+  ###
+  ### Return these plots
+  ###
+
+  assess_plots_lst <- list(
+    multi_plot = multi_customer_count_plot,
+    total_plot = total_tnxcount_plot,
+    quant_plot = customer_tnxquant_plot
+    )
+
+  return(assess_plots_lst)
+}
