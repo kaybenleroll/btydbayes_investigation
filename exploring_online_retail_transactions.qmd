@@ -1980,19 +1980,13 @@ Finally we output the various datasets we have constructed to disks.
 ```{r write_to_disk}
 #| echo: TRUE
 
-stock_description_tbl   |> write_rds("data/stock_description_tbl.rds")
-
-returns_lookup_tbl      |> write_rds("data/returns_lookup_tbl.rds")
-
-cleaned_data_tbl        |> write_rds("data/retail_data_cleaned_tbl.rds")
-
-customer_cohort_tbl     |> write_rds("data/retail_data_cohort_tbl.rds")
-
-customer_tnx_data_tbl   |> write_rds("data/retail_data_transactions_tbl.rds")
-
-daily_spend_invoice_tbl |> write_rds("data/retail_data_invoice_cleaned_tbl.rds")
-
-daily_spend_tbl         |> write_rds("data/daily_spend_tbl.rds")
+stock_description_tbl   |> write_rds("data/onlineretail_stock_description_tbl.rds")
+returns_lookup_tbl      |> write_rds("data/onlineretail_returns_lookup_tbl.rds")
+cleaned_data_tbl        |> write_rds("data/onlineretail_cleaned_tbl.rds")
+customer_cohort_tbl     |> write_rds("data/onlineretail_cohort_tbl.rds")
+customer_tnx_data_tbl   |> write_rds("data/onlineretail_transactions_tbl.rds")
+daily_spend_invoice_tbl |> write_rds("data/onlineretail_invoice_cleaned_tbl.rds")
+daily_spend_tbl         |> write_rds("data/onlineretail_daily_spend_tbl.rds")
 ```
 
 

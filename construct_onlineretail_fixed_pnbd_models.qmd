@@ -101,10 +101,10 @@ We now want to load the online retail transaction data.
 ```{r load_online_retail_transaction_data}
 #| echo: TRUE
 
-customer_cohortdata_tbl <- read_rds("data/retail_data_cohort_tbl.rds")
+customer_cohortdata_tbl <- read_rds("data/onlineretail_cohort_tbl.rds")
 customer_cohortdata_tbl |> glimpse()
 
-customer_transactions_tbl <- read_rds("data/retail_data_transactions_tbl.rds")
+customer_transactions_tbl <- read_rds("data/onlineretail_transactions_tbl.rds")
 customer_transactions_tbl |> glimpse()
 ```
 
@@ -179,7 +179,7 @@ customer_valid_stats_tbl |> glimpse()
 ```
 
 
-```{r}
+```{r construct_fit_valid_datasets}
 #| echo: TRUE
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
@@ -200,7 +200,6 @@ We then write this data to disk.
 #! echo: TRUE
 
 obs_fitdata_tbl   |> write_rds("data/onlineretail_obs_fitdata_tbl.rds")
-
 obs_validdata_tbl |> write_rds("data/onlineretail_obs_validdata_tbl.rds")
 ```
 
