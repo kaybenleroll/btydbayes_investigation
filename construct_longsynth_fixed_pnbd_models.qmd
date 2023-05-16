@@ -763,6 +763,15 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 
+## Write to Disk
+
+We save this data to disk as we may want to load this data later for comparison.
+
+```{r write_pnbd_long_fixed3_disk}
+#| echo: TRUE
+
+assess_data_lst |> write_rds("data/pnbd_long_fixed3_assess_data_lst.rds")
+```
 
 
 

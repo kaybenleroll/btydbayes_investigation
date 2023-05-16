@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Mick Cooney mickcooney@gmail.com">
-<meta name="dcterms.date" content="2023-05-11">
+<meta name="dcterms.date" content="2023-05-15">
 
 <title>Exploring the CD-Now Transaction Dataset</title>
 <style>
@@ -2672,7 +2672,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 11, 2023</p>
+      <p class="date">May 15, 2023</p>
     </div>
   </div>
   
@@ -3517,8 +3517,12 @@ $ total_tnx_count &lt;int&gt; 1, 2, 6, 4, 11, 1, 3, 8, 3, 1, 4, 1, 1, 1, 1, 4, 1
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>customer_cohort_data_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_customer_cohort_data_tbl.rds&quot;</span>)</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>data_tbl                 <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_transaction_data_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>customer_cohort_data_tbl <span class="sc">|&gt;</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_customer_cohort_data_tbl.rds&quot;</span>)</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="sc">|&gt;</span></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">tnx_timestamp =</span> tnx_date) <span class="sc">|&gt;</span></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_transaction_data_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -3540,8 +3544,8 @@ $ total_tnx_count &lt;int&gt; 1, 2, 6, 4, 11, 1, 3, 8, 3, 1, 4, 1, 1, 1, 1, 4, 1
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-05-11
- pandoc   2.19.2 @ /usr/lib/rstudio-server/bin/quarto/bin/tools/ (via rmarkdown)
+ date     2023-05-15
+ pandoc   2.19.2 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package      * version date (UTC) lib source
@@ -3587,7 +3591,6 @@ $ total_tnx_count &lt;int&gt; 1, 2, 6, 4, 11, 1, 3, 8, 3, 1, 4, 1, 1, 1, 1, 4, 1
  readr        * 2.1.4   2023-02-10 [1] RSPM (R 4.2.0)
  rlang        * 1.1.0   2023-03-14 [1] RSPM (R 4.2.0)
  rmarkdown      2.21    2023-03-26 [1] RSPM (R 4.2.0)
- rstudioapi     0.14    2022-08-22 [1] RSPM (R 4.2.0)
  scales       * 1.2.1   2022-08-20 [1] RSPM (R 4.2.0)
  sessioninfo    1.2.2   2021-12-06 [1] RSPM (R 4.2.0)
  snakecase    * 0.11.0  2019-05-25 [1] RSPM (R 4.2.0)
