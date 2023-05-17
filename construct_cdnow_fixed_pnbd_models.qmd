@@ -346,7 +346,7 @@ run the simulations and combine the datasets.
 
 We first run the assessment data.
 
-```{r calculate_pnbd_cdnow_fixed1_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed1_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
@@ -523,7 +523,7 @@ run the simulations and combine the datasets.
 
 We first run the assessment data.
 
-```{r calculate_pnbd_cdnow_fixed1_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed2_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
@@ -699,7 +699,7 @@ run the simulations and combine the datasets.
 
 We first run the assessment data.
 
-```{r calculate_pnbd_cdnow_fixed1_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed3_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
@@ -874,7 +874,7 @@ run the simulations and combine the datasets.
 
 We first run the assessment data.
 
-```{r calculate_pnbd_cdnow_fixed4_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed4_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
