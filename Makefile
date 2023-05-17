@@ -53,6 +53,8 @@ construct_longsynth_fixed_pnbd_models.html: initial_pnbd_models.html
 construct_onlineretail_fixed_pnbd_models.html: exploring_online_retail_transactions.html \
   initial_pnbd_models.html
 
+construct_cdnow_fixed_pnbd_models.html: exploring_cdnow_dataset.html \
+  initial_pnbd_models.html
 
 mrproper: clean-cache clean-data clean-html clean-precompute clean-models
 	rm -fv data/*.xlsx

@@ -344,11 +344,9 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
+We first run the assessment data.
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_cdnow_fixed1_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed1_fit_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
@@ -361,6 +359,17 @@ assess_data_lst <- run_model_assessment(
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
   sim_seed         = 10
   )
+
+assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_cdnow_fixed1_fit_assessment}
+#| echo: TRUE
 
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
@@ -512,11 +521,9 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
+We first run the assessment data.
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_cdnow_fixed2_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed1_fit_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
@@ -529,6 +536,17 @@ assess_data_lst <- run_model_assessment(
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
   sim_seed         = 20
   )
+
+assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_cdnow_fixed2_fit_assessment}
+#| echo: TRUE
 
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
@@ -679,11 +697,9 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
+We first run the assessment data.
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_cdnow_fixed3_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed1_fit_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
@@ -696,6 +712,17 @@ assess_data_lst <- run_model_assessment(
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
   sim_seed         = 30
   )
+
+assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_cdnow_fixed3_fit_assessment}
+#| echo: TRUE
 
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
@@ -845,11 +872,9 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
+We first run the assessment data.
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_cdnow_fixed4_fit_assessment}
+```{r calculate_pnbd_cdnow_fixed4_fit_assessment}
 #| echo: TRUE
 
 assess_data_lst <- run_model_assessment(
@@ -862,6 +887,17 @@ assess_data_lst <- run_model_assessment(
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
   sim_seed         = 40
   )
+
+assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_cdnow_fixed4_fit_assessment}
+#| echo: TRUE
 
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,

@@ -325,27 +325,53 @@ run_model_assessment <- function(
     sim_seed = 420) {
 
 
+  ###
+  ### Ensuring the precompute_dir folder exists
+  ###
+  precompute_dir <- glue("precompute/{fit_label}")
+
+  syslog(
+    glue("Ensuring precompute directory {precompute_dir} exists"),
+    level = "INFO"
+    )
+
+  ensure_exists_precompute_directory(precompute_dir)
+
+
+  ###
+  ### Setting up the simulation statistics
+  ###
   syslog(
     glue("Calculating the posterior statistics"),
     level = "INFO"
     )
 
   model_simstats_tbl <- construct_pnbd_posterior_statistics(
-    stanfit         = model_stanfit,
-    fitdata_tbl     = insample_tbl
+    stanfit     = model_stanfit,
+    fitdata_tbl = insample_tbl
     )
 
-  precompute_dir <- glue("precompute/{fit_label}")
+  ### Setting up the sim_stats function
+  retrieve_sim_stats <- ~ .x |>
+    read_rds() |>
+    select(draw_id, sim_data, sim_tnx_count, sim_tnx_last)
 
-  ensure_exists_precompute_directory(precompute_dir)
+  ### We also want to get the contents of the precompute_dir directory
+  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
+    as.character() |>
+    enframe(name = NULL, value = "sim_file")
 
 
+
+  ###
+  ### Setting up and calculating the in-sample simulations
+  ###
   syslog(
-    glue("Setting up model_fitsims_index_tbl"),
+    glue("Setting up insample model_index_tbl"),
     level = "INFO"
-  )
+    )
 
-  model_fitsims_index_tbl <- model_simstats_tbl |>
+  model_index_tbl <- model_simstats_tbl |>
     mutate(
       start_dttm = first_tnx_date,
       end_dttm   = fit_end_dttm,
@@ -363,39 +389,11 @@ run_model_assessment <- function(
       )
 
   syslog(
-    glue("Setting up model_validsims_index_tbl"),
+    glue("Configuring the insample fit simulations"),
     level = "INFO"
     )
 
-  model_validsims_index_tbl <- model_simstats_tbl |>
-    mutate(
-      start_dttm = valid_start_dttm,
-      end_dttm   = valid_end_dttm,
-      lambda     = post_lambda,
-      mu         = post_mu,
-      tnx_mu     = 1,      ### We are not simulating tnx size
-      tnx_cv     = 1       ###
-      ) |>
-    group_nest(customer_id, .key = "cust_params") |>
-    mutate(
-      sim_file = glue(
-        "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
-        )
-      )
-
-
-
-  syslog(
-    glue("Configuring the insample validation simulations"),
-    level = "INFO"
-    )
-
-  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-    as.character() |>
-    enframe(name = NULL, value = "sim_file")
-
-
-  runsims_tbl <- model_fitsims_index_tbl |>
+  runsims_tbl <- model_index_tbl |>
     anti_join(precomputed_tbl, by = "sim_file")
 
   n_sims <- runsims_tbl |> nrow()
@@ -405,11 +403,11 @@ run_model_assessment <- function(
     syslog(
       glue("Running {n_sims} in-sample simulations to {precompute_dir}"),
       level = "INFO"
-    )
+      )
 
     plan(multisession)
 
-    model_fitsims_index_tbl <- runsims_tbl |>
+    model_index_tbl <- runsims_tbl |>
       mutate(
         chunk_data = future_map2_int(
           cust_params, sim_file,
@@ -434,16 +432,55 @@ run_model_assessment <- function(
 
 
   syslog(
+    glue("Setting up model_fit_simstats_tbl"),
+    level = "INFO"
+    )
+
+  model_fit_simstats_tbl <- model_index_tbl |>
+    mutate(
+      sim_data = map(
+        sim_file, retrieve_sim_stats,
+
+        .progress = "retrieve_fit_stats"
+        )
+      ) |>
+    select(customer_id, sim_data) |>
+    unnest(sim_data)
+
+
+
+
+  ###
+  ### Setting up and calculating the out-of-sample simulations
+  ###
+
+  syslog(
+    glue("Setting up out-of-sample validation model_index_tbl"),
+    level = "INFO"
+    )
+
+  model_index_tbl <- model_simstats_tbl |>
+    mutate(
+      start_dttm = valid_start_dttm,
+      end_dttm   = valid_end_dttm,
+      lambda     = post_lambda,
+      mu         = post_mu,
+      tnx_mu     = 1,      ### We are not simulating tnx size
+      tnx_cv     = 1       ###
+      ) |>
+    group_nest(customer_id, .key = "cust_params") |>
+    mutate(
+      sim_file = glue(
+        "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
+        )
+      )
+
+  syslog(
     glue("Configuring the out-of-sample validation simulations"),
     level = "INFO"
     )
 
-  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-    as.character() |>
-    enframe(name = NULL, value = "sim_file")
-
-
-  runsims_tbl <- model_validsims_index_tbl |>
+  runsims_tbl <- model_index_tbl |>
     anti_join(precomputed_tbl, by = "sim_file")
 
   n_sims <- runsims_tbl |> nrow()
@@ -452,11 +489,11 @@ run_model_assessment <- function(
     syslog(
       glue("Running {n_sims} out-of-sample simulations to {precompute_dir}"),
       level = "INFO"
-    )
+      )
 
     plan(multisession)
 
-    model_validsims_index_tbl <- runsims_tbl |>
+    model_index_tbl <- runsims_tbl |>
       mutate(
         chunk_data = future_map2_int(
           cust_params, sim_file,
@@ -485,24 +522,8 @@ run_model_assessment <- function(
     level = "INFO"
     )
 
-  retrieve_sim_stats <- ~ .x |>
-    read_rds() |>
-    select(draw_id, sim_tnx_count, sim_tnx_last)
 
-
-  model_fit_simstats_tbl <- model_fitsims_index_tbl |>
-    mutate(
-      sim_data = map(
-        sim_file, retrieve_sim_stats,
-
-        .progress = "retrieve_fit_stats"
-        )
-      ) |>
-    select(customer_id, sim_data) |>
-    unnest(sim_data)
-
-
-  model_valid_simstats_tbl <- model_validsims_index_tbl |>
+  model_valid_simstats_tbl <- model_index_tbl |>
     mutate(
       sim_data = map(
         sim_file, retrieve_sim_stats,
@@ -526,7 +547,6 @@ run_model_assessment <- function(
 
 
 create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
-
 
   ##
   ## First we check the counts of customer with more than 1 transaction

@@ -534,6 +534,9 @@ stan_modelname <- "pnbd_init_short_fixed"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 stanfit_seed   <- stanfit_seed + 1
 
+stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
+
+
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
   compose_data(
@@ -544,16 +547,23 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 1.00,
     )
 
-pnbd_init_short_fixed_stanfit <- pnbd_fixed_stanmodel$sample(
-  data            =                stan_data_lst,
-  chains          =                            4,
-  iter_warmup     =                          500,
-  iter_sampling   =                          500,
-  seed            =                 stanfit_seed,
-  save_warmup     =                         TRUE,
-  output_dir      =                stan_modeldir,
-  output_basename =               stanfit_prefix,
-  )
+if(!file_exists(stanfit_object_file)) {
+  pnbd_init_short_fixed_stanfit <- pnbd_fixed_stanmodel$sample(
+    data            =                stan_data_lst,
+    chains          =                            4,
+    iter_warmup     =                          500,
+    iter_sampling   =                          500,
+    seed            =                 stanfit_seed,
+    save_warmup     =                         TRUE,
+    output_dir      =                stan_modeldir,
+    output_basename =               stanfit_prefix,
+    )
+  
+  pnbd_init_short_fixed_stanfit$save_object(stanfit_object_file)
+
+} else {
+  pnbd_init_short_fixed_stanfit <- read_rds(stanfit_object_file)
+}
 
 pnbd_init_short_fixed_stanfit$summary()
 ```
@@ -1172,6 +1182,9 @@ stan_modelname <- "pnbd_init_short_fixed2"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 stanfit_seed   <- stanfit_seed + 1
 
+stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
+
+
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
   compose_data(
@@ -1182,16 +1195,23 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 0.50,
     )
 
-pnbd_init_short_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
-  data            =                stan_data_lst,
-  chains          =                            4,
-  iter_warmup     =                          500,
-  iter_sampling   =                          500,
-  seed            =                 stanfit_seed,
-  save_warmup     =                         TRUE,
-  output_dir      =                stan_modeldir,
-  output_basename =               stanfit_prefix,
-  )
+if(!file_exists(stanfit_object_file)) {
+  pnbd_init_short_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
+    data            =                stan_data_lst,
+    chains          =                            4,
+    iter_warmup     =                          500,
+    iter_sampling   =                          500,
+    seed            =                 stanfit_seed,
+    save_warmup     =                         TRUE,
+    output_dir      =                stan_modeldir,
+    output_basename =               stanfit_prefix,
+    )
+  
+  pnbd_init_short_fixed2_stanfit$save_object(stanfit_object_file)
+
+} else {
+  pnbd_init_short_fixed2_stanfit <- read_rds(stanfit_object_file)
+}
 
 pnbd_init_short_fixed2_stanfit$summary()
 ```
@@ -1733,6 +1753,8 @@ stan_modelname <- "pnbd_init_short_fixed3"
 stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_seed   <- stanfit_seed + 1
 
+stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
+
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -1744,18 +1766,25 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 2.00,
     )
 
-pnbd_init_short_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
-  data            =                stan_data_lst,
-  chains          =                            4,
-  iter_warmup     =                          500,
-  iter_sampling   =                          500,
-  seed            =                 stanfit_seed,
-  save_warmup     =                         TRUE,
-  output_dir      =                stan_modeldir,
-  output_basename =               stanfit_prefix,
-  )
+if(!file_exists(stanfit_object_file)) {
+  pnbd_init_short_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
+    data            =                stan_data_lst,
+    chains          =                            4,
+    iter_warmup     =                          500,
+    iter_sampling   =                          500,
+    seed            =                 stanfit_seed,
+    save_warmup     =                         TRUE,
+    output_dir      =                stan_modeldir,
+    output_basename =               stanfit_prefix,
+    )
+  
+  pnbd_init_short_fixed3_stanfit$save_object(stanfit_object_file)
 
-pnbd_init_short_fixed2_stanfit$summary()
+} else {
+  pnbd_init_short_fixed3_stanfit <- read_rds(stanfit_object_file)
+}
+
+pnbd_init_short_fixed3_stanfit$summary()
 ```
 
 
