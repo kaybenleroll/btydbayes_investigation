@@ -466,7 +466,17 @@ We save this data to disk as we may want to load this data later for comparison.
 ```{r write_pnbd_long_fixed1_disk}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_long_fixed1_assess_data_lst.rds")
+assess_data_lst$model_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed1_assess_model_simstats_tbl.rds")
+
+assess_data_lst$model_fit_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed1_assess_fit_simstats_tbl.rds")
+
+assess_data_lst$model_valid_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed1_assess_valid_simstats_tbl.rds")
+
+rm(assess_data_lst)
+gc()
 ```
 
 
@@ -633,7 +643,17 @@ We save this data to disk as we may want to load this data later for comparison.
 ```{r write_pnbd_long_fixed2_disk}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_long_fixed2_assess_data_lst.rds")
+assess_data_lst$model_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed2_assess_model_simstats_tbl.rds")
+
+assess_data_lst$model_fit_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed2_assess_fit_simstats_tbl.rds")
+
+assess_data_lst$model_valid_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed2_assess_valid_simstats_tbl.rds")
+
+rm(assess_data_lst)
+gc()
 ```
 
 
@@ -798,7 +818,17 @@ We save this data to disk as we may want to load this data later for comparison.
 ```{r write_pnbd_long_fixed3_disk}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_long_fixed3_assess_data_lst.rds")
+assess_data_lst$model_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed3_assess_model_simstats_tbl.rds")
+
+assess_data_lst$model_fit_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed3_assess_fit_simstats_tbl.rds")
+
+assess_data_lst$model_valid_simstats_tbl |>
+  write_rds("data/pnbd_long_fixed3_assess_valid_simstats_tbl.rds")
+
+rm(assess_data_lst)
+gc()
 ```
 
 

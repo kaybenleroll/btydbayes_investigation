@@ -412,7 +412,17 @@ We now store this assessment data to disk.
 ```{r write_pnbd_cdnow_fixed1_assessment_data}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_cdnow_fixed1_data.rds")
+assess_data_lst$model_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed1_assess_model_simstats_tbl.rds")
+
+assess_data_lst$model_fit_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed1_assess_fit_simstats_tbl.rds")
+
+assess_data_lst$model_valid_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed1_assess_valid_simstats_tbl.rds")
+
+rm(assess_data_lst)
+gc()
 ```
 
 
@@ -586,7 +596,17 @@ We now store this assessment data to disk.
 ```{r write_pnbd_cdnow_fixed2_assessment_data}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_cdnow_fixed2_data.rds")
+assess_data_lst$model_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed2_assess_model_simstats_tbl.rds")
+
+assess_data_lst$model_fit_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed2_assess_fit_simstats_tbl.rds")
+
+assess_data_lst$model_valid_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed2_assess_valid_simstats_tbl.rds")
+
+rm(assess_data_lst)
+gc()
 ```
 
 
@@ -761,7 +781,17 @@ We now store this assessment data to disk.
 ```{r write_pnbd_cdnow_fixed3_assessment_data}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_cdnow_fixed3_data.rds")
+assess_data_lst$model_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed3_assess_model_simstats_tbl.rds")
+
+assess_data_lst$model_fit_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed3_assess_fit_simstats_tbl.rds")
+
+assess_data_lst$model_valid_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed3_assess_valid_simstats_tbl.rds")
+
+rm(assess_data_lst)
+gc()
 ```
 
 
@@ -935,7 +965,17 @@ We now store this assessment data to disk.
 ```{r write_pnbd_cdnow_fixed4_assessment_data}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_cdnow_fixed4_data.rds")
+assess_data_lst$model_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed4_assess_model_simstats_tbl.rds")
+
+assess_data_lst$model_fit_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed4_assess_fit_simstats_tbl.rds")
+
+assess_data_lst$model_valid_simstats_tbl |>
+  write_rds("data/pnbd_cdnow_fixed4_assess_valid_simstats_tbl.rds")
+
+rm(assess_data_lst)
+gc()
 ```
 
 
