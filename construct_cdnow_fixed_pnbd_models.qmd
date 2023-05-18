@@ -248,7 +248,6 @@ We then use this compiled model with our data to produce a fit of the data.
 
 ```{r fit_pnbd_fixed_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_cdnow_fixed"
 stanfit_seed   <- stanfit_seed + 1
@@ -425,7 +424,6 @@ to see what impact it has on our procedures.
 
 ```{r fit_pnbd_cdnow_fixed2_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_cdnow_fixed2"
 stanfit_seed   <- stanfit_seed + 1
@@ -602,7 +600,6 @@ variation for lifetime but keep the CoV for transaction frequency.
 
 ```{r fit_pnbd_cdnow_fixed3_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_cdnow_fixed3"
 stanfit_seed   <- stanfit_seed + 1
@@ -776,7 +773,6 @@ variation for lifetime but keep the CoV for transaction frequency.
 
 ```{r fit_pnbd_cdnow_fixed4_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_cdnow_fixed4"
 stanfit_seed   <- stanfit_seed + 1

@@ -248,7 +248,6 @@ We then use this compiled model with our data to produce a fit of the data.
 
 ```{r fit_pnbd_fixed_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_onlineretail_fixed"
 stanfit_seed   <- stanfit_seed + 1
