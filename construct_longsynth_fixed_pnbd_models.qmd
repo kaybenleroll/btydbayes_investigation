@@ -406,6 +406,25 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
+
+```{r run_pnbd_long_fixed1_assessment}
+#| echo: TRUE
+
+pnbd_long_fixed1_assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_long_fixed1_stanfit,
+  insample_tbl     = customer_fit_stats_tbl,
+  outsample_tbl    = customer_valid_stats_tbl,
+  fit_label        = "pnbd_long_fixed1",
+  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
+  sim_seed         = 4210
+  )
+
+pnbd_long_fixed1_assess_data_lst |> glimpse()
+```
+
+
 ### Check In-Sample Data Validation
 
 We first check the model against the in-sample data.
@@ -413,20 +432,13 @@ We first check the model against the in-sample data.
 ```{r run_pnbd_long_fixed1_fit_assessment}
 #| echo: TRUE
 
-assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_long_fixed1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
-  fit_label        = "pnbd_long_fixed",
-  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
-  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
-  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4210
-  )
+simdata_tbl <- pnbd_long_fixed1_assess_data_lst |>
+  use_series(model_fit_simstats_filepath) |>
+  read_rds()
 
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
-  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 insample_plots_lst$multi_plot |> print()
@@ -446,9 +458,13 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_long_fixed1_valid_assessment}
 #| echo: TRUE
 
+simdata_tbl <- pnbd_long_fixed1_assess_data_lst |>
+  use_series(model_valid_simstats_filepath) |>
+  read_rds()
+
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
-  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 outsample_plots_lst$multi_plot |> print()
@@ -457,27 +473,6 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 As for our short time frame data, overall our model is working well.
-
-
-## Write to Disk
-
-We save this data to disk as we may want to load this data later for comparison.
-
-```{r write_pnbd_long_fixed1_disk}
-#| echo: TRUE
-
-assess_data_lst$model_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed1_assess_model_simstats_tbl.rds")
-
-assess_data_lst$model_fit_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed1_assess_fit_simstats_tbl.rds")
-
-assess_data_lst$model_valid_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed1_assess_valid_simstats_tbl.rds")
-
-rm(assess_data_lst)
-gc()
-```
 
 
 
@@ -585,14 +580,11 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_long_fixed2_fit_assessment}
+```{r run_pnbd_long_fixed2_assessment}
 #| echo: TRUE
 
-assess_data_lst <- run_model_assessment(
+pnbd_long_fixed2_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_fixed2_stanfit,
   insample_tbl     = customer_fit_stats_tbl,
   outsample_tbl    = customer_valid_stats_tbl,
@@ -603,9 +595,24 @@ assess_data_lst <- run_model_assessment(
   sim_seed         = 4220
   )
 
+pnbd_long_fixed2_assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_long_fixed2_fit_assessment}
+#| echo: TRUE
+
+simdata_tbl <- pnbd_long_fixed2_assess_data_lst |>
+  use_series(model_fit_simstats_filepath) |>
+  read_rds()
+
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
-  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 insample_plots_lst$multi_plot |> print()
@@ -625,9 +632,13 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_long_fixed2_valid_assessment}
 #| echo: TRUE
 
+simdata_tbl <- pnbd_long_fixed2_assess_data_lst |>
+  use_series(model_valid_simstats_filepath) |>
+  read_rds()
+
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
-  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 outsample_plots_lst$multi_plot |> print()
@@ -635,26 +646,6 @@ outsample_plots_lst$total_plot |> print()
 outsample_plots_lst$quant_plot |> print()
 ```
 
-
-## Write to Disk
-
-We save this data to disk as we may want to load this data later for comparison.
-
-```{r write_pnbd_long_fixed2_disk}
-#| echo: TRUE
-
-assess_data_lst$model_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed2_assess_model_simstats_tbl.rds")
-
-assess_data_lst$model_fit_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed2_assess_fit_simstats_tbl.rds")
-
-assess_data_lst$model_valid_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed2_assess_valid_simstats_tbl.rds")
-
-rm(assess_data_lst)
-gc()
-```
 
 
 # Fit Tight-Lifetime Model
@@ -760,14 +751,11 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_long_fixed3_fit_assessment}
+```{r run_pnbd_long_fixed3_assessment}
 #| echo: TRUE
 
-assess_data_lst <- run_model_assessment(
+pnbd_long_fixed3_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_fixed3_stanfit,
   insample_tbl     = customer_fit_stats_tbl,
   outsample_tbl    = customer_valid_stats_tbl,
@@ -778,9 +766,24 @@ assess_data_lst <- run_model_assessment(
   sim_seed         = 4230
   )
 
+pnbd_long_fixed3_assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_long_fixed3_fit_assessment}
+#| echo: TRUE
+
+simdata_tbl <- pnbd_long_fixed3_assess_data_lst |>
+  use_series(model_fit_simstats_filepath) |>
+  read_rds()
+
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
-  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 insample_plots_lst$multi_plot |> print()
@@ -800,9 +803,13 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_long_fixed3_valid_assessment}
 #| echo: TRUE
 
+simdata_tbl <- pnbd_long_fixed3_assess_data_lst |>
+  use_series(model_valid_simstats_filepath) |>
+  read_rds()
+
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
-  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 outsample_plots_lst$multi_plot |> print()
@@ -810,26 +817,6 @@ outsample_plots_lst$total_plot |> print()
 outsample_plots_lst$quant_plot |> print()
 ```
 
-
-## Write to Disk
-
-We save this data to disk as we may want to load this data later for comparison.
-
-```{r write_pnbd_long_fixed3_disk}
-#| echo: TRUE
-
-assess_data_lst$model_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed3_assess_model_simstats_tbl.rds")
-
-assess_data_lst$model_fit_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed3_assess_fit_simstats_tbl.rds")
-
-assess_data_lst$model_valid_simstats_tbl |>
-  write_rds("data/pnbd_long_fixed3_assess_valid_simstats_tbl.rds")
-
-rm(assess_data_lst)
-gc()
-```
 
 
 

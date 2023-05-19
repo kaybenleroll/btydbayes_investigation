@@ -322,13 +322,14 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
 run_model_assessment <- function(
     model_stanfit, insample_tbl, outsample_tbl, fit_label,
     fit_end_dttm, valid_start_dttm, valid_end_dttm,
+    precompute_rootdir = "precompute", data_dir = "data",
     sim_seed = 420) {
 
 
   ###
   ### Ensuring the precompute_dir folder exists
   ###
-  precompute_dir <- glue("precompute/{fit_label}")
+  precompute_dir <- glue("{precompute_rootdir}/{fit_label}")
 
   syslog(
     glue("Ensuring precompute directory {precompute_dir} exists"),
@@ -350,6 +351,13 @@ run_model_assessment <- function(
     stanfit     = model_stanfit,
     fitdata_tbl = insample_tbl
     )
+
+
+  model_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_model_simstats_tbl.rds")
+
+  model_simstats_tbl |> write_rds(model_simstats_filepath)
+
+
 
   ### Setting up the sim_stats function
   retrieve_sim_stats <- ~ .x |>
@@ -436,7 +444,7 @@ run_model_assessment <- function(
     level = "INFO"
     )
 
-  model_fit_simstats_tbl <- model_index_tbl |>
+  model_simdata_tbl <- model_index_tbl |>
     mutate(
       sim_data = map(
         sim_file, retrieve_sim_stats,
@@ -447,6 +455,9 @@ run_model_assessment <- function(
     select(customer_id, sim_data) |>
     unnest(sim_data)
 
+  model_fit_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_fit_simstats_tbl.rds")
+
+  model_simdata_tbl |> write_rds(model_fit_simstats_filepath)
 
 
 
@@ -523,7 +534,7 @@ run_model_assessment <- function(
     )
 
 
-  model_valid_simstats_tbl <- model_index_tbl |>
+  model_simdata_tbl <- model_index_tbl |>
     mutate(
       sim_data = map(
         sim_file, retrieve_sim_stats,
@@ -534,11 +545,15 @@ run_model_assessment <- function(
     select(customer_id, sim_data) |>
     unnest(sim_data)
 
+  model_valid_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_valid_simstats_tbl.rds")
+
+  model_simdata_tbl |> write_rds(model_valid_simstats_filepath)
+
 
   assessment_lst <- list(
-    model_simstats_tbl       = model_simstats_tbl,
-    model_fit_simstats_tbl   = model_fit_simstats_tbl,
-    model_valid_simstats_tbl = model_valid_simstats_tbl
+    model_simstats_filepath       = model_simstats_filepath,
+    model_fit_simstats_filepath   = model_fit_simstats_filepath,
+    model_valid_simstats_filepath = model_valid_simstats_filepath
     )
 
 
