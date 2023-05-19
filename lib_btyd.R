@@ -570,11 +570,11 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
     filter(tnx_count > 0) |>
     nrow()
 
-  sim_data_tbl <- simdata_tbl |>
+  plotdata_tbl <- simdata_tbl |>
     filter(sim_tnx_count > 0) |>
     count(draw_id, name = "sim_customer_count")
 
-  multi_customer_count_plot <- ggplot(sim_data_tbl) +
+  multi_customer_count_plot <- ggplot(plotdata_tbl) +
     geom_histogram(aes(x = sim_customer_count), bins = 50) +
     geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
     labs(
@@ -592,11 +592,11 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
     pull(tnx_count) |>
     sum()
 
-  sim_data_tbl <- simdata_tbl |>
+  plotdata_tbl <- simdata_tbl |>
     count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
 
 
-  total_tnxcount_plot <- ggplot(sim_data_tbl) +
+  total_tnxcount_plot <- ggplot(plotdata_tbl) +
     geom_histogram(aes(x = sim_total_count), bins = 50) +
     geom_vline(aes(xintercept = obs_total_count), colour = "red") +
     labs(
@@ -618,7 +618,7 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
       prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
       )
 
-  sim_data_tbl <- simdata_tbl |>
+  plotdata_tbl <- simdata_tbl |>
     filter(sim_tnx_count > 0) |>
     group_by(draw_id) |>
     summarise(
@@ -636,7 +636,7 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
       ) |>
     inner_join(obs_quantiles_tbl, by = "prob_label")
 
-  customer_tnxquant_plot <- ggplot(sim_data_tbl) +
+  customer_tnxquant_plot <- ggplot(plotdata_tbl) +
     geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
     geom_vline(aes(xintercept = prob_value), colour = "red") +
     facet_wrap(vars(prob_label), nrow = 2, scales = "free") +

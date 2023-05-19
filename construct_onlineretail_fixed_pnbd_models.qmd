@@ -246,10 +246,10 @@ We then use this compiled model with our data to produce a fit of the data.
 
 
 
-```{r fit_pnbd_fixed_stanmodel}
+```{r fit_pnbd_onlineretail_fixed1_stanmodel}
 #| echo: TRUE
 
-stan_modelname <- "pnbd_onlineretail_fixed"
+stan_modelname <- "pnbd_onlineretail_fixed1"
 stanfit_seed   <- stanfit_seed + 1
 stanfit_prefix <- str_c("fit_", stan_modelname) 
 
@@ -410,6 +410,12 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 As for our short time frame data, overall our model is working well.
+
+```{r delete_pnbd_onlineretail_fixed1_valid_assessment}
+#| echo: false
+
+rm(simdata_tbl)
+```
 
 
 
@@ -581,6 +587,14 @@ outsample_plots_lst$total_plot |> print()
 outsample_plots_lst$quant_plot |> print()
 ```
 
+
+
+
+```{r delete_pnbd_onlineretail_fixed2_valid_assessment}
+#| echo: false
+
+rm(simdata_tbl)
+```
 
 
 # Fit Tight-Lifetime Model
@@ -755,6 +769,13 @@ outsample_plots_lst$quant_plot |> print()
 
 
 
+```{r delete_pnbd_onlineretail_fixed3_valid_assessment}
+#| echo: false
+
+rm(simdata_tbl)
+```
+
+
 # Fit Narrow-Short-Lifetime Model
 
 We now want to try a model where we use priors with a tighter coefficient of
@@ -923,6 +944,18 @@ outsample_plots_lst <- create_model_assessment_plots(
 outsample_plots_lst$multi_plot |> print()
 outsample_plots_lst$total_plot |> print()
 outsample_plots_lst$quant_plot |> print()
+```
+
+
+```{r delete_pnbd_onlineretail_fixed4_valid_assessment}
+#| echo: false
+
+rm(simdata_tbl)
+```
+
+
+```{r}
+knitr::knit_exit()
 ```
 
 
