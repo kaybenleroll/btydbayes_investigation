@@ -347,15 +347,21 @@ run_model_assessment <- function(
     level = "INFO"
     )
 
-  model_simstats_tbl <- construct_pnbd_posterior_statistics(
-    stanfit     = model_stanfit,
-    fitdata_tbl = insample_tbl
-    )
-
-
   model_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_model_simstats_tbl.rds")
 
-  model_simstats_tbl |> write_rds(model_simstats_filepath)
+  if(!file_exists(model_simstats_filepath)) {
+    model_simstats_tbl <- construct_pnbd_posterior_statistics(
+      stanfit     = model_stanfit,
+      fitdata_tbl = insample_tbl
+    )
+
+    model_simstats_tbl |> write_rds(model_simstats_filepath)
+  } else {
+
+    model_simstats_tbl <- read_rds(model_simstats_filepath)
+  }
+
+
 
 
 
@@ -444,21 +450,25 @@ run_model_assessment <- function(
     level = "INFO"
     )
 
-  model_simdata_tbl <- model_index_tbl |>
-    mutate(
-      sim_data = map(
-        sim_file, retrieve_sim_stats,
-
-        .progress = "retrieve_fit_stats"
-        )
-      ) |>
-    select(customer_id, sim_data) |>
-    unnest(sim_data)
-
   model_fit_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_fit_simstats_tbl.rds")
 
-  model_simdata_tbl |> write_rds(model_fit_simstats_filepath)
+  if(!file_exists(model_fit_simstats_filepath)) {
+    model_simdata_tbl <- model_index_tbl |>
+      mutate(
+        sim_data = map(
+          sim_file, retrieve_sim_stats,
 
+          .progress = "retrieve_fit_stats"
+          )
+        ) |>
+      select(customer_id, sim_data) |>
+      unnest(sim_data)
+
+    model_simdata_tbl |> write_rds(model_fit_simstats_filepath)
+
+  } else {
+    model_simdata_tbl <- read_rds(model_fit_simstats_filepath)
+  }
 
 
   ###
@@ -534,21 +544,25 @@ run_model_assessment <- function(
     )
 
 
-  model_simdata_tbl <- model_index_tbl |>
-    mutate(
-      sim_data = map(
-        sim_file, retrieve_sim_stats,
-
-        .progress = "retrieve_valid_stats"
-        )
-      ) |>
-    select(customer_id, sim_data) |>
-    unnest(sim_data)
-
   model_valid_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_valid_simstats_tbl.rds")
 
-  model_simdata_tbl |> write_rds(model_valid_simstats_filepath)
 
+  if(!file_exists(model_valid_simstats_filepath)) {
+    model_simdata_tbl <- model_index_tbl |>
+      mutate(
+        sim_data = map(
+          sim_file, retrieve_sim_stats,
+
+          .progress = "retrieve_valid_stats"
+          )
+        ) |>
+      select(customer_id, sim_data) |>
+      unnest(sim_data)
+
+    model_simdata_tbl |> write_rds(model_valid_simstats_filepath)
+  } else {
+    model_simdata_tbl <- read_rds(model_valid_simstats_filepath)
+  }
 
   assessment_lst <- list(
     model_simstats_filepath       = model_simstats_filepath,

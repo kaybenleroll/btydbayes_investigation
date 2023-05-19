@@ -528,7 +528,6 @@ We then use this compiled model with our data to produce a fit of the data.
 
 ```{r fit_pnbd_fixed_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_init_short_fixed1"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
@@ -698,9 +697,8 @@ data we fit. This procedure is similar to what we did before but now we focus
 on in sample data rather than using validation data.
 
 
-```{r calculate_pnbd_posterior_simstats}
+```{r calculate_pnbd_init_short_fixed1_simstats}
 #| echo: TRUE
-#| cache: TRUE
 
 pnbd_init_short_fixed1_simstats_tbl <- construct_pnbd_posterior_statistics(
   stanfit         = pnbd_init_short_fixed1_stanfit,
@@ -709,6 +707,16 @@ pnbd_init_short_fixed1_simstats_tbl <- construct_pnbd_posterior_statistics(
 
 pnbd_init_short_fixed1_simstats_tbl |> glimpse()
 ```
+
+We now want to write out the simulation stats to disk.
+
+```{r write_fit_pnbd_init_short_fixed1_simstats}
+#! echo: TRUE
+
+pnbd_init_short_fixed1_simstats_tbl |>
+  write_rds("data/pnbd_init_short_fixed1_assess_model_simstats_tbl.rds")
+```
+
 
 We then use these posterior statistics as inputs to our simulations to help
 us assess the in-sample quality of fit.
@@ -1189,7 +1197,6 @@ to see what impact it has on our procedures.
 
 ```{r fit_pnbd_fixed2_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_init_short_fixed2"
 stanfit_prefix <- str_c("fit_", stan_modelname) 
@@ -1284,7 +1291,6 @@ We now want to check our in-sample data.
 
 ```{r calculate_pnbd_init_short_fixed2_posterior_simstats}
 #| echo: TRUE
-#| cache: TRUE
 
 pnbd_init_short_fixed2_simstats_tbl <- construct_pnbd_posterior_statistics(
   stanfit         = pnbd_init_short_fixed2_stanfit,
@@ -1295,7 +1301,17 @@ pnbd_init_short_fixed2_simstats_tbl |> glimpse()
 ```
 
 
+We write out this data to disk.
 
+```{r write_fit_pnbd_init_short_fixed2_simstats}
+#! echo: TRUE
+
+pnbd_init_short_fixed2_simstats_tbl |>
+  write_rds("data/pnbd_init_short_fixed2_assess_model_simstats_tbl.rds")
+```
+
+
+We now want to generate the transactions for the in-sample data.
 
 ```{r setup_simulation_pnbd_init_short_fixed2_fitdata_transactions}
 #| echo: TRUE
@@ -1764,7 +1780,6 @@ to see what impact it has on our procedures.
 
 ```{r fit_pnbd_fixed3_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_init_short_fixed3"
 stanfit_prefix <- str_c("fit_", stan_modelname)
@@ -1859,7 +1874,6 @@ We now want to check our in-sample data.
 
 ```{r calculate_pnbd_init_short_fixed3_posterior_simstats}
 #| echo: TRUE
-#| cache: TRUE
 
 pnbd_init_short_fixed3_simstats_tbl <- construct_pnbd_posterior_statistics(
   stanfit         = pnbd_init_short_fixed3_stanfit,
@@ -1870,6 +1884,17 @@ pnbd_init_short_fixed3_simstats_tbl |> glimpse()
 ```
 
 
+We write out this data to disk.
+
+```{r write_fit_pnbd_init_short_fixed3_simstats}
+#! echo: TRUE
+
+pnbd_init_short_fixed3_simstats_tbl |>
+  write_rds("data/pnbd_init_short_fixed3_assess_model_simstats_tbl.rds")
+```
+
+
+We now want to generate the transactions for the in-sample data.
 
 
 ```{r setup_simulation_pnbd_init_short_fixed3_fitdata_transactions}
