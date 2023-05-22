@@ -1166,6 +1166,12 @@ pnbd_init_short_fixed1_valid_simstats_tbl |>
   write_rds("data/pnbd_init_short_fixed1_assess_valid_simstats_tbl.rds")
 ```
 
+```{r delete_pnbd_init_short_fixed1_data}
+#| echo: TRUE
+
+rm(pnbd_init_short_fixed1_fit_simstats_tbl)
+rm(pnbd_init_short_fixed1_valid_simstats_tbl)
+```
 
 
 ## Final Assessment
@@ -1244,6 +1250,7 @@ We have some basic HMC-based validity statistics we can check.
 
 pnbd_init_short_fixed2_stanfit$cmdstan_diagnose()
 ```
+
 
 
 ## Visual Diagnostics of the Sample Validity
@@ -1648,7 +1655,7 @@ obs_customer_count <- customer_valid_stats_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-sim_data_tbl <- pnbd_init_short_fixed1_valid_simstats_tbl |>
+sim_data_tbl <- pnbd_init_short_fixed2_valid_simstats_tbl |>
   filter(sim_tnx_count > 0) |>
   count(draw_id, name = "sim_customer_count")
 
@@ -1746,6 +1753,14 @@ We write this data to disk
 
 pnbd_init_short_fixed2_valid_simstats_tbl |>
   write_rds("data/pnbd_init_short_fixed2_assess_valid_simstats_tbl.rds")
+```
+
+
+```{r delete_pnbd_init_short_fixed2_data}
+#| echo: TRUE
+
+rm(pnbd_init_short_fixed2_fit_simstats_tbl)
+rm(pnbd_init_short_fixed2_valid_simstats_tbl)
 ```
 
 
@@ -2232,7 +2247,7 @@ obs_customer_count <- customer_valid_stats_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-sim_data_tbl <- pnbd_init_short_fixed1_valid_simstats_tbl |>
+sim_data_tbl <- pnbd_init_short_fixed3_valid_simstats_tbl |>
   filter(sim_tnx_count > 0) |>
   count(draw_id, name = "sim_customer_count")
 
@@ -2333,6 +2348,14 @@ pnbd_init_short_fixed3_fit_simstats_tbl |>
 ```
 
 
+```{r delete_pnbd_init_short_fixed3_data}
+#| echo: TRUE
+
+rm(pnbd_init_short_fixed3_fit_simstats_tbl)
+rm(pnbd_init_short_fixed3_valid_simstats_tbl)
+```
+
+
 ## Final Assessment
 
 The behaviour of this model is a little curious - in-sample the model
@@ -2346,6 +2369,119 @@ Similarly, the higher quantiles of transaction count is over-estimated.
 This suggests that the model tends towards higher transaction frequency, but
 lower lifetime values. This should be useful when fitting on real data.
 
+
+# Compare Model Outputs
+
+We have looked at each of the models individually, but it is also worth looking
+at each of the models as a group.
+
+```{r calculate_simulation_statistics}
+#| echo: TRUE
+
+calculate_simulation_statistics <- function(file_rds) {
+  simdata_tbl <- read_rds(file_rds)
+  
+  multicount_cust_tbl <- simdata_tbl |>
+    filter(sim_tnx_count > 0) |>
+    count(draw_id, name = "multicust_count")
+  
+  totaltnx_data_tbl <- simdata_tbl |>
+    count(draw_id, wt = sim_tnx_count, name = "simtnx_count")
+  
+  simstats_tbl <- multicount_cust_tbl |>
+    inner_join(totaltnx_data_tbl, by = "draw_id")
+  
+  return(simstats_tbl)
+}
+```
+
+
+
+```{r load_model_assessment_data}
+#| echo: TRUE
+
+obs_fit_customer_count <- customer_fit_stats_tbl |>
+  filter(x > 0) |>
+  nrow()
+
+obs_valid_customer_count <- customer_valid_stats_tbl |>
+  filter(tnx_count > 0) |>
+  nrow()
+
+obs_fit_total_count <- customer_fit_stats_tbl |>
+  pull(x) |>
+  sum()
+
+obs_valid_total_count <- customer_valid_stats_tbl |>
+  pull(tnx_count) |>
+  sum()
+
+obs_stats_tbl <- tribble(
+  ~assess_type, ~name,               ~obs_value,
+  "fit",        "multicust_count",   obs_fit_customer_count,
+  "fit",        "simtnx_count",      obs_fit_total_count,
+  "valid",      "multicust_count",   obs_valid_customer_count,
+  "valid",      "simtnx_count",      obs_valid_total_count
+  )
+
+
+
+
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_init_short_.*_assess") |>
+  enframe(name = NULL, value = "file_path") |>
+  filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
+  mutate(
+    model_label = str_replace(file_path, "data/pnbd_init_short_(.*?)_assess_.*", "\\1"),
+    assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
+    
+    sim_data = map(file_path, calculate_simulation_statistics)
+    )
+
+model_assess_summstat_tbl <- model_assess_tbl |>
+  select(model_label, assess_type, sim_data) |>
+  unnest(sim_data) |>
+  pivot_longer(
+    cols = !c(model_label, assess_type, draw_id)
+    ) |>
+  group_by(model_label, assess_type, name) |>
+  summarise(
+    .groups = "drop",
+    
+    mean_val = mean(value),
+    p10 = quantile(value, 0.10),
+    p25 = quantile(value, 0.25),
+    p50 = quantile(value, 0.50),
+    p75 = quantile(value, 0.75),
+    p90 = quantile(value, 0.90)
+    )
+```
+
+
+```{r construct_model_comparison_plot}
+#! echo: TRUE
+
+ggplot(model_assess_summstat_tbl) +
+  geom_errorbar(
+    aes(x = model_label, ymin = p10, ymax = p90), width = 0
+    ) +
+  geom_errorbar(
+    aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3
+    ) +
+  geom_hline(
+    aes(yintercept = obs_value),
+    data = obs_stats_tbl, colour = "red"
+    ) +
+  scale_y_continuous(labels = label_comma()) +
+  expand_limits(y = 0) +
+  facet_wrap(
+    vars(assess_type, name), scale = "free_y"
+    ) +
+  labs(
+    x = "Model",
+    y = "Count",
+    title = "Comparison Plot for the Different Models"
+    )
+```
 
 
 # R Environment
