@@ -107,5 +107,6 @@ RUN Rscript /tmp/docker_install_user_rpkgs.R
 USER root
 
 RUN chown -R rstudio:rstudio /home/rstudio \
-  && chmod ugo+rx /home/rstudio
+  && chmod ugo+rx /home/rstudio \
+  && chown -R rstudio:rstudio /home/rstudio/.cmdstan
 

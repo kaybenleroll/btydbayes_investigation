@@ -277,12 +277,11 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_onlineretail_fixed1_stanfit$save_object(stanfit_object_file)
+  pnbd_onlineretail_fixed1_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
   pnbd_onlineretail_fixed1_stanfit <- read_rds(stanfit_object_file)
 }
-
 
 pnbd_onlineretail_fixed1_stanfit$summary()
 ```
@@ -457,12 +456,11 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_onlineretail_fixed2_stanfit$save_object(stanfit_object_file)
+  pnbd_onlineretail_fixed2_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
   pnbd_onlineretail_fixed2_stanfit <- read_rds(stanfit_object_file)
 }
-
 
 pnbd_onlineretail_fixed2_stanfit$summary()
 ```
@@ -636,12 +634,11 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_onlineretail_fixed3_stanfit$save_object(stanfit_object_file)
+  pnbd_onlineretail_fixed3_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
   pnbd_onlineretail_fixed3_stanfit <- read_rds(stanfit_object_file)
 }
-
 
 pnbd_onlineretail_fixed3_stanfit$summary()
 ```
@@ -815,12 +812,11 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_onlineretail_fixed4_stanfit$save_object(stanfit_object_file)
+  pnbd_onlineretail_fixed4_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
   pnbd_onlineretail_fixed4_stanfit <- read_rds(stanfit_object_file)
 }
-
 
 pnbd_onlineretail_fixed4_stanfit$summary()
 ```
@@ -1067,208 +1063,6 @@ ggplot(model_assess_summstat_tbl) +
     )
 ```
 
-
-
-
-
-
-```{r}
-knitr::knit_exit()
-```
-
-
-# Compare Model Posterior Fits
-
-We now want to load and compare the summary statistics across multiple models.
-
-```{r construct_model_posterior_fit_comparison}
-#| echo: true
-
-model_compare_tbl <- dir_ls("data", regex = ".*onlineretail.*_assess_data") |>
-  enframe(name = NULL, value = "file_path") |>
-  mutate(
-    model_label = str_replace(file_path, ".*pnbd_(.*?)_assess_data.*", "\\1"),
-    data        = map(file_path, read_rds),
-    fit_data    = map(data, "model_fit_simstats_tbl"),
-    valid_data  = map(data, "model_valid_simstats_tbl")
-    ) |>
-  select(-data)
-  
-model_compare_fitdata_tbl <- model_compare_tbl |>
-  select(model_label, fit_data) |>
-  unnest(fit_data)
-
-model_compare_fitdata_tbl |> glimpse()
-
-
-model_compare_validdata_tbl <- model_compare_tbl |>
-  select(model_label, valid_data) |>
-  unnest(valid_data)
-
-model_compare_validdata_tbl |> glimpse()
-```
-
-
-
-## In-Sample Simulation Comparisons
-
-We now want to bring together all the comparison plots of the four fitted
-models to help us get a feel for the effect of the different set of priors on
-the posterior simulations.
-
-
-```{r compare_insample_statistics}
-#| echo: true
-
-obs_cust_count <- obs_fitdata_tbl |>
-  filter(tnx_count > 0) |>
-  nrow()
-
-model_fitcompare_multicustomer_tbl <- model_compare_fitdata_tbl |>
-  filter(sim_tnx_count > 0) |>
-  count(model_label, draw_id, name = "sim_cust_count") |>
-  summarise(
-    p01 = quantile(sim_cust_count, 0.01),
-    p10 = quantile(sim_cust_count, 0.10),
-    p25 = quantile(sim_cust_count, 0.25),
-    p50 = quantile(sim_cust_count, 0.50),
-    p75 = quantile(sim_cust_count, 0.75),
-    p90 = quantile(sim_cust_count, 0.90),
-    p99 = quantile(sim_cust_count, 0.99),
-    
-    .by = model_label
-    )
-
-ggplot(model_fitcompare_multicustomer_tbl) +
-  geom_errorbar(aes(x = model_label, ymin = p10, ymax = p90), width = 0, linewidth = 1) +
-  geom_errorbar(aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3) +
-  geom_hline(aes(yintercept = obs_cust_count), colour = "red") +
-  expand_limits(y = 0) +
-  scale_y_continuous(labels = label_comma()) +
-  labs(
-    x = "Model",
-    y = "Customer Count",
-    title = "In-Sample Comparison of Multi-transaction Customers"
-    )
-
-
-obs_tnx_count <- obs_fitdata_tbl |>
-  pull(tnx_count) |>
-  sum()
-
-model_fitcompare_totalcount_tbl <- model_compare_fitdata_tbl |>
-  group_by(model_label, draw_id) |>
-  summarise(
-    .groups = "drop",
-    
-    sim_total_count = sum(sim_tnx_count)
-    ) |>
-  summarise(
-    p01 = quantile(sim_total_count, 0.01),
-    p10 = quantile(sim_total_count, 0.10),
-    p25 = quantile(sim_total_count, 0.25),
-    p50 = quantile(sim_total_count, 0.50),
-    p75 = quantile(sim_total_count, 0.75),
-    p90 = quantile(sim_total_count, 0.90),
-    p99 = quantile(sim_total_count, 0.99),
-    
-    .by = model_label
-    )
-
-ggplot(model_fitcompare_totalcount_tbl) +
-  geom_errorbar(aes(x = model_label, ymin = p10, ymax = p90), width = 0, linewidth = 1) +
-  geom_errorbar(aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3) +
-  geom_hline(aes(yintercept = obs_tnx_count), colour = "red") +
-  expand_limits(y = 0) +
-  scale_y_continuous(labels = label_comma()) +
-  labs(
-    x = "Model",
-    y = "Total Count",
-    title = "In-Sample Comparison of Total Transaction Count"
-    )
-
-
-```
-
-
-
-## Out-of-Sample Simulation Comparisons
-
-We repeat these plots for the out-of-sample data.
-
-
-```{r compare_outsample_statistics}
-#| echo: true
-
-obs_cust_count <- obs_validdata_tbl |>
-  filter(tnx_count > 0) |>
-  nrow()
-
-model_fitcompare_multicustomer_tbl <- model_compare_validdata_tbl |>
-  filter(sim_tnx_count > 0) |>
-  count(model_label, draw_id, name = "sim_cust_count") |>
-  summarise(
-    p01 = quantile(sim_cust_count, 0.01),
-    p10 = quantile(sim_cust_count, 0.10),
-    p25 = quantile(sim_cust_count, 0.25),
-    p50 = quantile(sim_cust_count, 0.50),
-    p75 = quantile(sim_cust_count, 0.75),
-    p90 = quantile(sim_cust_count, 0.90),
-    p99 = quantile(sim_cust_count, 0.99),
-    
-    .by = model_label
-    )
-
-ggplot(model_fitcompare_multicustomer_tbl) +
-  geom_errorbar(aes(x = model_label, ymin = p10, ymax = p90), width = 0, linewidth = 1) +
-  geom_errorbar(aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3) +
-  geom_hline(aes(yintercept = obs_cust_count), colour = "red") +
-  expand_limits(y = 0) +
-  scale_y_continuous(labels = label_comma()) +
-  labs(
-    x = "Model",
-    y = "Customer Count",
-    title = "In-Sample Comparison of Multi-transaction Customers"
-    )
-
-
-obs_tnx_count <- obs_validdata_tbl |>
-  pull(tnx_count) |>
-  sum()
-
-model_fitcompare_totalcount_tbl <- model_compare_validdata_tbl |>
-  group_by(model_label, draw_id) |>
-  summarise(
-    .groups = "drop",
-    
-    sim_total_count = sum(sim_tnx_count)
-    ) |>
-  summarise(
-    p01 = quantile(sim_total_count, 0.01),
-    p10 = quantile(sim_total_count, 0.10),
-    p25 = quantile(sim_total_count, 0.25),
-    p50 = quantile(sim_total_count, 0.50),
-    p75 = quantile(sim_total_count, 0.75),
-    p90 = quantile(sim_total_count, 0.90),
-    p99 = quantile(sim_total_count, 0.99),
-    
-    .by = model_label
-    )
-
-ggplot(model_fitcompare_totalcount_tbl) +
-  geom_errorbar(aes(x = model_label, ymin = p10, ymax = p90), width = 0, linewidth = 1) +
-  geom_errorbar(aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3) +
-  geom_hline(aes(yintercept = obs_tnx_count), colour = "red") +
-  expand_limits(y = 0) +
-  scale_y_continuous(labels = label_comma()) +
-  labs(
-    x = "Model",
-    y = "Total Count",
-    title = "In-Sample Comparison of Total Transaction Count"
-    )
-
-
-```
 
 
 

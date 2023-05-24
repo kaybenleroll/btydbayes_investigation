@@ -355,7 +355,7 @@ run_model_assessment <- function(
       fitdata_tbl = insample_tbl
     )
 
-    model_simstats_tbl |> write_rds(model_simstats_filepath)
+    model_simstats_tbl |> write_rds(model_simstats_filepath, compress = "gz")
   } else {
 
     model_simstats_tbl <- read_rds(model_simstats_filepath)
@@ -464,11 +464,12 @@ run_model_assessment <- function(
       select(customer_id, sim_data) |>
       unnest(sim_data)
 
-    model_simdata_tbl |> write_rds(model_fit_simstats_filepath)
-
-  } else {
-    model_simdata_tbl <- read_rds(model_fit_simstats_filepath)
+    model_simdata_tbl |> write_rds(model_fit_simstats_filepath, compress = "gz")
   }
+
+  rm(model_simdata_tbl)
+
+
 
 
   ###
@@ -559,9 +560,7 @@ run_model_assessment <- function(
       select(customer_id, sim_data) |>
       unnest(sim_data)
 
-    model_simdata_tbl |> write_rds(model_valid_simstats_filepath)
-  } else {
-    model_simdata_tbl <- read_rds(model_valid_simstats_filepath)
+    model_simdata_tbl |> write_rds(model_valid_simstats_filepath, compress = "gz")
   }
 
   assessment_lst <- list(

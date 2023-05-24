@@ -307,11 +307,11 @@ We then use this compiled model with our data to produce a fit of the data.
 
 
 
-```{r fit_pnbd_fixed_stanmodel}
+```{r fit_pnbd_long_fixed1_stanmodel}
 #| echo: TRUE
 #| cache: TRUE
 
-stan_modelname <- "pnbd_long_fixed"
+stan_modelname <- "pnbd_long_fixed1"
 stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_seed   <- stanfit_seed + 1
 
@@ -340,7 +340,7 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_long_fixed1_stanfit$save_object(stanfit_object_file)
+  pnbd_long_fixed1_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
   pnbd_long_fixed1_stanfit <- read_rds(stanfit_object_file)
@@ -516,7 +516,7 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_long_fixed2_stanfit$save_object(stanfit_object_file)
+  pnbd_long_fixed2_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
   pnbd_long_fixed2_stanfit <- read_rds(stanfit_object_file)
@@ -687,7 +687,7 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_long_fixed3_stanfit$save_object(stanfit_object_file)
+  pnbd_long_fixed3_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
   pnbd_long_fixed3_stanfit <- read_rds(stanfit_object_file)
