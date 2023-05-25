@@ -2,11 +2,16 @@
 
 *.qmd
 *.html
+*.log
+*.R
 
 data/*
 precompute/*
+.git/*
 
+stan_code/*
 stan_models/*
+img/*
 
 *_cache/*
 *_files/*

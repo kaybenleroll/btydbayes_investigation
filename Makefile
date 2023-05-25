@@ -83,6 +83,11 @@ clean-models:
 docker-build-image: Dockerfile
 	docker build -t ${IMAGE_TAG} -f Dockerfile .
 
+docker-show-context:
+	docker build -f context.dockerfile -t context-image .
+	docker run --rm -it context-image find /tmp/build
+	docker rmi test:latest
+
 docker-run:
 	docker run --rm -d \
 	  -p ${RSTUDIO_PORT}:8787 \
