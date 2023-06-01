@@ -44,17 +44,19 @@ full_deps.dot:
 depgraph: full_deps.png
 
 
+exploring_shortsynth_data.html: generate_transaction_datasets.html
+exploring_longsynth_data.html: generate_transaction_datasets.html
 exploring_online_retail_transactions.html: retrieve_retail_data.html
+exploring_cdnow_dataset.html: retrieve_retail_data.html
+
+initial_pnbd_models.html: exploring_shortsynth_data.html
+construct_longsynth_fixed_pnbd_models.html: exploring_longsynth_data.html
 construct_onlineretail_fixed_pnbd_models.html: exploring_online_retail_transactions.html
+construct_cdnow_fixed_pnbd_models.html: exploring_cdnow_dataset.html
 
-initial_pnbd_models.html: generate_transaction_datasets.html
 
-construct_longsynth_fixed_pnbd_models.html: initial_pnbd_models.html
-construct_onlineretail_fixed_pnbd_models.html: exploring_online_retail_transactions.html \
-  initial_pnbd_models.html
 
-construct_cdnow_fixed_pnbd_models.html: exploring_cdnow_dataset.html \
-  initial_pnbd_models.html
+
 
 mrproper: clean-cache clean-data clean-html clean-precompute clean-models
 	rm -fv data/*.xlsx

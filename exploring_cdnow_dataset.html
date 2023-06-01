@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Mick Cooney mickcooney@gmail.com">
-<meta name="dcterms.date" content="2023-05-24">
+<meta name="dcterms.date" content="2023-05-25">
 
 <title>Exploring the CD-Now Transaction Dataset</title>
 <style>
@@ -2644,7 +2644,10 @@ vertical-align: -.125em;
   <li><a href="#datetime-variables-1" id="toc-datetime-variables-1" class="nav-link" data-scroll-target="#datetime-variables-1"><span class="toc-section-number">5.4</span>  Date/Time Variables</a></li>
   </ul></li>
   <li><a href="#custom-explorations" id="toc-custom-explorations" class="nav-link" data-scroll-target="#custom-explorations"><span class="toc-section-number">6</span>  Custom Explorations</a></li>
-  <li><a href="#output-cleaned-data" id="toc-output-cleaned-data" class="nav-link" data-scroll-target="#output-cleaned-data"><span class="toc-section-number">7</span>  Output Cleaned Data</a></li>
+  <li><a href="#load-and-construct-datasets" id="toc-load-and-construct-datasets" class="nav-link" data-scroll-target="#load-and-construct-datasets"><span class="toc-section-number">7</span>  Load and Construct Datasets</a>
+  <ul class="collapse">
+  <li><a href="#construct-datasets" id="toc-construct-datasets" class="nav-link" data-scroll-target="#construct-datasets"><span class="toc-section-number">7.1</span>  Construct Datasets</a></li>
+  </ul></li>
   <li><a href="#r-environment" id="toc-r-environment" class="nav-link" data-scroll-target="#r-environment"><span class="toc-section-number">8</span>  R Environment</a></li>
   </ul>
 </nav>
@@ -2672,7 +2675,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 24, 2023</p>
+      <p class="date">May 25, 2023</p>
     </div>
   </div>
   
@@ -3511,27 +3514,135 @@ $ total_tnx_count &lt;int&gt; 1, 2, 6, 4, 11, 1, 3, 8, 3, 1, 4, 1, 1, 1, 1, 4, 1
 </div>
 </div>
 </section>
-<section id="output-cleaned-data" class="level1" data-number="7">
-<h1 data-number="7"><span class="header-section-number">7</span> Output Cleaned Data</h1>
-<p>Finally we output the various datasets we have constructed to disks.</p>
+<section id="load-and-construct-datasets" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Load and Construct Datasets</h1>
+<p>We start by modelling the P/NBD model using our synthetic datasets before we try to model real-life data.</p>
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>customer_cohort_data_tbl <span class="sc">|&gt;</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_customer_cohort_data_tbl.rds&quot;</span>)</span>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>use_fit_start_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1997-01-01&quot;</span>)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>use_fit_end_date   <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1997-12-01&quot;</span>)</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="sc">|&gt;</span></span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">tnx_timestamp =</span> tnx_date) <span class="sc">|&gt;</span></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_transaction_data_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>use_valid_start_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1998-01-01&quot;</span>)</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>use_valid_end_date   <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1999-01-10&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>customer_transactions_tbl <span class="ot">&lt;-</span> data_tbl <span class="sc">|&gt;</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">tnx_timestamp =</span> tnx_date)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="construct-datasets" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="construct-datasets"><span class="header-section-number">7.1</span> Construct Datasets</h2>
+<p>Having loaded the synthetic data we need to construct a number of datasets of derived values.</p>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>customer_summarystats_tbl <span class="ot">&lt;-</span> customer_transactions_tbl <span class="sc">|&gt;</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(customer_id) <span class="sc">|&gt;</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate_transaction_cbs_data</span>(<span class="at">last_date =</span> use_fit_end_date <span class="sc">|&gt;</span> <span class="fu">as.POSIXct</span>())</span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>customer_summarystats_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 23,570
+Columns: 6
+$ customer_id    &lt;chr&gt; &quot;00001&quot;, &quot;00002&quot;, &quot;00003&quot;, &quot;00004&quot;, &quot;00005&quot;, &quot;00006&quot;, &quot;…
+$ first_tnx_date &lt;date&gt; 1997-01-01, 1997-01-12, 1997-01-02, 1997-01-01, 1997-0…
+$ last_tnx_date  &lt;date&gt; 1997-01-01, 1997-01-12, 1997-11-25, 1997-08-02, 1997-0…
+$ x              &lt;dbl&gt; 0, 1, 4, 2, 7, 0, 1, 5, 1, 0, 2, 0, 0, 0, 0, 3, 0, 0, 1…
+$ t_x            &lt;dbl&gt; 0.000000, 0.000000, 46.714286, 30.428571, 36.714286, 0.…
+$ T_cal          &lt;dbl&gt; 47.71429, 46.14286, 47.57143, 47.71429, 47.71429, 47.71…</code></pre>
+</div>
+</div>
+<p>As before, we construct a number of subsets of the data for use later on with the modelling and create some data subsets.</p>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>customer_fit_stats_tbl <span class="ot">&lt;-</span> customer_summarystats_tbl</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>customer_fit_stats_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 23,570
+Columns: 6
+$ customer_id    &lt;chr&gt; &quot;00001&quot;, &quot;00002&quot;, &quot;00003&quot;, &quot;00004&quot;, &quot;00005&quot;, &quot;00006&quot;, &quot;…
+$ first_tnx_date &lt;date&gt; 1997-01-01, 1997-01-12, 1997-01-02, 1997-01-01, 1997-0…
+$ last_tnx_date  &lt;date&gt; 1997-01-01, 1997-01-12, 1997-11-25, 1997-08-02, 1997-0…
+$ x              &lt;dbl&gt; 0, 1, 4, 2, 7, 0, 1, 5, 1, 0, 2, 0, 0, 0, 0, 3, 0, 0, 1…
+$ t_x            &lt;dbl&gt; 0.000000, 0.000000, 46.714286, 30.428571, 36.714286, 0.…
+$ T_cal          &lt;dbl&gt; 47.71429, 46.14286, 47.57143, 47.71429, 47.71429, 47.71…</code></pre>
+</div>
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>customer_valid_stats_tbl <span class="ot">&lt;-</span> customer_transactions_tbl <span class="sc">|&gt;</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(customer_id) <span class="sc">|&gt;</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a>    tnx_timestamp <span class="sc">&gt;</span> (use_valid_start_date <span class="sc">|&gt;</span> <span class="fu">as.POSIXct</span>())</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">tnx_count =</span> <span class="fu">n</span>(),</span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">tnx_last_interval =</span> <span class="fu">difftime</span>(</span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>        <span class="fu">max</span>(tnx_timestamp),</span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>        use_valid_start_date,</span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">units =</span> <span class="st">&quot;weeks&quot;</span></span>
+<span id="cb56-12"><a href="#cb56-12" aria-hidden="true" tabindex="-1"></a>        ) <span class="sc">|&gt;</span></span>
+<span id="cb56-13"><a href="#cb56-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">as.numeric</span>(),</span>
+<span id="cb56-14"><a href="#cb56-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-15"><a href="#cb56-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">.by =</span> customer_id</span>
+<span id="cb56-16"><a href="#cb56-16" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb56-17"><a href="#cb56-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-18"><a href="#cb56-18" aria-hidden="true" tabindex="-1"></a>customer_valid_stats_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,360
+Columns: 3
+$ customer_id       &lt;chr&gt; &quot;00003&quot;, &quot;00005&quot;, &quot;00007&quot;, &quot;00008&quot;, &quot;00009&quot;, &quot;00011&quot;…
+$ tnx_count         &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 4, 1, 3, 1, 4, 1, 2, 4, 1, 5, 4…
+$ tnx_last_interval &lt;dbl&gt; 21.0000000, 0.2857143, 11.4285714, 12.4285714, 22.57…</code></pre>
+</div>
+</div>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>obs_fitdata_tbl <span class="ot">&lt;-</span> customer_fit_stats_tbl <span class="sc">|&gt;</span></span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">tnx_count =</span> x)</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb58-5"><a href="#cb58-5" aria-hidden="true" tabindex="-1"></a><span class="do">### We need to add all the zero count customers into the valid data</span></span>
+<span id="cb58-6"><a href="#cb58-6" aria-hidden="true" tabindex="-1"></a>obs_validdata_tbl <span class="ot">&lt;-</span> customer_fit_stats_tbl <span class="sc">|&gt;</span></span>
+<span id="cb58-7"><a href="#cb58-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(customer_valid_stats_tbl, <span class="at">by =</span> <span class="st">&quot;customer_id&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb58-8"><a href="#cb58-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(customer_id, <span class="at">tnx_count =</span> <span class="dv">0</span>) <span class="sc">|&gt;</span></span>
+<span id="cb58-9"><a href="#cb58-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(customer_valid_stats_tbl) <span class="sc">|&gt;</span></span>
+<span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(customer_id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>We then write this data to disk.</p>
+<div class="cell">
+<details>
+<summary>Show code</summary>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="co">#! echo: TRUE</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>customer_cohort_data_tbl <span class="sc">|&gt;</span></span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_customer_cohort_data_tbl.rds&quot;</span>)</span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="sc">|&gt;</span></span>
+<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">tnx_timestamp =</span> tnx_date) <span class="sc">|&gt;</span></span>
+<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_transaction_data_tbl.rds&quot;</span>)</span>
+<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a>obs_fitdata_tbl   <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_obs_fitdata_tbl.rds&quot;</span>)</span>
+<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>obs_validdata_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_obs_validdata_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
 </section>
 <section id="r-environment" class="level1" data-number="8">
 <h1 data-number="8"><span class="header-section-number">8</span> R Environment</h1>
 <div class="cell">
 <details>
 <summary>Show code</summary>
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>─ Session info ───────────────────────────────────────────────────────────────
@@ -3544,8 +3655,8 @@ $ total_tnx_count &lt;int&gt; 1, 2, 6, 4, 11, 1, 3, 8, 3, 1, 4, 1, 1, 1, 1, 4, 1
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-05-24
- pandoc   2.19.2 @ /usr/lib/rstudio-server/bin/quarto/bin/tools/ (via rmarkdown)
+ date     2023-05-25
+ pandoc   2.19.2 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package      * version date (UTC) lib source
@@ -3591,7 +3702,6 @@ $ total_tnx_count &lt;int&gt; 1, 2, 6, 4, 11, 1, 3, 8, 3, 1, 4, 1, 1, 1, 1, 4, 1
  readr        * 2.1.4   2023-02-10 [1] RSPM (R 4.2.0)
  rlang        * 1.1.0   2023-03-14 [1] RSPM (R 4.2.0)
  rmarkdown      2.21    2023-03-26 [1] RSPM (R 4.2.0)
- rstudioapi     0.14    2022-08-22 [1] RSPM (R 4.2.0)
  scales       * 1.2.1   2022-08-20 [1] RSPM (R 4.2.0)
  sessioninfo    1.2.2   2021-12-06 [1] RSPM (R 4.2.0)
  snakecase    * 0.11.0  2019-05-25 [1] RSPM (R 4.2.0)
