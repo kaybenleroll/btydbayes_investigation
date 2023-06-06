@@ -133,7 +133,6 @@ ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
 ```
 
 
-
 ## Construct Datasets
 
 Having loaded the synthetic data we need to construct a number of datasets of
@@ -980,19 +979,19 @@ calculate_simulation_statistics <- function(file_rds) {
 ```{r load_model_assessment_data}
 #| echo: TRUE
 
-obs_fit_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
-  nrow()
-
-obs_valid_customer_count <- customer_valid_stats_tbl |>
+obs_fit_customer_count <- obs_fitdata_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-obs_fit_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
+obs_valid_customer_count <- obs_validdata_tbl |>
+  filter(tnx_count > 0) |>
+  nrow()
+
+obs_fit_total_count <- obs_fitdata_tbl |>
+  pull(tnx_count) |>
   sum()
 
-obs_valid_total_count <- customer_valid_stats_tbl |>
+obs_valid_total_count <- obs_validdata_tbl |>
   pull(tnx_count) |>
   sum()
 
@@ -1004,9 +1003,6 @@ obs_stats_tbl <- tribble(
   "valid",      "simtnx_count",      obs_valid_total_count
   )
 
-
-
-
 model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_.*_assess") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
@@ -1014,8 +1010,22 @@ model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_.*_assess") |>
     model_label = str_replace(file_path, "data/pnbd_onlineretail_(.*?)_assess_.*", "\\1"),
     assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
     
-    sim_data = map(file_path, calculate_simulation_statistics)
+    sim_data = map(
+      file_path, calculate_simulation_statistics,
+      
+      .progress = "calculate_simulation_statistics"
+      )
     )
+
+model_assess_tbl |> glimpse()
+```
+
+We have now constructed the simulation summary statistics and now reshape our
+data to aid in our model assessment.
+
+
+```{r calculate_model_assess_summary_stats}
+#| echo: TRUE
 
 model_assess_summstat_tbl <- model_assess_tbl |>
   select(model_label, assess_type, sim_data) |>
@@ -1034,7 +1044,13 @@ model_assess_summstat_tbl <- model_assess_tbl |>
     p75 = quantile(value, 0.75),
     p90 = quantile(value, 0.90)
     )
+
+model_assess_summstat_tbl |> glimpse()
 ```
+
+
+We now use this data to construct model comparison plots for the different
+models we have fit.
 
 
 ```{r construct_model_comparison_plot}
