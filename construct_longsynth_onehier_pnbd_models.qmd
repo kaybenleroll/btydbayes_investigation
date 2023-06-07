@@ -115,19 +115,6 @@ customer_transactions_tbl |> glimpse()
 
 ## Load Derived Data
 
-<<<<<<< Updated upstream
-```{r write_data_disk}
-#| echo: TRUE
-
-id_1000  <- read_rds("data/longframe_id_1000.rds")
-id_5000  <- read_rds("data/longframe_id_5000.rds")
-id_10000 <- read_rds("data/longframe_id_10000.rds")
-
-fit_1000_data_tbl  <- read_rds("data/fit_1000_longframe_data_tbl.rds")
-fit_10000_data_tbl <- read_rds("data/fit_10000_longframe_data_tbl.rds")
-
-customer_summarystats_tbl <- read_rds("data/customer_summarystats_longframe_tbl.rds")
-=======
 ```{r load_modelling_data}
 #| echo: TRUE
 
@@ -140,15 +127,12 @@ fit_10000_data_tbl <- read_rds("data/longsynth_fit_10000_data_tbl.rds")
 
 customer_fit_stats_tbl    <- fit_1000_data_tbl
 customer_summarystats_tbl <- read_rds("data/longsynth_customer_summarystats_tbl.rds")
->>>>>>> Stashed changes
 
 obs_fitdata_tbl   <- read_rds("data/longsynth_obs_fitdata_tbl.rds")
 obs_validdata_tbl <- read_rds("data/longsynth_obs_validdata_tbl.rds")
 ```
 
 
-<<<<<<< Updated upstream
-=======
 Finally, we need to set our directories where we save our Stan code and the
 model outputs.
 
@@ -160,7 +144,6 @@ stan_codedir  <-   "stan_code"
 ```
 
 
->>>>>>> Stashed changes
 
 # Fit First Hierarchical Lambda Model
 
@@ -193,7 +176,6 @@ We then use this compiled model with our data to produce a fit of the data.
 
 ```{r fit_pnbd_long_onehierlambda1_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_long_onehierlambda1"
 stanfit_prefix <- str_c("fit_", stan_modelname)
@@ -256,6 +238,7 @@ few different visualisations of the diagnostics.
 #| echo: TRUE
 
 parameter_subset <- c(
+  "lambda_mn",
   "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
   "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
   )
@@ -379,7 +362,6 @@ We now want to fit the model to our data using this alternative prior for `lambd
 
 ```{r fit_pnbd_long_onehierlambda2_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_long_onehierlambda2"
 stanfit_prefix <- str_c("fit_", stan_modelname)
@@ -442,6 +424,7 @@ few different visualisations of the diagnostics.
 #| echo: TRUE
 
 parameter_subset <- c(
+  "lambda_mn",
   "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
   "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
   )
@@ -576,7 +559,6 @@ We then use this compiled model with our data to produce a fit of the data.
 
 ```{r fit_pnbd_long_onehiermu1_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_long_onehiermu1"
 stanfit_prefix <- str_c("fit_", stan_modelname)
@@ -588,13 +570,14 @@ stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
   compose_data(
-    hier_lambda_mn_p1 = 0.50,
-    hier_lambda_mn_p2 = 1,
+    hier_mu_mn_p1 = 0.50,
+    hier_mu_mn_p2 = 1.00,
 
-    lambda_cv = 1.00,
-    
-    mu_mn     = 0.10,
-    mu_cv     = 1.00,
+    lambda_mn     = 0.25,
+    lambda_cv     = 1.00,
+
+    mu_cv         = 1.00
+
     )
 
 if(!file_exists(stanfit_object_file)) {
@@ -639,6 +622,7 @@ few different visualisations of the diagnostics.
 #| echo: TRUE
 
 parameter_subset <- c(
+  "mu_mn",
   "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
   "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
   )
@@ -683,7 +667,7 @@ pnbd_long_onehiermu1_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_onehiermu1_stanfit,
   insample_tbl     = customer_fit_stats_tbl,
   outsample_tbl    = customer_valid_stats_tbl,
-  fit_label        = "pnbd_long_onehierlambda2",
+  fit_label        = "pnbd_long_onehiermu1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
@@ -758,7 +742,6 @@ We now want to fit the model to our data using this alternative prior for `lambd
 
 ```{r fit_pnbd_long_onehiermu2_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_long_onehiermu2"
 stanfit_prefix <- str_c("fit_", stan_modelname)
@@ -770,13 +753,13 @@ stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
   compose_data(
-    hier_lambda_mn_p1 = 0.50,
-    hier_lambda_mn_p2 = 1,
+    hier_mu_mn_p1 = 0.25,
+    hier_mu_mn_p2 = 1.00,
 
-    lambda_cv = 1.00,
-    
-    mu_mn     = 0.10,
-    mu_cv     = 1.00,
+    lambda_mn     = 0.25,
+    lambda_cv     = 1.00,
+
+    mu_cv         = 1.00
     )
 
 if(!file_exists(stanfit_object_file)) {
@@ -821,11 +804,12 @@ few different visualisations of the diagnostics.
 #| echo: TRUE
 
 parameter_subset <- c(
+  "mu_mn",
   "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
   "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
   )
 
-pnbd_long_onehierlambda2_stanfit$draws(inc_warmup = FALSE) |>
+pnbd_long_onehiermu2_stanfit$draws(inc_warmup = FALSE) |>
   mcmc_trace(pars = parameter_subset) +
   expand_limits(y = 0) +
   labs(
@@ -985,14 +969,18 @@ obs_stats_tbl <- tribble(
 
 
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_one.*_assess") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(
     model_label = str_replace(file_path, "data/pnbd_long_(onehier.*?)_assess_.*", "\\1"),
     assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
     
-    sim_data = map(file_path, calculate_simulation_statistics)
+    sim_data = map(
+      file_path, calculate_simulation_statistics,
+      
+      .progress = "calculate_simulation_statistics"
+      )
     )
 
 model_assess_summstat_tbl <- model_assess_tbl |>

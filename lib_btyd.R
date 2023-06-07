@@ -465,9 +465,10 @@ run_model_assessment <- function(
       unnest(sim_data)
 
     model_simdata_tbl |> write_rds(model_fit_simstats_filepath, compress = "gz")
+
+    rm(model_simdata_tbl)
   }
 
-  rm(model_simdata_tbl)
 
 
 
@@ -561,6 +562,8 @@ run_model_assessment <- function(
       unnest(sim_data)
 
     model_simdata_tbl |> write_rds(model_valid_simstats_filepath, compress = "gz")
+
+    rm(model_simdata_tbl)
   }
 
   assessment_lst <- list(

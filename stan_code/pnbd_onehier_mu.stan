@@ -12,7 +12,7 @@ data {
   real<lower=0> hier_mu_mn_p1; // p1 for mu_mn hierarchical prior
   real<lower=0> hier_mu_mn_p2; // p2 for mu_mn hierarchical prior
 
-  real<lower=0> lambda_mu;     // prior cv   for lambda
+  real<lower=0> lambda_mn;     // prior cv   for lambda
   real<lower=0> lambda_cv;     // prior mean for mu
 
   real<lower=0> mu_cv;      // prior mean for mu
