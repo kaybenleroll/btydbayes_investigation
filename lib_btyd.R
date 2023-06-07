@@ -395,7 +395,7 @@ run_model_assessment <- function(
       tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
       tnx_cv     = 1       ###
       ) |>
-    group_nest(customer_id, .key = "cust_params") |>
+    group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
     mutate(
       sim_file = glue(
         "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
@@ -468,9 +468,6 @@ run_model_assessment <- function(
 
     rm(model_simdata_tbl)
   }
-
-
-
 
 
   ###

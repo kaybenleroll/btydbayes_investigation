@@ -917,7 +917,7 @@ As for our short time frame data, overall our model is working well.
 We have looked at each of the models individually, but it is also worth looking
 at each of the models as a group.
 
-```{r calculate_simulation_statistics}
+```{r calculate_simulation_statistics} 
 #| echo: TRUE
 
 calculate_simulation_statistics <- function(file_rds) {
@@ -942,21 +942,22 @@ calculate_simulation_statistics <- function(file_rds) {
 ```{r load_model_assessment_data}
 #| echo: TRUE
 
-obs_fit_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
-  nrow()
-
-obs_valid_customer_count <- customer_valid_stats_tbl |>
+obs_fit_customer_count <- obs_fitdata_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-obs_fit_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
-  sum()
+obs_valid_customer_count <- obs_validdata_tbl |>
+  filter(tnx_count > 0) |>
+  nrow()
 
-obs_valid_total_count <- customer_valid_stats_tbl |>
+obs_fit_total_count <- obs_fitdata_tbl |>
   pull(tnx_count) |>
   sum()
+
+obs_valid_total_count <- obs_validdata_tbl |>
+  pull(tnx_count) |>
+  sum()
+
 
 obs_stats_tbl <- tribble(
   ~assess_type, ~name,               ~obs_value,
@@ -965,8 +966,6 @@ obs_stats_tbl <- tribble(
   "valid",      "multicust_count",   obs_valid_customer_count,
   "valid",      "simtnx_count",      obs_valid_total_count
   )
-
-
 
 
 model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_one.*_assess") |>
@@ -982,6 +981,14 @@ model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_one.*_assess") |>
       .progress = "calculate_simulation_statistics"
       )
     )
+
+model_assess_tbl |> glimpse()
+```
+
+
+
+```{r construct_model_assessment_summary_stats}
+#| echo: TRUE
 
 model_assess_summstat_tbl <- model_assess_tbl |>
   select(model_label, assess_type, sim_data) |>
@@ -1000,6 +1007,8 @@ model_assess_summstat_tbl <- model_assess_tbl |>
     p75 = quantile(value, 0.75),
     p90 = quantile(value, 0.90)
     )
+
+model_assess_summstat_tbl |> glimpse()
 ```
 
 

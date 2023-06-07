@@ -1214,7 +1214,7 @@ ts_data_tbl <- list(
   bind_rows(.id = "series") |>
   arrange(series, period_date)
 
-ts_data_tbl |> write_rds("data/retail_timeseries_tbl.rds")
+ts_data_tbl |> glimpse()
 ```
 
 
@@ -1971,6 +1971,95 @@ cohort_dropout_est_tbl |> datatable()
 ```
 
 
+# Construct BTYD Datasets
+
+We start by modelling the P/NBD model using our synthetic datasets before we
+try to model real-life data.
+
+```{r set_start_end_dates}
+use_fit_start_date <- as.Date("2009-12-01")
+use_fit_end_date   <- as.Date("2010-12-01")
+
+use_valid_start_date <- as.Date("2010-12-01")
+use_valid_end_date   <- as.Date("2012-12-10")
+```
+
+
+
+## Load Online Retail Transaction Data
+
+We now want to load the online retail transaction data.
+
+
+```{r load_online_retail_transaction_data}
+#| echo: TRUE
+
+customer_cohortdata_tbl   <- customer_cohort_tbl
+customer_transactions_tbl <- customer_tnx_data_tbl
+```
+
+
+
+## Construct Datasets
+
+Having loaded the synthetic data we need to construct a number of datasets of
+derived values.
+
+```{r construct_summary_stats_data}
+#| echo: TRUE
+
+customer_summarystats_tbl <- customer_transactions_tbl |>
+  drop_na(customer_id) |>
+  calculate_transaction_cbs_data(last_date = use_fit_end_date |> as.POSIXct())
+
+customer_summarystats_tbl |> glimpse()
+```
+
+As before, we construct a number of subsets of the data for use later on with
+the modelling and create some data subsets.
+
+
+```{r select_fit_dataset}
+customer_fit_stats_tbl <- customer_summarystats_tbl
+customer_fit_stats_tbl |> glimpse()
+
+
+customer_valid_stats_tbl <- customer_transactions_tbl |>
+  drop_na(customer_id) |>
+  filter(
+    tnx_timestamp > (use_valid_start_date |> as.POSIXct())
+    ) |>
+  summarise(
+    tnx_count = n(),
+    tnx_last_interval = difftime(
+        max(tnx_timestamp),
+        use_valid_start_date,
+        units = "weeks"
+        ) |>
+      as.numeric(),
+
+    .by = customer_id
+    )
+
+customer_valid_stats_tbl |> glimpse()
+```
+
+
+```{r construct_fit_valid_datasets}
+#| echo: TRUE
+
+obs_fitdata_tbl <- customer_fit_stats_tbl |>
+  rename(tnx_count = x)
+  
+
+### We need to add all the zero count customers into the valid data
+obs_validdata_tbl <- customer_fit_stats_tbl |>
+  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
+  transmute(customer_id, tnx_count = 0) |>
+  bind_rows(customer_valid_stats_tbl) |>
+  arrange(customer_id)
+```
+
 
 # Output Cleaned Data
 
@@ -1980,14 +2069,21 @@ Finally we output the various datasets we have constructed to disks.
 ```{r write_to_disk}
 #| echo: TRUE
 
-stock_description_tbl   |> write_rds("data/onlineretail_stock_description_tbl.rds")
-returns_lookup_tbl      |> write_rds("data/onlineretail_returns_lookup_tbl.rds")
-cleaned_data_tbl        |> write_rds("data/onlineretail_cleaned_tbl.rds")
-customer_cohort_tbl     |> write_rds("data/onlineretail_cohort_tbl.rds")
-customer_tnx_data_tbl   |> write_rds("data/onlineretail_transactions_tbl.rds")
-daily_spend_invoice_tbl |> write_rds("data/onlineretail_invoice_cleaned_tbl.rds")
-daily_spend_tbl         |> write_rds("data/onlineretail_daily_spend_tbl.rds")
+customer_summarystats_tbl |> write_rds("data/onlineretail_customer_summarystats_tbl.rds")
+
+ts_data_tbl               |> write_rds("data/onlineretail_timeseries_tbl.rds")
+stock_description_tbl     |> write_rds("data/onlineretail_stock_description_tbl.rds")
+returns_lookup_tbl        |> write_rds("data/onlineretail_returns_lookup_tbl.rds")
+cleaned_data_tbl          |> write_rds("data/onlineretail_cleaned_tbl.rds")
+customer_cohort_tbl       |> write_rds("data/onlineretail_cohort_tbl.rds")
+customer_tnx_data_tbl     |> write_rds("data/onlineretail_transactions_tbl.rds")
+daily_spend_invoice_tbl   |> write_rds("data/onlineretail_invoice_cleaned_tbl.rds")
+daily_spend_tbl           |> write_rds("data/onlineretail_daily_spend_tbl.rds")
+
+obs_fitdata_tbl           |> write_rds("data/onlineretail_obs_fitdata_tbl.rds")
+obs_validdata_tbl         |> write_rds("data/onlineretail_obs_validdata_tbl.rds")
 ```
+
 
 
 # R Environment

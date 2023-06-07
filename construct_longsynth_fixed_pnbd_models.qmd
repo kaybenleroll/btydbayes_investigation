@@ -111,102 +111,32 @@ customer_transactions_tbl |> glimpse()
 ```
 
 
-We re-produce the visualisation of the transaction times we used in previous
-workbooks.
+## Load Derived Datasets
 
-```{r plot_customer_transaction_times}
+```{r write_data_disk}
 #| echo: TRUE
 
-plot_tbl <- customer_transactions_tbl |>
-  group_nest(customer_id, .key = "cust_data") |>
-  filter(map_int(cust_data, nrow) > 3) |>
-  slice_sample(n = 30) |>
-  unnest(cust_data)
+id_1000  <- read_rds("data/longsynth_id_1000.rds")
+id_5000  <- read_rds("data/longsynth_id_5000.rds")
+id_10000 <- read_rds("data/longsynth_id_10000.rds")
 
-ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
-  geom_line() +
-  geom_point() +
-  labs(
-      x = "Date",
-      y = "Customer ID",
-      title = "Visualisation of Customer Transaction Times"
-    ) +
-  theme(axis.text.y = element_text(size = 10))
+fit_1000_data_tbl  <- read_rds("data/longsynth_fit_1000_data_tbl.rds")
+fit_10000_data_tbl <- read_rds("data/longsynth_fit_10000_data_tbl.rds")
+
+customer_fit_stats_tbl    <- fit_1000_data_tbl
+customer_summarystats_tbl <- read_rds("data/longsynth_customer_summarystats_tbl.rds")
+
+obs_fitdata_tbl   <- read_rds("data/longsynth_obs_fitdata_tbl.rds")
+obs_validdata_tbl <- read_rds("data/longsynth_obs_validdata_tbl.rds")
 ```
 
 
 
-## Construct Datasets
+# Fit First P/NBD Model
 
-Having loaded the synthetic data we need to construct a number of datasets of
-derived values.
+We need to set up a number of workbook parameters, such as some directories
+for the Stan model.
 
-```{r construct_summary_stats_data}
-#| echo: TRUE
-
-customer_summarystats_tbl <- customer_transactions_tbl |>
-  calculate_transaction_cbs_data(last_date = use_fit_end_date)
-
-customer_summarystats_tbl |> glimpse()
-```
-
-As before, we construct a number of subsets of the data for use later on with
-the modelling and create some data subsets.
-
-
-```{r construct_data_subset_id}
-#| echo: TRUE
-
-shuffle_tbl <- customer_summarystats_tbl |>
-  slice_sample(prop = 1, replace = FALSE)
-
-id_50    <- shuffle_tbl |> head(50)    |> pull(customer_id) |> sort() 
-id_1000  <- shuffle_tbl |> head(1000)  |> pull(customer_id) |> sort()
-id_5000  <- shuffle_tbl |> head(5000)  |> pull(customer_id) |> sort()
-id_10000 <- shuffle_tbl |> head(10000) |> pull(customer_id) |> sort()
-```
-
-We then construct some fit data based on these values.
-
-```{r construct_fit_subset_data}
-#| echo: TRUE
-
-fit_1000_data_tbl  <- customer_summarystats_tbl |> filter(customer_id %in% id_1000)
-fit_1000_data_tbl |> glimpse()
-
-fit_10000_data_tbl <- customer_summarystats_tbl |> filter(customer_id %in% id_10000)
-fit_10000_data_tbl |> glimpse()
-```
-
-
-Finally, we also want to recreate our transaction visualisation for the first
-50 customers randomly selected.
-
-```{r plot_customer_transaction_times_first50}
-#| echo: TRUE
-
-plot_tbl <- customer_transactions_tbl |>
-  filter(customer_id %in% id_50)
-
-ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
-  geom_line() +
-  geom_point() +
-  labs(
-      x = "Date",
-      y = "Customer ID",
-      title = "Visualisation of Customer Transaction Times"
-    ) +
-  theme(axis.text.y = element_text(size = 10))
-```
-
-
-
-
-We now construct our Stan model and prepare to fit it with our synthetic
-dataset.
-
-Before we start on that, we set a few parameters for the workbook to organise
-our Stan code.
 
 ```{r setup_workbook_parameters}
 #| echo: TRUE
@@ -215,75 +145,6 @@ stan_modeldir <- "stan_models"
 stan_codedir  <-   "stan_code"
 ```
 
-We also want to set a number of overall parameters for this workbook
-
-To start the fit data, we want to use the 1,000 customers. We also need to
-calculate the summary statistics for the validation period.
-
-```{r select_fit_dataset}
-customer_fit_stats_tbl <- fit_1000_data_tbl
-customer_fit_stats_tbl |> glimpse()
-
-
-customer_valid_stats_tbl <- customer_transactions_tbl |>
-  filter(
-    customer_id %in% id_1000,
-    tnx_timestamp > use_valid_start_date
-    ) |>
-  summarise(
-    tnx_count = n(),
-    tnx_last_interval = difftime(
-        use_valid_end_date,
-        max(tnx_timestamp),
-        units = "weeks"
-        ) |>
-      as.numeric(),
-
-    .by = customer_id
-    )
-
-customer_valid_stats_tbl |> glimpse()
-```
-
-
-
-## Write Data
-
-```{r write_data_disk}
-#| echo: TRUE
-
-id_1000  |> write_rds("data/longframe_id_1000.rds")
-id_5000  |> write_rds("data/longframe_id_5000.rds")
-id_10000 |> write_rds("data/longframe_id_10000.rds")
-
-fit_1000_data_tbl  |> write_rds("data/fit_1000_longframe_data_tbl.rds")
-fit_10000_data_tbl |> write_rds("data/fit_10000_longframe_data_tbl.rds")
-
-customer_summarystats_tbl |> write_rds("data/customer_summarystats_longframe_tbl.rds")
-```
-
-Now we want to save this data to disk if we want to use it again.
-
-```{r construct_fit_valid_datasets}
-#| echo: TRUE
-
-obs_fitdata_tbl <- customer_fit_stats_tbl |>
-  rename(tnx_count = x)
-  
-### We need to add all the zero count customers into the valid data
-obs_validdata_tbl <- customer_fit_stats_tbl |>
-  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
-  transmute(customer_id, tnx_count = 0) |>
-  bind_rows(customer_valid_stats_tbl) |>
-  arrange(customer_id)
-
-
-obs_fitdata_tbl   |> write_rds("data/longsynth_obs_fitdata_tbl.rds")
-obs_validdata_tbl |> write_rds("data/longsynth_obs_validdata_tbl.rds")
-```
-
-
-# Fit First P/NBD Model
 
 
 ## Compile and Fit Stan Model
@@ -849,19 +710,19 @@ calculate_simulation_statistics <- function(file_rds) {
 ```{r load_model_assessment_data}
 #| echo: TRUE
 
-obs_fit_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
-  nrow()
-
-obs_valid_customer_count <- customer_valid_stats_tbl |>
+obs_fit_customer_count <- obs_fitdata_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-obs_fit_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
+obs_valid_customer_count <- obs_validdata_tbl |>
+  filter(tnx_count > 0) |>
+  nrow()
+
+obs_fit_total_count <- obs_fitdata_tbl |>
+  pull(tnx_count) |>
   sum()
 
-obs_valid_total_count <- customer_valid_stats_tbl |>
+obs_valid_total_count <- obs_validdata_tbl |>
   pull(tnx_count) |>
   sum()
 
@@ -873,18 +734,27 @@ obs_stats_tbl <- tribble(
   "valid",      "simtnx_count",      obs_valid_total_count
   )
 
-
-
-
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_fixed.*_assess") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(
     model_label = str_replace(file_path, "data/pnbd_long_(fixed.*?)_assess_.*", "\\1"),
     assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
     
-    sim_data = map(file_path, calculate_simulation_statistics)
+    sim_data = map(
+      file_path, calculate_simulation_statistics,
+      
+      .progress = "calculate_simulation_statistics"
+      )
     )
+
+model_assess_tbl |> glimpse()
+```
+
+
+
+```{r construct_model_assessment_summary_stats}
+#| echo: TRUE
 
 model_assess_summstat_tbl <- model_assess_tbl |>
   select(model_label, assess_type, sim_data) |>
@@ -903,6 +773,8 @@ model_assess_summstat_tbl <- model_assess_tbl |>
     p75 = quantile(value, 0.75),
     p90 = quantile(value, 0.90)
     )
+
+model_assess_summstat_tbl |> glimpse()
 ```
 
 

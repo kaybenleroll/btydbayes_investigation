@@ -831,13 +831,93 @@ customer_cohort_data_tbl |> glimpse()
 ```
 
 
-# Output Cleaned Data
+# Load and Construct Datasets
 
-Finally we output the various datasets we have constructed to disks.
+We start by modelling the P/NBD model using our synthetic datasets before we
+try to model real-life data.
+
+```{r set_start_end_dates}
+#| echo: true
+
+use_fit_start_date <- as.Date("1997-01-01")
+use_fit_end_date   <- as.Date("1997-12-01")
+
+use_valid_start_date <- as.Date("1998-01-01")
+use_valid_end_date   <- as.Date("1999-01-10")
+```
 
 
-```{r write_to_disk}
+```{r setup_customer_transactions}
+#| echo: true
+
+customer_transactions_tbl <- data_tbl |>
+  rename(tnx_timestamp = tnx_date)
+```
+
+## Construct Datasets
+
+Having loaded the synthetic data we need to construct a number of datasets of
+derived values.
+
+```{r construct_summary_stats_data}
 #| echo: TRUE
+
+customer_summarystats_tbl <- customer_transactions_tbl |>
+  drop_na(customer_id) |>
+  calculate_transaction_cbs_data(last_date = use_fit_end_date |> as.POSIXct())
+
+customer_summarystats_tbl |> glimpse()
+```
+
+As before, we construct a number of subsets of the data for use later on with
+the modelling and create some data subsets.
+
+
+```{r select_fit_dataset}
+customer_fit_stats_tbl <- customer_summarystats_tbl
+customer_fit_stats_tbl |> glimpse()
+
+
+customer_valid_stats_tbl <- customer_transactions_tbl |>
+  drop_na(customer_id) |>
+  filter(
+    tnx_timestamp > (use_valid_start_date |> as.POSIXct())
+    ) |>
+  summarise(
+    tnx_count = n(),
+    tnx_last_interval = difftime(
+        max(tnx_timestamp),
+        use_valid_start_date,
+        units = "weeks"
+        ) |>
+      as.numeric(),
+
+    .by = customer_id
+    )
+
+customer_valid_stats_tbl |> glimpse()
+```
+
+
+```{r construct_fit_valid_datasets}
+#| echo: TRUE
+
+obs_fitdata_tbl <- customer_fit_stats_tbl |>
+  rename(tnx_count = x)
+  
+
+### We need to add all the zero count customers into the valid data
+obs_validdata_tbl <- customer_fit_stats_tbl |>
+  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
+  transmute(customer_id, tnx_count = 0) |>
+  bind_rows(customer_valid_stats_tbl) |>
+  arrange(customer_id)
+```
+
+We then write this data to disk.
+
+```{r write_fit_valid_data_to_disk}
+#! echo: TRUE
 
 customer_cohort_data_tbl |>
   write_rds("data/cdnow_customer_cohort_data_tbl.rds")
@@ -845,6 +925,9 @@ customer_cohort_data_tbl |>
 data_tbl |>
   rename(tnx_timestamp = tnx_date) |>
   write_rds("data/cdnow_transaction_data_tbl.rds")
+
+obs_fitdata_tbl   |> write_rds("data/cdnow_obs_fitdata_tbl.rds")
+obs_validdata_tbl |> write_rds("data/cdnow_obs_validdata_tbl.rds")
 ```
 
 

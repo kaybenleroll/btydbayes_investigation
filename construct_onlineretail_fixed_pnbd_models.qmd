@@ -72,10 +72,9 @@ theme_set(theme_cowplot())
 plan(multisession)
 ```
 
-In this workbook we construct the non-hierarchical P/NBD models on the
+
+In this workbook we construct our first hierarchical P/NBD models on the
 synthetic data with the longer timeframe.
-
-
 
 
 # Load and Construct Datasets
@@ -84,21 +83,21 @@ We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
 ```{r set_start_end_dates}
-use_fit_start_date <- as.Date("2009-12-01")
-use_fit_end_date   <- as.Date("2010-12-01")
+use_fit_start_date <- as.Date("2010-01-01")
+use_fit_end_date   <- as.Date("2022-01-01")
 
-use_valid_start_date <- as.Date("2010-12-01")
-use_valid_end_date   <- as.Date("2012-12-10")
+use_valid_start_date <- as.Date("2022-01-01")
+use_valid_end_date   <- as.Date("2023-01-01")
 ```
 
 
 
-## Load Online Retail Transaction Data
+## Load Online Retail Data
 
-We now want to load the online retail transaction data.
+We now want to load the short time-frame synthetic data.
 
 
-```{r load_online_retail_transaction_data}
+```{r load_longframe_synthetic_data}
 #| echo: TRUE
 
 customer_cohortdata_tbl <- read_rds("data/onlineretail_cohort_tbl.rds")
@@ -109,98 +108,21 @@ customer_transactions_tbl |> glimpse()
 ```
 
 
-We re-produce the visualisation of the transaction times we used in previous
-workbooks.
 
-```{r plot_customer_transaction_times}
+
+## Load Derived Data
+
+```{r write_data_disk}
 #| echo: TRUE
+customer_summarystats_tbl <- read_rds("data/onlineretail_customer_summarystats_tbl.rds")
 
-plot_tbl <- customer_transactions_tbl |>
-  group_nest(customer_id, .key = "cust_data") |>
-  filter(map_int(cust_data, nrow) > 3) |>
-  slice_sample(n = 30) |>
-  unnest(cust_data)
+obs_fitdata_tbl   <- read_rds("data/onlineretail_obs_fitdata_tbl.rds")
+obs_validdata_tbl <- read_rds("data/onlineretail_obs_validdata_tbl.rds")
 
-ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
-  geom_line() +
-  geom_point() +
-  labs(
-      x = "Date",
-      y = "Customer ID",
-      title = "Visualisation of Customer Transaction Times"
-    ) +
-  theme(axis.text.y = element_text(size = 10))
+customer_fit_stats_tbl <- obs_fitdata_tbl |>
+  rename(x = tnx_count)
 ```
 
-
-## Construct Datasets
-
-Having loaded the synthetic data we need to construct a number of datasets of
-derived values.
-
-```{r construct_summary_stats_data}
-#| echo: TRUE
-
-customer_summarystats_tbl <- customer_transactions_tbl |>
-  drop_na(customer_id) |>
-  calculate_transaction_cbs_data(last_date = use_fit_end_date |> as.POSIXct())
-
-customer_summarystats_tbl |> glimpse()
-```
-
-As before, we construct a number of subsets of the data for use later on with
-the modelling and create some data subsets.
-
-
-```{r select_fit_dataset}
-customer_fit_stats_tbl <- customer_summarystats_tbl
-customer_fit_stats_tbl |> glimpse()
-
-
-customer_valid_stats_tbl <- customer_transactions_tbl |>
-  drop_na(customer_id) |>
-  filter(
-    tnx_timestamp > (use_valid_start_date |> as.POSIXct())
-    ) |>
-  summarise(
-    tnx_count = n(),
-    tnx_last_interval = difftime(
-        max(tnx_timestamp),
-        use_valid_start_date,
-        units = "weeks"
-        ) |>
-      as.numeric(),
-
-    .by = customer_id
-    )
-
-customer_valid_stats_tbl |> glimpse()
-```
-
-
-```{r construct_fit_valid_datasets}
-#| echo: TRUE
-
-obs_fitdata_tbl <- customer_fit_stats_tbl |>
-  rename(tnx_count = x)
-  
-
-### We need to add all the zero count customers into the valid data
-obs_validdata_tbl <- customer_fit_stats_tbl |>
-  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
-  transmute(customer_id, tnx_count = 0) |>
-  bind_rows(customer_valid_stats_tbl) |>
-  arrange(customer_id)
-```
-
-We then write this data to disk.
-
-```{r write_fit_valid_data_to_disk}
-#! echo: TRUE
-
-obs_fitdata_tbl   |> write_rds("data/onlineretail_obs_fitdata_tbl.rds")
-obs_validdata_tbl |> write_rds("data/onlineretail_obs_validdata_tbl.rds")
-```
 
 
 # Fit First P/NBD Model
@@ -1003,7 +925,7 @@ obs_stats_tbl <- tribble(
   "valid",      "simtnx_count",      obs_valid_total_count
   )
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_fixed.*_assess") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(
