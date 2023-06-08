@@ -968,11 +968,11 @@ obs_stats_tbl <- tribble(
   )
 
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_one.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_(one|fixed).*_assess") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(
-    model_label = str_replace(file_path, "data/pnbd_long_(onehier.*?)_assess_.*", "\\1"),
+    model_label = str_replace(file_path, "data/pnbd_long_(.*?)_assess_.*", "\\1"),
     assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
     
     sim_data = map(
@@ -1035,6 +1035,9 @@ ggplot(model_assess_summstat_tbl) +
     x = "Model",
     y = "Count",
     title = "Comparison Plot for the Different Models"
+    ) +
+  theme(
+    axis.text.x = element_text(angle = 20, vjust = 0.5, size = 8)
     )
 ```
 

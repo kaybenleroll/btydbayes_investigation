@@ -170,7 +170,6 @@ We then use this compiled model with our data to produce a fit of the data.
 
 ```{r fit_pnbd_long_fixed1_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_long_fixed1"
 stanfit_prefix <- str_c("fit_", stan_modelname)
@@ -345,7 +344,6 @@ to see what impact it has on our procedures.
 
 ```{r fit_pnbd_long_fixed2_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_long_fixed2"
 stanfit_prefix <- str_c("fit_", stan_modelname)
@@ -517,7 +515,6 @@ variation for lifetime but keep the CoV for transaction frequency.
 
 ```{r fit_pnbd_long_fixed3_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_long_fixed3"
 stanfit_prefix <- str_c("fit_", stan_modelname)
