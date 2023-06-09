@@ -103,7 +103,7 @@ We now want to load the short time-frame synthetic data.
 customer_cohortdata_tbl <- read_rds("data/onlineretail_cohort_tbl.rds")
 customer_cohortdata_tbl |> glimpse()
 
-customer_transactions_tbl <- read_rds("data/onlineretail_transactions_tbl.rds")
+customer_transactions_tbl <- read_rds("data/onlineretail_invoice_cleaned_tbl.rds")
 customer_transactions_tbl |> glimpse()
 ```
 
@@ -995,9 +995,22 @@ ggplot(model_assess_summstat_tbl) +
     x = "Model",
     y = "Count",
     title = "Comparison Plot for the Different Models"
+    ) +
+  theme(
+    axis.text.x = element_text(angle = 20, vjust = 0.5, size = 8)
     )
 ```
 
+
+## Write Assessment Data to Disk
+
+We now want to save the assessment data to disk.
+
+```{r write_model_assessment_data}
+#| echo: TRUE
+
+model_assess_tbl |> write_rds("data/assess_data_pnbd_onlineretail_fixed_tbl.rds")
+```
 
 
 

@@ -798,9 +798,22 @@ ggplot(model_assess_summstat_tbl) +
     x = "Model",
     y = "Count",
     title = "Comparison Plot for the Different Models"
+    ) +
+  theme(
+    axis.text.x = element_text(angle = 20, vjust = 0.5, size = 8)
     )
 ```
 
+
+## Write Assessment Data to Disk
+
+We now want to save the assessment data to disk.
+
+```{r write_model_assessment_data}
+#| echo: TRUE
+
+model_assess_tbl |> write_rds("data/assess_data_pnbd_long_fixed_tbl.rds")
+```
 
 
 # R Environment

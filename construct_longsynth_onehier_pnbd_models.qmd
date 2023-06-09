@@ -1042,6 +1042,16 @@ ggplot(model_assess_summstat_tbl) +
 ```
 
 
+## Write Assessment Data to Disk
+
+We now want to save the assessment data to disk.
+
+```{r write_model_assessment_data}
+#| echo: TRUE
+
+model_assess_tbl |> write_rds("data/assess_data_pnbd_long_onehier_tbl.rds")
+```
+
 
 
 # R Environment

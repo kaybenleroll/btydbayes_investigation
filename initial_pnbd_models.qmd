@@ -2329,15 +2329,23 @@ obs_stats_tbl <- tribble(
 
 
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_init_short_.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_init_short_fixed.*_assess_") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(
-    model_label = str_replace(file_path, "data/pnbd_init_short_(.*?)_assess_.*", "\\1"),
+    model_label = str_replace(file_path, "data/pnbd_init_short_(fixed.*?)_assess_.*", "\\1"),
     assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
     
     sim_data = map(file_path, calculate_simulation_statistics)
     )
+
+model_assess_tbl |> glimpse()
+```
+
+We now take this data and calculate summary statistics based on it.
+
+```{r calculate_model_assessment_summary_stats}
+#| echo: TRUE
 
 model_assess_summstat_tbl <- model_assess_tbl |>
   select(model_label, assess_type, sim_data) |>
@@ -2356,6 +2364,8 @@ model_assess_summstat_tbl <- model_assess_tbl |>
     p75 = quantile(value, 0.75),
     p90 = quantile(value, 0.90)
     )
+
+model_assess_summstat_tbl |> glimpse()
 ```
 
 
@@ -2383,6 +2393,17 @@ ggplot(model_assess_summstat_tbl) +
     y = "Count",
     title = "Comparison Plot for the Different Models"
     )
+```
+
+
+## Write Assessment Data to Disk
+
+We now want to save the assessment data to disk.
+
+```{r write_model_assessment_data}
+#| echo: TRUE
+
+model_assess_tbl |> write_rds("data/assess_data_pnbd_init_short_fixed_tbl.rds")
 ```
 
 

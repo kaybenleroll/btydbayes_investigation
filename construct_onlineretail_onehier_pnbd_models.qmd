@@ -719,7 +719,7 @@ outsample_plots_lst$quant_plot |> print()
 As for our short time frame data, overall our model is working well.
 
 
-# Fit Second Hierarchical Lambda Model
+# Fit Second Hierarchical Mu Model
 
 In this model, we are going with a broadly similar model but we are instead
 using a different mean for our hierarchical prior.
@@ -1032,6 +1032,16 @@ ggplot(model_assess_summstat_tbl) +
     )
 ```
 
+
+## Write Assessment Data to Disk
+
+We now want to save the assessment data to disk.
+
+```{r write_model_assessment_data}
+#| echo: TRUE
+
+model_assess_tbl |> write_rds("data/assess_data_pnbd_onlineretail_onehier_tbl.rds")
+```
 
 
 
