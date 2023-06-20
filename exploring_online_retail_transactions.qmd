@@ -1286,7 +1286,7 @@ distribution of transaction amounts changes and evolves over time.
 plot_tbl <- daily_distribution_tbl |>
   filter(total_spend > 0) |>
   group_by(invoice_date) |>
-  summarise(
+  reframe(
     .groups = "drop",
     
     qn   = c("total_spend", "p10", "p25", "p50", "p75", "p90"),
@@ -1319,7 +1319,7 @@ plot_tbl <- daily_distribution_tbl |>
   filter(total_spend < 0) |>
   mutate(total_refund = abs(total_spend)) |>
   group_by(invoice_date) |>
-  summarise(
+  reframe(
     .groups = "drop",
     
     qn   = c("total_refund", "p10", "p25", "p50", "p75", "p90"),
@@ -1648,8 +1648,8 @@ tnx_purchase_tbl <- cleaned_data_tbl |>
     exclude == FALSE
     ) |>
   select(
-    invoice_date, invoice_id, stock_code, customer_id, description,
-    quantity, price, stock_value
+    invoice_date, invoice_dttm, invoice_id, stock_code, customer_id,
+    description, quantity, price, stock_value
     )
 
 tnx_purchase_tbl |> glimpse()
@@ -1664,7 +1664,7 @@ BTYD routines so we keep just the per-invoice spend.
 
 daily_spend_invoice_tbl <- tnx_purchase_tbl |>
   drop_na(customer_id) |>
-  group_by(invoice_date, customer_id, invoice_id) |>
+  group_by(invoice_date, invoice_dttm, customer_id, invoice_id) |>
   summarise(
     .groups = "drop",
     
@@ -1994,8 +1994,16 @@ We now want to load the online retail transaction data.
 ```{r load_online_retail_transaction_data}
 #| echo: TRUE
 
-customer_cohortdata_tbl   <- customer_cohort_tbl
-customer_transactions_tbl <- customer_tnx_data_tbl
+customer_cohortdata_tbl <- customer_cohort_tbl
+customer_cohortdata_tbl |> glimpse()
+
+customer_transactions_tbl <- daily_spend_invoice_tbl |>
+  transmute(
+    tnx_timestamp = invoice_dttm,
+    customer_id, invoice_id, tnx_amount = invoice_spend
+    )
+
+customer_transactions_tbl |> glimpse()
 ```
 
 
@@ -2061,6 +2069,26 @@ obs_validdata_tbl <- customer_fit_stats_tbl |>
 ```
 
 
+Finally we want to construct a cleaned transaction dataset consisting only
+of purchases from individual customers.
+
+```{r construct_customer_transaction_data}
+#| echo: TRUE
+
+daily_spend_invoice_tbl <- tnx_purchase_tbl |>
+  drop_na(customer_id) |>
+  group_by(invoice_date, customer_id, invoice_id) |>
+  summarise(
+    .groups = "drop",
+    
+    invoice_spend = sum(stock_value)
+    )
+
+daily_spend_invoice_tbl |> glimpse()
+```
+
+
+
 # Output Cleaned Data
 
 Finally we output the various datasets we have constructed to disks.
@@ -2076,7 +2104,7 @@ stock_description_tbl     |> write_rds("data/onlineretail_stock_description_tbl.
 returns_lookup_tbl        |> write_rds("data/onlineretail_returns_lookup_tbl.rds")
 cleaned_data_tbl          |> write_rds("data/onlineretail_cleaned_tbl.rds")
 customer_cohort_tbl       |> write_rds("data/onlineretail_cohort_tbl.rds")
-customer_tnx_data_tbl     |> write_rds("data/onlineretail_transactions_tbl.rds")
+customer_transactions_tbl |> write_rds("data/onlineretail_transactions_tbl.rds")
 daily_spend_invoice_tbl   |> write_rds("data/onlineretail_invoice_cleaned_tbl.rds")
 daily_spend_tbl           |> write_rds("data/onlineretail_daily_spend_tbl.rds")
 
