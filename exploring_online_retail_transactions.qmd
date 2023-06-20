@@ -1,5 +1,5 @@
 ---
-title: "Construct Non-Hierarchical P/NBD Model for Long Timeframe Synthetic Data"
+title: "Exploring the Online Retail Transaction Data"
 author: "Mick Cooney <mickcooney@gmail.com>"
 date: "Last updated: `r format(Sys.time(), '%B %d, %Y')`"
 editor: source

@@ -84,11 +84,11 @@ We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
 ```{r set_start_end_dates}
-use_fit_start_date <- as.Date("2010-01-01")
-use_fit_end_date   <- as.Date("2022-01-01")
+use_fit_start_date <- as.Date("2009-12-01")
+use_fit_end_date   <- as.Date("2010-12-01")
 
-use_valid_start_date <- as.Date("2022-01-01")
-use_valid_end_date   <- as.Date("2023-01-01")
+use_valid_start_date <- as.Date("2010-12-01")
+use_valid_end_date   <- as.Date("2011-12-31")
 ```
 
 
@@ -98,13 +98,13 @@ use_valid_end_date   <- as.Date("2023-01-01")
 We now want to load the short time-frame synthetic data.
 
 
-```{r load_longframe_synthetic_data}
+```{r load_online_retail_data}
 #| echo: TRUE
 
 customer_cohortdata_tbl <- read_rds("data/onlineretail_cohort_tbl.rds")
 customer_cohortdata_tbl |> glimpse()
 
-customer_transactions_tbl <- read_rds("data/onlineretail_transactions_tbl.rds")
+customer_transactions_tbl <- read_rds("data/onlineretail_invoice_cleaned_tbl.rds")
 customer_transactions_tbl |> glimpse()
 ```
 
@@ -113,7 +113,7 @@ customer_transactions_tbl |> glimpse()
 
 ## Load Derived Data
 
-```{r write_data_disk}
+```{r load_derived_data}
 #| echo: TRUE
 customer_summarystats_tbl <- read_rds("data/onlineretail_customer_summarystats_tbl.rds")
 
@@ -352,7 +352,6 @@ to see what impact it has on our procedures.
 
 ```{r fit_pnbd_onlineretail_fixed2_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_onlineretail_fixed2"
 stanfit_seed   <- stanfit_seed + 1
@@ -533,7 +532,6 @@ variation for lifetime but keep the CoV for transaction frequency.
 
 ```{r fit_pnbd_onlineretail_fixed3_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_onlineretail_fixed3"
 stanfit_seed   <- stanfit_seed + 1
@@ -715,7 +713,6 @@ variation for lifetime but keep the CoV for transaction frequency.
 
 ```{r fit_pnbd_onlineretail_fixed4_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_onlineretail_fixed4"
 stanfit_seed   <- stanfit_seed + 1
@@ -919,7 +916,7 @@ calculate_simulation_statistics <- function(file_rds) {
 #| echo: TRUE
 
 obs_fit_customer_count <- obs_fitdata_tbl |>
-  filter(x > 0) |>
+  filter(tnx_count > 0) |>
   nrow()
 
 obs_valid_customer_count <- obs_validdata_tbl |>
@@ -927,7 +924,7 @@ obs_valid_customer_count <- obs_validdata_tbl |>
   nrow()
 
 obs_fit_total_count <- obs_fitdata_tbl |>
-  pull(x) |>
+  pull(tnx_count) |>
   sum()
 
 obs_valid_total_count <- obs_validdata_tbl |>
@@ -942,18 +939,29 @@ obs_stats_tbl <- tribble(
   "valid",      "simtnx_count",      obs_valid_total_count
   )
 
-
-
-
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_fixed.*_assess") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(
     model_label = str_replace(file_path, "data/pnbd_onlineretail_(.*?)_assess_.*", "\\1"),
     assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
     
-    sim_data = map(file_path, calculate_simulation_statistics)
+    sim_data = map(
+      file_path, calculate_simulation_statistics,
+      
+      .progress = "calculate_simulation_statistics"
+      )
     )
+
+model_assess_tbl |> glimpse()
+```
+
+We have now constructed the simulation summary statistics and now reshape our
+data to aid in our model assessment.
+
+
+```{r calculate_model_assess_summary_stats}
+#| echo: TRUE
 
 model_assess_summstat_tbl <- model_assess_tbl |>
   select(model_label, assess_type, sim_data) |>
@@ -972,7 +980,13 @@ model_assess_summstat_tbl <- model_assess_tbl |>
     p75 = quantile(value, 0.75),
     p90 = quantile(value, 0.90)
     )
+
+model_assess_summstat_tbl |> glimpse()
 ```
+
+
+We now use this data to construct model comparison plots for the different
+models we have fit.
 
 
 ```{r construct_model_comparison_plot}
@@ -998,9 +1012,22 @@ ggplot(model_assess_summstat_tbl) +
     x = "Model",
     y = "Count",
     title = "Comparison Plot for the Different Models"
+    ) +
+  theme(
+    axis.text.x = element_text(angle = 20, vjust = 0.5, size = 8)
     )
 ```
 
+
+## Write Assessment Data to Disk
+
+We now want to save the assessment data to disk.
+
+```{r write_model_assessment_data}
+#| echo: TRUE
+
+model_assess_tbl |> write_rds("data/assess_data_pnbd_onlineretail_fixed_tbl.rds")
+```
 
 
 

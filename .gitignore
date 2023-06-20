@@ -1,15 +1,13 @@
-.Rhistory
-.RData
-
 .Rproj.user/
-
-temp.R
 
 *_cache/*
 *_files/*
 
-output.log
-
 *.rmarkdown
 *.dot
+
+.Rhistory
+.RData
+output.log
+temp.R
 

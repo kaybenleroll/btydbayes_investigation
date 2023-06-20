@@ -468,7 +468,6 @@ run_model_assessment <- function(
   }
 
 
-
   ###
   ### Setting up and calculating the out-of-sample simulations
   ###
