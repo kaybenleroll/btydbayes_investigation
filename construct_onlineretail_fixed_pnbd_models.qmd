@@ -34,6 +34,7 @@ library(cowplot)
 library(directlabels)
 library(magrittr)
 library(rlang)
+library(lobstr)
 library(rsyslog)
 library(fs)
 library(purrr)
@@ -335,6 +336,10 @@ As for our short time frame data, overall our model is working well.
 #| echo: false
 
 rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
+
+gc()
 ```
 
 
@@ -513,6 +518,10 @@ outsample_plots_lst$quant_plot |> print()
 #| echo: false
 
 rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
+
+gc()
 ```
 
 
@@ -691,6 +700,10 @@ outsample_plots_lst$quant_plot |> print()
 #| echo: false
 
 rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
+
+gc()
 ```
 
 
@@ -868,6 +881,10 @@ outsample_plots_lst$quant_plot |> print()
 #| echo: false
 
 rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
+
+gc()
 ```
 
 
@@ -990,6 +1007,7 @@ ggplot(model_assess_summstat_tbl) +
 
 
 # R Environment
+
 
 ```{r show_session_info}
 #| echo: TRUE

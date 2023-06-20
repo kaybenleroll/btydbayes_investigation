@@ -419,8 +419,6 @@ run_model_assessment <- function(
       level = "INFO"
       )
 
-    plan(multisession)
-
     model_index_tbl <- runsims_tbl |>
       mutate(
         chunk_data = future_map2_int(
@@ -511,8 +509,6 @@ run_model_assessment <- function(
       glue("Running {n_sims} out-of-sample simulations to {precompute_dir}"),
       level = "INFO"
       )
-
-    plan(multisession)
 
     model_index_tbl <- runsims_tbl |>
       mutate(
