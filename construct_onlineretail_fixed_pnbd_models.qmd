@@ -117,11 +117,11 @@ customer_transactions_tbl |> glimpse()
 #| echo: TRUE
 customer_summarystats_tbl <- read_rds("data/onlineretail_customer_summarystats_tbl.rds")
 
-obs_fitdata_tbl   <- read_rds("data/onlineretail_obs_fitdata_tbl.rds")
-obs_validdata_tbl <- read_rds("data/onlineretail_obs_validdata_tbl.rds")
+obs_fitdata_tbl <- read_rds("data/onlineretail_obs_fitdata_tbl.rds")
+obs_fitdata_tbl |> glimpse()
 
-customer_fit_stats_tbl <- obs_fitdata_tbl |>
-  rename(x = tnx_count)
+obs_validdata_tbl <- read_rds("data/onlineretail_obs_validdata_tbl.rds")
+obs_validdata_tbl |> glimpse()
 ```
 
 
@@ -177,8 +177,8 @@ stanfit_prefix <- str_c("fit_", stan_modelname)
 
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 1.00,
@@ -359,8 +359,8 @@ stanfit_prefix <- str_c("fit_", stan_modelname)
 
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 0.50,
@@ -368,6 +368,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_mn     = 0.10,
     mu_cv     = 0.50,
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_onlineretail_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
@@ -540,8 +541,8 @@ stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 1.00,
@@ -549,6 +550,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_mn     = 0.10,
     mu_cv     = 0.50,
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_onlineretail_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
@@ -721,8 +723,8 @@ stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 1.00,
@@ -730,6 +732,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_mn     = 0.20,
     mu_cv     = 0.30,
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_onlineretail_fixed4_stanfit <- pnbd_fixed_stanmodel$sample(

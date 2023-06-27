@@ -1,0 +1,32 @@
+version: '3'
+services:
+  workspace:
+    image: kaybenleroll/btydbayes-workspace:latest
+    container_name: btydbayes_workspace
+    volumes:
+      - .:/home/rstudio/workspace:rw
+    environment:
+      - USER=rstudio
+      - PASSWORD=${DOCKER_PASS}
+      - USERID=${UID}
+      - GROUPID=${GROUPID}
+      - REDIS=redis
+      - USEJSON=true
+    ports:
+      - "8787:8787"
+    depends_on:
+      - redis
+
+  minion:
+    image: kaybenleroll/btydbayes-minion:latest
+    environment:
+      - REDIS=redis
+      - USEJSON=true
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7.0.11-alpine3.18
+    container_name: gru_svr
+    ports:
+      - "6379:6379"

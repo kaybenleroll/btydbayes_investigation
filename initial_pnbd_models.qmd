@@ -218,7 +218,7 @@ customer_simparams_tbl    |> glimpse()
 customer_transactions_tbl <- read_rds("data/synthdata_shortframe_transactions_tbl.rds")
 customer_transactions_tbl |> glimpse()
 
-customer_fit_stats_tbl    <- read_rds("data/shortsynth_fit_1000_data_tbl.rds")
+customer_fit_stats_tbl    <- read_rds("data/shortsynth_obs_fitdata_tbl.rds")
 customer_fit_stats_tbl    |> glimpse()
 
 customer_valid_stats_tbl  <- read_rds("data/shortsynth_obs_validdata_tbl.rds")
@@ -439,7 +439,7 @@ stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
 stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 1.00,
@@ -744,7 +744,7 @@ total transaction count observed
 #| echo: TRUE
 
 obs_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
+  filter(tnx_count > 0) |>
   nrow()
 
 sim_data_tbl <- pnbd_init_short_fixed1_fit_simstats_tbl |>
@@ -775,7 +775,7 @@ We now check the count of all transactions.
 #| echo: TRUE
 
 obs_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
+  pull(tnx_count) |>
   sum()
 
 sim_data_tbl <- pnbd_init_short_fixed1_fit_simstats_tbl |>
@@ -807,7 +807,7 @@ We now look at the quantiles for the transaction counts across each customer.
 obs_quantiles_tbl <- customer_fit_stats_tbl |>
   reframe(
     prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
-    prob_value = quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
+    prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
     )
     
 sim_data_tbl <- pnbd_init_short_fixed1_fit_simstats_tbl |>
@@ -1114,7 +1114,7 @@ stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
 stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 0.50,
@@ -1333,7 +1333,7 @@ total transaction count observed
 #| echo: TRUE
 
 obs_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
+  filter(tnx_count > 0) |>
   nrow()
 
 sim_data_tbl <- pnbd_init_short_fixed2_fit_simstats_tbl |>
@@ -1364,7 +1364,7 @@ We now check the count of all transactions.
 #| echo: TRUE
 
 obs_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
+  pull(tnx_count) |>
   sum()
 
 sim_data_tbl <- pnbd_init_short_fixed2_fit_simstats_tbl |>
@@ -1396,7 +1396,7 @@ We now look at the quantiles for the transaction counts across each customer.
 obs_quantiles_tbl <- customer_fit_stats_tbl |>
   reframe(
     prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
-    prob_value = quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
+    prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
     )
     
 sim_data_tbl <- pnbd_init_short_fixed2_fit_simstats_tbl |>
@@ -1706,7 +1706,7 @@ stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
 stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 2.00,
@@ -1925,7 +1925,7 @@ total transaction count observed
 #| echo: TRUE
 
 obs_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
+  filter(tnx_count > 0) |>
   nrow()
 
 sim_data_tbl <- pnbd_init_short_fixed3_fit_simstats_tbl |>
@@ -1956,7 +1956,7 @@ We now check the count of all transactions.
 #| echo: TRUE
 
 obs_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
+  pull(tnx_count) |>
   sum()
 
 sim_data_tbl <- pnbd_init_short_fixed3_fit_simstats_tbl |>
@@ -1988,7 +1988,7 @@ We now look at the quantiles for the transaction counts across each customer.
 obs_quantiles_tbl <- customer_fit_stats_tbl |>
   reframe(
     prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
-    prob_value = quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
+    prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
     )
     
 sim_data_tbl <- pnbd_init_short_fixed3_fit_simstats_tbl |>
@@ -2303,7 +2303,7 @@ calculate_simulation_statistics <- function(file_rds) {
 #| echo: TRUE
 
 obs_fit_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
+  filter(tnx_count > 0) |>
   nrow()
 
 obs_valid_customer_count <- customer_valid_stats_tbl |>
@@ -2311,7 +2311,7 @@ obs_valid_customer_count <- customer_valid_stats_tbl |>
   nrow()
 
 obs_fit_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
+  pull(tnx_count) |>
   sum()
 
 obs_valid_total_count <- customer_valid_stats_tbl |>

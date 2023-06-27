@@ -123,9 +123,6 @@ id_10000 <- read_rds("data/longsynth_id_10000.rds")
 fit_1000_data_tbl  <- read_rds("data/longsynth_fit_1000_data_tbl.rds")
 fit_10000_data_tbl <- read_rds("data/longsynth_fit_10000_data_tbl.rds")
 
-customer_fit_stats_tbl    <- fit_1000_data_tbl
-customer_summarystats_tbl <- read_rds("data/longsynth_customer_summarystats_tbl.rds")
-
 obs_fitdata_tbl   <- read_rds("data/longsynth_obs_fitdata_tbl.rds")
 obs_validdata_tbl <- read_rds("data/longsynth_obs_validdata_tbl.rds")
 ```
@@ -178,8 +175,8 @@ stanfit_seed   <- stanfit_seed + 1
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 1.00,
@@ -187,6 +184,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_mn     = 0.10,
     mu_cv     = 1.00,
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_long_fixed1_stanfit <- pnbd_fixed_stanmodel$sample(
@@ -272,8 +270,8 @@ run the simulations and combine the datasets.
 
 pnbd_long_fixed1_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_fixed1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  insample_tbl     = obs_fitdata_tbl,
+  outsample_tbl    = obs_validdata_tbl,
   fit_label        = "pnbd_long_fixed1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -352,8 +350,8 @@ stanfit_seed   <- stanfit_seed + 1
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 0.50,
@@ -445,8 +443,8 @@ run the simulations and combine the datasets.
 
 pnbd_long_fixed2_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_fixed2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  insample_tbl     = obs_fitdata_tbl,
+  outsample_tbl    = obs_validdata_tbl,
   fit_label        = "pnbd_long_fixed2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -523,8 +521,8 @@ stanfit_seed   <- stanfit_seed + 1
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     lambda_mn = 0.25,
     lambda_cv = 1.00,
@@ -532,6 +530,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_mn     = 0.10,
     mu_cv     = 0.50,
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_long_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
@@ -615,8 +614,8 @@ run the simulations and combine the datasets.
 
 pnbd_long_fixed3_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_fixed3_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  insample_tbl     = obs_fitdata_tbl,
+  outsample_tbl    = obs_validdata_tbl,
   fit_label        = "pnbd_long_fixed3",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),

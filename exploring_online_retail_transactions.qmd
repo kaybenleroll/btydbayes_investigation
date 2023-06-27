@@ -1739,7 +1739,7 @@ We know look at how time differences between purchases are distributed.
 
 customer_tnx_diffs_tbl <- daily_spend_tbl |>
   group_by(customer_id) |>
-  summarise(
+  reframe(
     .groups = "drop",
     
     time_diff = diff(invoice_date) |> as.numeric() |> divide_by(7)
@@ -2058,6 +2058,8 @@ customer_valid_stats_tbl |> glimpse()
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
   rename(tnx_count = x)
+
+obs_fitdata_tbl |> glimpse()
   
 
 ### We need to add all the zero count customers into the valid data
@@ -2065,7 +2067,10 @@ obs_validdata_tbl <- customer_fit_stats_tbl |>
   anti_join(customer_valid_stats_tbl, by = "customer_id") |>
   transmute(customer_id, tnx_count = 0) |>
   bind_rows(customer_valid_stats_tbl) |>
+  semi_join(customer_fit_stats_tbl, by = "customer_id") |>
   arrange(customer_id)
+
+obs_validdata_tbl |> glimpse()
 ```
 
 

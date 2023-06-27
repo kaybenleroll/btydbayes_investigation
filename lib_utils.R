@@ -49,6 +49,12 @@ rgamma_mucv <- function(n, mu, cv, ...) {
 }
 
 
+create_chunk_label <- function(n, chunk_size) {
+  chunk_id <- floor(0:(n-1) / chunk_size)
+
+  return(chunk_id)
+}
+
 calculate_distribution_qvals <- function(data_tbl, distrib_vals, ref_val, ...) {
   qval_data_tbl <- data_tbl |>
     group_by(..., {{ ref_val }}) |>

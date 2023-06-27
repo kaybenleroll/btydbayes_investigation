@@ -184,8 +184,8 @@ stanfit_seed   <- stanfit_seed + 1
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     hier_lambda_mn_p1 = 0.25,
     hier_lambda_mn_p2 = 1,
@@ -281,8 +281,8 @@ run the simulations and combine the datasets.
 
 pnbd_long_onehierlambda1_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_onehierlambda1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  insample_tbl     = obs_fitdata_tbl,
+  outsample_tbl    = obs_validdata_tbl,
   fit_label        = "pnbd_long_onehierlambda1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -370,8 +370,8 @@ stanfit_seed   <- stanfit_seed + 1
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     hier_lambda_mn_p1 = 0.50,
     hier_lambda_mn_p2 = 1,
@@ -381,6 +381,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_mn     = 0.10,
     mu_cv     = 1.00,
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_long_onehierlambda2_stanfit <- pnbd_onehierlambda_stanmodel$sample(
@@ -467,8 +468,8 @@ run the simulations and combine the datasets.
 
 pnbd_long_onehierlambda2_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_onehierlambda2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  insample_tbl     = obs_fitdata_tbl,
+  outsample_tbl    = obs_validdata_tbl,
   fit_label        = "pnbd_long_onehierlambda2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -567,8 +568,8 @@ stanfit_seed   <- stanfit_seed + 1
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     hier_mu_mn_p1 = 0.50,
     hier_mu_mn_p2 = 1.00,
@@ -579,6 +580,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv         = 1.00
 
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_long_onehiermu1_stanfit <- pnbd_onehiermu_stanmodel$sample(
@@ -665,8 +667,8 @@ run the simulations and combine the datasets.
 
 pnbd_long_onehiermu1_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_onehiermu1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  insample_tbl     = obs_fitdata_tbl,
+  outsample_tbl    = obs_validdata_tbl,
   fit_label        = "pnbd_long_onehiermu1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -728,7 +730,7 @@ outsample_plots_lst$quant_plot |> print()
 As for our short time frame data, overall our model is working well.
 
 
-# Fit Second Hierarchical Lambda Model
+# Fit Second Hierarchical Mu Model
 
 In this model, we are going with a broadly similar model but we are instead
 using a different mean for our hierarchical prior.
@@ -750,8 +752,8 @@ stanfit_seed   <- stanfit_seed + 1
 stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
+stan_data_lst <- obs_fitdata_tbl |>
+  select(customer_id, x = tnx_count, t_x, T_cal) |>
   compose_data(
     hier_mu_mn_p1 = 0.25,
     hier_mu_mn_p2 = 1.00,
@@ -761,6 +763,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
 
     mu_cv         = 1.00
     )
+
 
 if(!file_exists(stanfit_object_file)) {
   pnbd_long_onehiermu2_stanfit <- pnbd_onehiermu_stanmodel$sample(
@@ -847,8 +850,8 @@ run the simulations and combine the datasets.
 
 pnbd_long_onehiermu2_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_long_onehiermu2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  insample_tbl     = obs_fitdata_tbl,
+  outsample_tbl    = obs_validdata_tbl,
   fit_label        = "pnbd_long_onehiermu2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),

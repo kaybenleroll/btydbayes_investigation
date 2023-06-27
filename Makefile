@@ -1,9 +1,10 @@
 ### repo variables
 PROJECT_USER=kaybenleroll
-PROJECT_NAME=btydbayes-investigation
+PROJECT_NAME=btydbayes
 PROJECT_TAG=latest
 
-IMAGE_TAG=${PROJECT_USER}/${PROJECT_NAME}:${PROJECT_TAG}
+MINION_IMAGE_TAG=${PROJECT_USER}/${PROJECT_NAME}-minion:${PROJECT_TAG}
+WORKSPACE_IMAGE_TAG=${PROJECT_USER}/${PROJECT_NAME}-workspace:${PROJECT_TAG}
 
 DOCKER_USER=rstudio
 DOCKER_PASS=CHANGEME
@@ -18,7 +19,7 @@ PROJECT_FOLDER=btydwork
 ### Set GITHUB_USER with 'gh config set gh_user <<user>>'
 GITHUB_USER=$(shell gh config get gh_user)
 
-CONTAINER_NAME=btyd-work
+WORKSPACE_CONTAINER_NAME=btyd-work
 
 ### Project build targets
 .SUFFIXES: .qmd .html .dot .png
@@ -85,15 +86,24 @@ clean-models:
 
 
 ### Docker targets
-docker-build-image: Dockerfile
-	docker build -t ${IMAGE_TAG} -f Dockerfile .
+docker-build-images: docker-build-minion-image docker-build-workspace-image
+
+docker-build-minion-image: Dockerfile.minion
+	docker build -t ${MINION_IMAGE_TAG} -f Dockerfile.minion .
+
+docker-build-workspace-image: Dockerfile.workspace
+	docker build -t ${WORKSPACE_IMAGE_TAG} -f Dockerfile.workspace .
+
+
+
+
 
 docker-show-context:
 	docker build -f context.dockerfile -t context-image .
 	docker run --rm -it context-image find /tmp/build
 	docker rmi test:latest
 
-docker-run:
+docker-run-workspace:
 	docker run --rm -d \
 	  -p ${RSTUDIO_PORT}:8787 \
 	  -e USER=${DOCKER_USER} \
@@ -101,11 +111,17 @@ docker-run:
 	  -e USERID=${DOCKER_UID} \
 	  -e GROUPID=${DOCKER_GID} \
 	  -v "${PWD}":"/home/${DOCKER_USER}/${PROJECT_FOLDER}":rw \
-	  --name ${CONTAINER_NAME} \
-	  ${IMAGE_TAG}
+	  --name ${WORKSPACE_CONTAINER_NAME} \
+	  ${WORKSPACE_IMAGE_TAG}
+
+
+compose-up: 
+	env UID=${DOCKER_UID} DOCKER_PASS=${DOCKER_PASS} docker-compose up -d
+
+
 
 docker-bash:
-	docker exec -it -u ${DOCKER_USER} ${CONTAINER_NAME} bash
+	docker exec -it -u ${DOCKER_USER} ${WORKSPACE_CONTAINER_NAME} bash
 
 docker-stop:
 	docker stop ${CONTAINER_NAME}
