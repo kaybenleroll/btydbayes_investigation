@@ -12,6 +12,13 @@ remotes::install_github(
 )
 
 
+remotes::install_github(
+  "kaybenleroll/rminions",
+  ref     = "e8551656589125f715423fd43f1a442ebc198cb4",
+  upgrade = "never"
+)
+
+
 library(cmdstanr)
 
 cmdstan_flags <- list(

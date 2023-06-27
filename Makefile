@@ -7,7 +7,7 @@ MINION_IMAGE_TAG=${PROJECT_USER}/${PROJECT_NAME}-minion:${PROJECT_TAG}
 WORKSPACE_IMAGE_TAG=${PROJECT_USER}/${PROJECT_NAME}-workspace:${PROJECT_TAG}
 
 DOCKER_USER=rstudio
-DOCKER_PASS=CHANGEME
+DOCKER_PASS=btydwork
 DOCKER_UID=$(shell id -u)
 DOCKER_GID=$(shell id -g)
 
@@ -116,7 +116,9 @@ docker-run-workspace:
 
 
 compose-up: 
-	env UID=${DOCKER_UID} DOCKER_PASS=${DOCKER_PASS} docker-compose up -d
+	env UID=${DOCKER_UID} GID=${DOCKER_GID} DOCKER_PASS=${DOCKER_PASS} \
+	  docker-compose up -d \
+	  --scale redis=1 --scale workspace=1 --scale minion=4
 
 
 

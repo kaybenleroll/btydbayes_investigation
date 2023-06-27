@@ -4,7 +4,7 @@
 \alias{run_simulations_chunk}
 \title{This function runs the simulations for a given set of parameters.}
 \usage{
-run_simulations_chunk(sim_param_tbl, sim_file, sim_func)
+run_simulations_chunk(sim_param_tbl, sim_func)
 }
 \description{
 It is expected that a chunk of jobs are combined into a single job.

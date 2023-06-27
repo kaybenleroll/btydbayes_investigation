@@ -1,6 +1,9 @@
 
 #' This function calculates the cbs data from the transactions
 #'
+#' @importFrom dplyr select arrange mutate filter group_by ungroup rename
+#' @importFrom dplyr inner_join semi_join anti_join group_nest
+#' @importFrom dplyr slice_max
 #' @export calculate_transaction_cbs_data
 
 calculate_transaction_cbs_data <- function(tnx_data_tbl, last_date) {

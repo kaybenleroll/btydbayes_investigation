@@ -1,8 +1,14 @@
 
 #' This function calculates posterior validation data for the P/NBD model
 #'
-#' @import tidyverse
-#' @import tidybayes
+#' @importFrom tibble as.tibble tibble enframe
+#' @importFrom magrittr divide_by
+#' @importFrom dplyr select arrange mutate filter group_by ungroup rename
+#' @importFrom dplyr inner_join semi_join anti_join
+#' @importFrom purrr pmap
+#' @importFrom tidyr unnest
+#' @importFrom tidybayes spread_draws gather_draws recover_types
+#' @importFrom ggplot2 geom_histogram geom_hline geom_errorbar
 #' @export create_pnbd_posterior_validation_data
 #' @export construct_pnbd_posterior_statistics
 
@@ -27,7 +33,7 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
     inner_join(tmp_tbl, by = "customer_id") |>
     select(
       customer_id, customer_lambda, qval_lambda = q_val, customer_mu, qval_mu
-    )
+      )
 
 
   unif_count <- qvalues_tbl |>
@@ -42,7 +48,7 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
       y = "Frequency",
 
       title = "Histogram of the q-Values for Lambda"
-    )
+      )
 
   mu_qval_plot <- ggplot(qvalues_tbl) +
     geom_histogram(aes(x = qval_mu), bins = bincount) +

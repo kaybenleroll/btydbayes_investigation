@@ -16,6 +16,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     libclang-dev \
     libglpk-dev \
     libgsl-dev \
+    libhiredis-dev \
     libnlopt-dev \
     p7zip-full \
     pbzip2 \
@@ -56,6 +57,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     prophet \
     pryr \
     quarto \
+    redux \
     rfm \
     rstan \
     rstanarm \
@@ -85,7 +87,6 @@ RUN git clone https://github.com/lindenb/makefile2graph.git \
 RUN cp -r $HOME/.R /home/rstudio \
   && chown -R rstudio:rstudio /home/rstudio/.R
 
-
 WORKDIR /home/rstudio
 USER rstudio
 
@@ -109,3 +110,9 @@ USER root
 RUN chown -R rstudio:rstudio /home/rstudio \
   && chmod ugo+rx /home/rstudio \
   && chown -R rstudio:rstudio /home/rstudio/.cmdstan
+
+RUN mkdir -p /R
+WORKDIR /R
+COPY ./btydbayes /R
+
+RUN r -e 'devtools::install()'

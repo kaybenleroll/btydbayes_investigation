@@ -9,7 +9,7 @@ services:
       - USER=rstudio
       - PASSWORD=${DOCKER_PASS}
       - USERID=${UID}
-      - GROUPID=${GROUPID}
+      - GROUPID=${GID}
       - REDIS=redis
       - USEJSON=true
     ports:

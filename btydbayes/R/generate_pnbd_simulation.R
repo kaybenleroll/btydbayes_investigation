@@ -2,7 +2,10 @@
 #' This function generates customer simulation parameters based on the P/NBD
 #' model
 #'
-#' @import tidyverse
+#' @importFrom tibble as.tibble tibble enframe
+#' @importFrom dplyr select arrange mutate filter group_by ungroup
+#' @importFrom purrr pmap
+#' @importFrom tidyr unnest
 #' @export generate_pnbd_customer_simulation_params
 #' @export generate_pnbd_customer_transaction_data
 #' @export generate_pnbd_individual_transactions
@@ -150,7 +153,7 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
 
     tnxdata_tbl <- tibble(
       tnx_timestamp = event_dates,
-      tnx_amount    = tnx_amounts %>% round(2)
+      tnx_amount    = tnx_amounts |> round(2)
       ) |>
       filter(
         tnx_timestamp <= end_dttm

@@ -1,7 +1,8 @@
 
 #' This function generates customer cohort data
 #'
-#' @import tidyverse
+#' @importFrom tibble enframe
+#' @importFrom dplyr slice_sample arrange group_by mutate ungroup select
 #' @importFrom zoo as.yearqtr
 #' @export calculate_transaction_cbs_data
 
