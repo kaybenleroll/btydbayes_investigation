@@ -139,6 +139,7 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
 
 
   if(customer_active) {
+
     obs_time <- min(extra_tau, max_observed)
 
     tnx_intervals <- calculate_event_times(
@@ -152,21 +153,26 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
     tnx_amounts <- rgamma_mucv(length(event_dates), mu = tnx_mu, cv = tnx_cv)
 
     tnxdata_tbl <- tibble(
-      tnx_timestamp = event_dates,
-      tnx_amount    = tnx_amounts |> round(2)
-      ) |>
-      filter(
-        tnx_timestamp <= end_dttm
+        tnx_timestamp = event_dates,
+        tnx_amount    = tnx_amounts |> round(2)
         )
 
-  } else {
-    tnxdata_tbl <- tibble(
-      tnx_timestamp = start_dttm,
-      tnx_amount    = 0
-      ) |>
-      slice(0)
-  }
+    if(nrow(tnxdata_tbl) > 0) {
+      tnxdata_tbl <- tnxdata_tbl |>
+        filter(
+          tnx_timestamp <= end_dttm
+          )
+    }
 
+  } else {
+
+    tnxdata_tbl <- tibble(
+        tnx_timestamp = start_dttm,
+        tnx_amount    = 0
+        ) |>
+      slice(0)
+
+  }
 
   return(tnxdata_tbl)
 }

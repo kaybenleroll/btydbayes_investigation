@@ -67,6 +67,11 @@ mrproper: clean-cache clean-data clean-html clean-precompute clean-models
 	rm -fv *.dot
 	rm -fv output.log
 
+clean-downloads:
+	rm -fv data/*.xlsx
+	rm -fv data/*.zip
+	rm -fv data/*.txt
+
 clean-data:
 	rm -fv data/*.rds
 	rm -fv data/*.csv

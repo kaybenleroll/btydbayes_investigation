@@ -134,7 +134,7 @@ generate_pnbd_individual_transactions <- function(
 
   if(tnx_window < 0) warning("Invalid tnx_window value: should not be negative")
 
-  first_tnx_dttm <- as.POSIXct(first_date) + runif(1, min = 0, max = 24 * 60 * 60 - 1)
+  first_tnx_dttm <- as.POSIXct(first_date, tz = "UTC") + runif(1, min = 0, max = 24 * 60 * 60 - 1)
 
   tnx_intervals <- calculate_event_times(
     rate       = tnx_rate,
@@ -323,32 +323,10 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
 
 run_model_assessment <- function(
     model_stanfit, insample_tbl, outsample_tbl, fit_label,
-    fit_end_dttm, valid_start_dttm, valid_end_dttm,
-    precompute_rootdir = "precompute", data_dir = "data",
-    sim_seed = 420) {
+    fit_end_dttm, valid_start_dttm, valid_end_dttm, data_dir = "data") {
 
 
-  ###
-  ### Ensuring the precompute_dir folder exists
-  ###
-  precompute_dir <- glue("{precompute_rootdir}/{fit_label}")
-
-  syslog(
-    glue("Ensuring precompute directory {precompute_dir} exists"),
-    level = "INFO"
-    )
-
-  ensure_exists_precompute_directory(precompute_dir)
-
-
-  ###
-  ### Setting up the simulation statistics
-  ###
-  syslog(
-    glue("Calculating the posterior statistics"),
-    level = "INFO"
-    )
-
+  ### Calculate the posterior customer statistics
   model_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_model_simstats_tbl.rds")
 
   if(!file_exists(model_simstats_filepath)) {
@@ -372,21 +350,6 @@ run_model_assessment <- function(
     read_rds() |>
     select(draw_id, sim_data, sim_tnx_count, sim_tnx_last)
 
-  ### We also want to get the contents of the precompute_dir directory
-  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-    as.character() |>
-    enframe(name = NULL, value = "sim_file")
-
-
-
-  ###
-  ### Setting up and calculating the in-sample simulations
-  ###
-  syslog(
-    glue("Setting up insample model_index_tbl"),
-    level = "INFO"
-    )
-
   model_index_tbl <- model_simstats_tbl |>
     mutate(
       start_dttm = first_tnx_date,
@@ -404,51 +367,28 @@ run_model_assessment <- function(
         )
       )
 
-  syslog(
-    glue("Configuring the insample fit simulations"),
-    level = "INFO"
-    )
+  model_index_tbl <- runsims_tbl |>
+    mutate(
+      chunk_data = future_map2_int(
+        cust_params, sim_file,
+        run_simulations_chunk,
 
-  runsims_tbl <- model_index_tbl |>
-    anti_join(precomputed_tbl, by = "sim_file")
+        sim_func = generate_pnbd_validation_transactions,
 
-  n_sims <- runsims_tbl |> nrow()
+        .options = furrr_options(
+          globals  = c(
+            "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
+            "generate_pnbd_validation_transactions"
+            ),
+          packages   = c("tidyverse", "fs"),
+          scheduling = Inf,
+          seed       = sim_seed + 1
+          ),
 
-  if(n_sims > 0) {
-
-    syslog(
-      glue("Running {n_sims} in-sample simulations to {precompute_dir}"),
-      level = "INFO"
+        .progress = TRUE
+        )
       )
 
-    model_index_tbl <- runsims_tbl |>
-      mutate(
-        chunk_data = future_map2_int(
-          cust_params, sim_file,
-          run_simulations_chunk,
-
-          sim_func = generate_pnbd_validation_transactions,
-
-          .options = furrr_options(
-            globals  = c(
-              "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
-              "generate_pnbd_validation_transactions"
-              ),
-            packages   = c("tidyverse", "fs"),
-            scheduling = Inf,
-            seed       = sim_seed + 1
-            ),
-
-          .progress = TRUE
-          )
-        )
-  }
-
-
-  syslog(
-    glue("Setting up model_fit_simstats_tbl"),
-    level = "INFO"
-    )
 
   model_fit_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_fit_simstats_tbl.rds")
 

@@ -10,9 +10,14 @@
 #' @importFrom dplyr slice_max
 #' @importFrom purrr pmap map map_int
 #' @importFrom tidyr unnest
-#' @export run_simulations_chunk
+#' @export run_pnbd_simulations_chunk
 
-run_simulations_chunk <- function(sim_param_tbl, sim_func) {
+run_pnbd_simulations_chunk <- function(input_param_tbl) {
+
+  sim_param_tbl <- input_param_tbl |>
+    mutate(across(contains("_dttm"), \(x) as.POSIXct(x, tz = "UTC"))) |>
+    mutate(across(contains("_date"), \(x) as.POSIXct(x, tz = "UTC")))
+
 
   select_last_date <- function(data_tbl) {
     last_tbl <- data_tbl |>
@@ -25,7 +30,7 @@ run_simulations_chunk <- function(sim_param_tbl, sim_func) {
   simdata_tbl <- sim_param_tbl |>
     group_nest(customer_id, draw_id, .key = "sim_params") |>
     mutate(
-      sim_data      = map(sim_params, sim_func),
+      sim_data      = map(sim_params, generate_pnbd_validation_transactions),
       sim_tnx_count = map_int(sim_data, nrow),
       last_data     = map(sim_data, select_last_date)
     ) |>

@@ -105,7 +105,7 @@ parse it.
 retrieve_datafile <- "data/retail_data_tbl.rds"
 
 create_excel_datetime <- function(x)
-  (x * (60 * 60 * 24)) |> as.POSIXct(origin = "1899-12-30", tz = "GMT")
+  (x * (60 * 60 * 24)) |> as.POSIXct(origin = "1899-12-30", tz = "UTC")
 
 data_cols <- cols(
   .default      = col_character(),

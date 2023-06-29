@@ -1,4 +1,4 @@
-FROM kaybenleroll/rminions:0.0.1
+FROM kaybenleroll/rminions:latest
 LABEL maintainer="Mick Cooney <mickcooney@gmail.com>"
 
 

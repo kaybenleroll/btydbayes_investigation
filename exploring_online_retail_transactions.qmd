@@ -903,7 +903,7 @@ possible duplication of `stock_code`.
 ```{r plot_stock_codes_distinct_50}
 #| echo: TRUE
 
-stock_codes_lookup_tbl |> datatable()
+#stock_codes_lookup_tbl |> datatable()
 ```
 
 
@@ -1028,7 +1028,7 @@ stock_code_summary_tbl <- data_tbl |>
     sc_nchar = nchar(stock_code_upr), .before = "row_count"
     )
 
-stock_code_summary_tbl |> datatable()
+#stock_code_summary_tbl |> datatable()
 ```
 
 It appears there are number of odd stock codes in the dataset, so we look at
@@ -1041,7 +1041,7 @@ those codes that are 4 characters or less and inspect those.
 short_stock_codes_tbl <- data_tbl |>
   semi_join(stock_code_summary_tbl |> filter(sc_nchar < 5), by = "stock_code_upr")
 
-short_stock_codes_tbl |> datatable()
+#short_stock_codes_tbl |> datatable()
 ```
 
 
@@ -1068,7 +1068,7 @@ stock_price_counts_tbl <- data_tbl |>
     range_price = ((max_price - min_price) / mean_price) |> round(4)
     )
 
-stock_price_counts_tbl |> datatable()
+#stock_price_counts_tbl |> datatable()
   
 stock_distinct_price_counts_tbl <- data_tbl |>
   select(stock_code, price) |>
@@ -1087,7 +1087,7 @@ stock_distinct_price_counts_tbl <- data_tbl |>
     range_price = (max_price - min_price) / mean_price
     )
 
-stock_distinct_price_counts_tbl |> datatable()
+#stock_distinct_price_counts_tbl |> datatable()
 ```
 
 
@@ -1625,7 +1625,7 @@ We also look at this output using DT
 ```{r view_stock_description}
 #| echo: TRUE
 
-stock_description_tbl |> datatable()
+#stock_description_tbl |> datatable()
 ```
 
 
@@ -1967,7 +1967,7 @@ cohort_dropout_est_tbl |> glimpse()
 ```{r cohort_dropout_params_dt}
 #| echo: TRUE
 
-cohort_dropout_est_tbl |> datatable()
+#cohort_dropout_est_tbl |> datatable()
 ```
 
 
