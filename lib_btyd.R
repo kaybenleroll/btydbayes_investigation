@@ -248,7 +248,7 @@ construct_pnbd_posterior_statistics <- function(stanfit, fitdata_tbl) {
 run_simulations_chunk <- function(sim_param_tbl, sim_file, sim_func) {
 
   simdata_tbl <- sim_param_tbl |>
-    group_nest(draw_id, .key = "sim_params") |>
+    group_nest(customer_id, draw_id, .key = "sim_params") |>
     mutate(
       sim_data      = map(sim_params, sim_func),
       sim_tnx_count = map_int(sim_data, nrow),
@@ -260,7 +260,8 @@ run_simulations_chunk <- function(sim_param_tbl, sim_file, sim_func) {
         )
       ) |>
     unnest(last_data, keep_empty = TRUE) |>
-    unnest(sim_params)
+    unnest(sim_params) |>
+    select(customer_id, draw_id, sim_data, sim_tnx_count, sim_tnx_last)
 
   simdata_tbl |> write_rds(sim_file)
 
@@ -486,7 +487,7 @@ run_model_assessment <- function(
       tnx_mu     = 1,      ### We are not simulating tnx size
       tnx_cv     = 1       ###
       ) |>
-    group_nest(customer_id, .key = "cust_params") |>
+    group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
     mutate(
       sim_file = glue(
         "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"

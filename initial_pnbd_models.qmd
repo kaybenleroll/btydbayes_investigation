@@ -69,6 +69,7 @@ stanfit_seed <- 4000
 open_syslog("initial_pnbd_models")
 
 theme_set(theme_cowplot())
+
 plan(multisession)
 ```
 
@@ -644,7 +645,7 @@ pnbd_init_short_fixed1_fitsims_index_tbl <- pnbd_init_short_fixed1_simstats_tbl 
     tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
     tnx_cv     = 1       ### 
     ) |>
-  group_nest(customer_id, .key = "cust_params") |>
+  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
   mutate(
     sim_file = glue(
       "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
@@ -660,9 +661,6 @@ We now use this setup to generate our simulations.
 
 ```{r generate_simulation_pnbd_init_short_fixed1_fitdata_transactions}
 #| echo: TRUE
-
-plan(multisession)
-
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   as.character() |>
@@ -878,7 +876,7 @@ pnbd_init_short_fixed1_validsims_index_tbl <- pnbd_init_short_fixed1_simstats_tb
     tnx_mu     = 1,      ### We are not simulating tnx size
     tnx_cv     = 1       ### 
     ) |>
-  group_nest(customer_id, .key = "cust_params") |>
+  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
   mutate(
     sim_file = glue(
       "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
@@ -894,8 +892,6 @@ transactions out of the fitted data.
 
 ```{r generate_pnbd_init_short_fixed1_validdata_transactions}
 #| echo: TRUE
-
-plan(multisession)
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   as.character() |>
@@ -1242,7 +1238,7 @@ pnbd_init_short_fixed2_fitsims_index_tbl <- pnbd_init_short_fixed2_simstats_tbl 
     tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
     tnx_cv     = 1       ### 
     ) |>
-  group_nest(customer_id, .key = "cust_params") |>
+  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
   mutate(
     sim_file = glue(
       "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
@@ -1258,9 +1254,6 @@ We now use this setup to generate our simulations.
 
 ```{r generate_simulation_pnbd_init_short_fixed2_fitdata_transactions}
 #| echo: TRUE
-
-plan(multisession)
-
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   as.character() |>
@@ -1467,7 +1460,7 @@ pnbd_init_short_fixed2_validsims_index_tbl <- pnbd_init_short_fixed2_simstats_tb
     tnx_mu     = 1,      ### We are not simulating tnx size
     tnx_cv     = 1       ### 
     ) |>
-  group_nest(customer_id, .key = "cust_params") |>
+  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
   mutate(
     sim_file = glue(
       "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
@@ -1483,8 +1476,6 @@ transactions out of the fitted data.
 
 ```{r generate_pnbd_init_short_fixed2_validdata_transactions}
 #| echo: TRUE
-
-plan(multisession)
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   as.character() |>
@@ -1834,7 +1825,7 @@ pnbd_init_short_fixed3_fitsims_index_tbl <- pnbd_init_short_fixed3_simstats_tbl 
     tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
     tnx_cv     = 1       ### 
     ) |>
-  group_nest(customer_id, .key = "cust_params") |>
+  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
   mutate(
     sim_file = glue(
       "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
@@ -1850,9 +1841,6 @@ We now use this setup to generate our simulations.
 
 ```{r generate_simulation_pnbd_init_short_fixed3_fitdata_transactions}
 #| echo: TRUE
-
-plan(multisession)
-
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   as.character() |>
@@ -2059,7 +2047,7 @@ pnbd_init_short_fixed3_validsims_index_tbl <- pnbd_init_short_fixed3_simstats_tb
     tnx_mu     = 1,      ### We are not simulating tnx size
     tnx_cv     = 1       ### 
     ) |>
-  group_nest(customer_id, .key = "cust_params") |>
+  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
   mutate(
     sim_file = glue(
       "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
@@ -2075,8 +2063,6 @@ transactions out of the fitted data.
 
 ```{r generate_pnbd_init_short_fixed3_validdata_transactions}
 #| echo: TRUE
-
-plan(multisession)
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   as.character() |>
