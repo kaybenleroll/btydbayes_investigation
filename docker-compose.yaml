@@ -21,7 +21,7 @@ services:
     image: kaybenleroll/btydbayes-minion:latest
     environment:
       - REDIS=redis
-      - USEJSON=true
+      - USEJSON=false
     depends_on:
       - redis
 
