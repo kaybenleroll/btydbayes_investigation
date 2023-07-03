@@ -60,7 +60,7 @@ conflict_lst <- resolve_conflicts(
 options(
   width = 80L,
   warn  = 1,
-  mc.cores = parallel::detectCores()
+  mc.cores = parallelly::availableCores()
   )
 
 
