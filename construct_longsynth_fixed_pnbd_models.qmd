@@ -271,14 +271,17 @@ run the simulations and combine the datasets.
 #| echo: TRUE
 
 pnbd_long_fixed1_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_long_fixed1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
-  fit_label        = "pnbd_long_fixed1",
-  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
-  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
-  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4210
+  model_stanfit       = pnbd_long_fixed1_stanfit,
+  insample_tbl        = customer_fit_stats_tbl,
+  outsample_tbl       = customer_valid_stats_tbl,
+  fit_label           = "pnbd_long_fixed1",
+  fit_end_dttm        = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm    = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm      = use_valid_end_date   |> as.POSIXct(),
+  precompute_rootdir  = "precompute",
+  data_dir            = "data",
+  summary_include_tnx = FALSE,
+  sim_seed            = 4210
   )
 
 pnbd_long_fixed1_assess_data_lst |> glimpse()
@@ -444,14 +447,17 @@ run the simulations and combine the datasets.
 #| echo: TRUE
 
 pnbd_long_fixed2_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_long_fixed2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
-  fit_label        = "pnbd_long_fixed2",
-  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
-  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
-  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4220
+  model_stanfit       = pnbd_long_fixed2_stanfit,
+  insample_tbl        = customer_fit_stats_tbl,
+  outsample_tbl       = customer_valid_stats_tbl,
+  fit_label           = "pnbd_long_fixed2",
+  fit_end_dttm        = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm    = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm      = use_valid_end_date   |> as.POSIXct(),
+  precompute_rootdir  = "precompute",
+  data_dir            = "data",
+  summary_include_tnx = FALSE,
+  sim_seed            = 4220
   )
 
 pnbd_long_fixed2_assess_data_lst |> glimpse()
@@ -614,14 +620,17 @@ run the simulations and combine the datasets.
 #| echo: TRUE
 
 pnbd_long_fixed3_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_long_fixed3_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
-  fit_label        = "pnbd_long_fixed3",
-  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
-  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
-  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4230
+  model_stanfit       = pnbd_long_fixed3_stanfit,
+  insample_tbl        = customer_fit_stats_tbl,
+  outsample_tbl       = customer_valid_stats_tbl,
+  fit_label           = "pnbd_long_fixed3",
+  fit_end_dttm        = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm    = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm      = use_valid_end_date   |> as.POSIXct(),
+  precompute_rootdir  = "precompute",
+  data_dir            = "data",
+  summary_include_tnx = FALSE,
+  sim_seed            = 4230
   )
 
 pnbd_long_fixed3_assess_data_lst |> glimpse()
@@ -731,7 +740,7 @@ obs_stats_tbl <- tribble(
   "valid",      "simtnx_count",      obs_valid_total_count
   )
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_fixed.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_long_fixed.*_assess_.*simstats") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(

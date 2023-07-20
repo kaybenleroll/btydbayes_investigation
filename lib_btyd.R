@@ -136,10 +136,12 @@ generate_pnbd_individual_transactions <- function(
 
   first_tnx_dttm <- as.POSIXct(first_date) + runif(1, min = 0, max = 24 * 60 * 60 - 1)
 
+  use_block <- pmax(10, 2 * ceiling(tnx_rate * tnx_window))
+
   tnx_intervals <- calculate_event_times(
     rate       = tnx_rate,
     total_time = tnx_window,
-    block_size = 1000
+    block_size = use_block
     )
 
   event_dates <- first_tnx_dttm + (cumsum(tnx_intervals) * (7 * 24 * 60 * 60))
@@ -232,14 +234,13 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
 
 construct_pnbd_posterior_statistics <- function(stanfit, fitdata_tbl) {
   post_stats_tbl <- stanfit |>
-    recover_types(fitdata_tbl) |>
     spread_draws(lambda[customer_id], mu[customer_id], p_alive[customer_id]) |>
     ungroup() |>
     inner_join(fitdata_tbl, by = "customer_id") |>
     select(
       customer_id, first_tnx_date, draw_id = .draw,
       post_lambda = lambda, post_mu = mu, p_alive
-    )
+      )
 
   return(post_stats_tbl)
 }
@@ -289,10 +290,12 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
   if(customer_active) {
     obs_time <- min(extra_tau, max_observed)
 
+    use_block <- pmax(10, 2 * ceiling(obs_time * lambda))
+
     tnx_intervals <- calculate_event_times(
       rate       = lambda,
       total_time = obs_time,
-      block_size = 1000
+      block_size = use_block
       )
 
     event_dates <- start_dttm + (cumsum(tnx_intervals) * (7 * 24 * 60 * 60))
@@ -315,16 +318,21 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
       slice(0)
   }
 
-
   return(tnxdata_tbl)
 }
 
 
 run_model_assessment <- function(
-    model_stanfit, insample_tbl, outsample_tbl, fit_label,
+    model_stanfit, insample_tbl, fit_label,
     fit_end_dttm, valid_start_dttm, valid_end_dttm,
     precompute_rootdir = "precompute", data_dir = "data",
-    sim_seed = 420) {
+    summary_include_tnx = FALSE, sim_seed = 420) {
+
+
+  write_assessment_logentry(
+    glue("-------------------- New model assessment --------------------"),
+    prefix_label = fit_label
+    )
 
 
   ###
@@ -332,9 +340,9 @@ run_model_assessment <- function(
   ###
   precompute_dir <- glue("{precompute_rootdir}/{fit_label}")
 
-  syslog(
+  write_assessment_logentry(
     glue("Ensuring precompute directory {precompute_dir} exists"),
-    level = "INFO"
+    prefix_label = fit_label
     )
 
   ensure_exists_precompute_directory(precompute_dir)
@@ -343,9 +351,9 @@ run_model_assessment <- function(
   ###
   ### Setting up the simulation statistics
   ###
-  syslog(
+  write_assessment_logentry(
     glue("Calculating the posterior statistics"),
-    level = "INFO"
+    prefix_label = fit_label
     )
 
   model_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_model_simstats_tbl.rds")
@@ -363,13 +371,18 @@ run_model_assessment <- function(
   }
 
 
-
-
-
   ### Setting up the sim_stats function
-  retrieve_sim_stats <- ~ .x |>
-    read_rds() |>
-    select(draw_id, sim_data, sim_tnx_count, sim_tnx_last)
+
+  if(summary_include_tnx) {
+    retrieve_sim_stats <- ~ .x |>
+      read_rds() |>
+      select(draw_id, sim_data, sim_tnx_count, sim_tnx_last)
+  } else {
+    retrieve_sim_stats <- ~ .x |>
+      read_rds() |>
+      select(draw_id, sim_tnx_count, sim_tnx_last)
+  }
+
 
   ### We also want to get the contents of the precompute_dir directory
   precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
@@ -381,9 +394,9 @@ run_model_assessment <- function(
   ###
   ### Setting up and calculating the in-sample simulations
   ###
-  syslog(
+  write_assessment_logentry(
     glue("Setting up insample model_index_tbl"),
-    level = "INFO"
+    prefix_label = fit_label
     )
 
   model_index_tbl <- model_simstats_tbl |>
@@ -403,9 +416,9 @@ run_model_assessment <- function(
         )
       )
 
-  syslog(
+  write_assessment_logentry(
     glue("Configuring the insample fit simulations"),
-    level = "INFO"
+    prefix_label = fit_label
     )
 
   runsims_tbl <- model_index_tbl |>
@@ -415,12 +428,12 @@ run_model_assessment <- function(
 
   if(n_sims > 0) {
 
-    syslog(
-      glue("Running {n_sims} in-sample simulations to {precompute_dir}"),
-      level = "INFO"
+    write_assessment_logentry(
+      glue("Generating {n_sims} in-sample simulations to {precompute_dir}"),
+      prefix_label = fit_label
       )
 
-    model_index_tbl <- runsims_tbl |>
+    output_tbl <- runsims_tbl |>
       mutate(
         chunk_data = future_map2_int(
           cust_params, sim_file,
@@ -444,15 +457,28 @@ run_model_assessment <- function(
   }
 
 
-  syslog(
+  write_assessment_logentry(
     glue("Setting up model_fit_simstats_tbl"),
-    level = "INFO"
+    prefix_label = fit_label
     )
+
+  ### Trying to reduce the memory footprint for this
+  model_fit_index_tbl <- model_index_tbl |>
+    select(customer_id, sim_file)
+
+  rm(model_index_tbl)
+  gc(verbose = TRUE, full = TRUE)
 
   model_fit_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_fit_simstats_tbl.rds")
 
   if(!file_exists(model_fit_simstats_filepath)) {
-    model_simdata_tbl <- model_index_tbl |>
+
+    write_assessment_logentry(
+      glue("Retrieving fit stats data from files"),
+      prefix_label = fit_label
+      )
+
+    model_simdata_tbl <- model_fit_index_tbl |>
       mutate(
         sim_data = map(
           sim_file, retrieve_sim_stats,
@@ -468,14 +494,18 @@ run_model_assessment <- function(
     rm(model_simdata_tbl)
   }
 
+  model_fit_index_filepath <- glue("{data_dir}/{fit_label}_assess_fit_index_tbl.rds")
+
+  model_fit_index_tbl |> write_rds(model_fit_index_filepath)
+
 
   ###
   ### Setting up and calculating the out-of-sample simulations
   ###
 
-  syslog(
+  write_assessment_logentry(
     glue("Setting up out-of-sample validation model_index_tbl"),
-    level = "INFO"
+    prefix_label = fit_label
     )
 
   model_index_tbl <- model_simstats_tbl |>
@@ -494,9 +524,9 @@ run_model_assessment <- function(
         )
       )
 
-  syslog(
+  write_assessment_logentry(
     glue("Configuring the out-of-sample validation simulations"),
-    level = "INFO"
+    prefix_label = fit_label
     )
 
   runsims_tbl <- model_index_tbl |>
@@ -505,12 +535,12 @@ run_model_assessment <- function(
   n_sims <- runsims_tbl |> nrow()
 
   if(n_sims > 0) {
-    syslog(
-      glue("Running {n_sims} out-of-sample simulations to {precompute_dir}"),
-      level = "INFO"
+    write_assessment_logentry(
+      glue("Generating {n_sims} out-of-sample simulations to {precompute_dir}"),
+      prefix_label = fit_label
       )
 
-    model_index_tbl <- runsims_tbl |>
+    output_tbl <- runsims_tbl |>
       mutate(
         chunk_data = future_map2_int(
           cust_params, sim_file,
@@ -534,17 +564,29 @@ run_model_assessment <- function(
   }
 
 
-  syslog(
+  write_assessment_logentry(
     glue("Loading the calculated simulations"),
-    level = "INFO"
+    prefix_label = fit_label
     )
+
+
+  model_valid_index_tbl <- model_index_tbl |>
+    select(customer_id, sim_file)
+
+  rm(model_index_tbl)
+  gc(verbose = TRUE, full = TRUE)
 
 
   model_valid_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_valid_simstats_tbl.rds")
 
 
   if(!file_exists(model_valid_simstats_filepath)) {
-    model_simdata_tbl <- model_index_tbl |>
+    write_assessment_logentry(
+      glue("Retrieving valid stats data from files"),
+      prefix_label = fit_label
+      )
+
+    model_simdata_tbl <- model_valid_index_tbl |>
       mutate(
         sim_data = map(
           sim_file, retrieve_sim_stats,
@@ -560,7 +602,21 @@ run_model_assessment <- function(
     rm(model_simdata_tbl)
   }
 
+  model_valid_index_filepath <- glue("{data_dir}/{fit_label}_assess_valid_index_tbl.rds")
+
+  model_valid_index_tbl |> write_rds(model_valid_index_filepath)
+
+
+  write_assessment_logentry(
+    glue("-------------------- End model assessment --------------------"),
+    prefix_label = fit_label
+    )
+
+
+
   assessment_lst <- list(
+    model_fit_index_filepath      = model_fit_index_filepath,
+    model_valid_index_filepath    = model_valid_index_filepath,
     model_simstats_filepath       = model_simstats_filepath,
     model_fit_simstats_filepath   = model_fit_simstats_filepath,
     model_valid_simstats_filepath = model_valid_simstats_filepath
@@ -669,3 +725,13 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
 
   return(assess_plots_lst)
 }
+
+
+write_assessment_logentry <- function(log_str, prefix_label) {
+  log_message <- glue(
+      "[{timestamp}] - [{prefix_label}] - {log_str}",
+      timestamp = Sys.time()
+      ) |>
+    write_lines(file = "model_assessment.log", append = TRUE)
+}
+

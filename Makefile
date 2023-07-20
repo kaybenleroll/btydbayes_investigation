@@ -30,8 +30,7 @@ all-html: $(HTML_FILES)
 
 .qmd.html:
 	echo "TIMESTAMP:" `date` "- Rendering script $<"  >> output.log 2>&1
-	quarto render $< --to html                        >> output.log 2>&1
-#	Rscript -e 'quarto::quarto_render("$<")'          >> output.log 2>&1
+	quarto render $< --to html >> output.log 2>&1
 	echo "TIMESTAMP:" `date` "- Finished $*.html"         >> output.log 2>&1
 
 

@@ -959,7 +959,7 @@ obs_stats_tbl <- tribble(
   )
 
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_(one|fixed).*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_(one|fixed).*_assess_.*simstats") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(

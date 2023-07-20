@@ -271,7 +271,6 @@ run the simulations and combine the datasets.
 pnbd_onlineretail_fixed1_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_onlineretail_fixed1_stanfit,
   insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
   fit_label        = "pnbd_onlineretail_fixed1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -452,7 +451,6 @@ run the simulations and combine the datasets.
 pnbd_onlineretail_fixed2_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_onlineretail_fixed2_stanfit,
   insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
   fit_label        = "pnbd_onlineretail_fixed2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -814,7 +812,6 @@ run the simulations and combine the datasets.
 pnbd_onlineretail_fixed4_assess_data_lst <- run_model_assessment(
   model_stanfit    = pnbd_onlineretail_fixed4_stanfit,
   insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
   fit_label        = "pnbd_onlineretail_fixed4",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -939,7 +936,7 @@ obs_stats_tbl <- tribble(
   "valid",      "simtnx_count",      obs_valid_total_count
   )
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_fixed.*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_fixed.*_assess_.*simstats") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(

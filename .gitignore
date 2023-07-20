@@ -8,6 +8,7 @@
 
 .Rhistory
 .RData
-output.log
-temp.R
 
+*.log
+
+temp*.R
