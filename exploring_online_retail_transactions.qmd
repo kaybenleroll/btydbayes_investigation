@@ -1986,12 +1986,8 @@ use_valid_end_date   <- as.Date("2012-12-10")
 
 
 
-## Load Online Retail Transaction Data
 
-We now want to load the online retail transaction data.
-
-
-```{r load_online_retail_transaction_data}
+```{r setup_online_retail_transaction_data}
 #| echo: TRUE
 
 customer_cohortdata_tbl <- customer_cohort_tbl
@@ -2089,6 +2085,31 @@ daily_spend_invoice_tbl |> glimpse()
 
 
 
+## Construct Customer Subsets
+
+Rather run our validation on the entire datasets, we instead focus initially
+on using a subset of the data for validating the model as a whole.
+
+The idea is to fit our models on the whole dataset, but just run our simulation
+code on the subset to reduce computation time. Once we are happy with a number
+of candidate models we can run the simulations on the full set.
+
+```{r create_customer_subset}
+#| echo: TRUE
+
+onlineretail_customer_subset_ids <- customer_summarystats_tbl |>
+  filter(first_tnx_date <= as.Date("2010-12-01")) |>
+  slice_sample(n = 2000, replace = FALSE) |>
+  arrange(customer_id) |>
+  pull(customer_id)
+
+onlineretail_customer_subset_ids |> glimpse()
+```
+
+
+
+
+
 # Output Cleaned Data
 
 Finally we output the various datasets we have constructed to disks.
@@ -2110,6 +2131,18 @@ daily_spend_tbl           |> write_rds("data/onlineretail_daily_spend_tbl.rds")
 
 obs_fitdata_tbl           |> write_rds("data/onlineretail_obs_fitdata_tbl.rds")
 obs_validdata_tbl         |> write_rds("data/onlineretail_obs_validdata_tbl.rds")
+
+onlineretail_customer_subset_ids |>
+  write_rds("data/onlineretail_customer_subset_ids.rds")
+
+list(
+    use_fit_start_date = use_fit_start_date,
+    use_fit_end_date   = use_fit_end_date,
+  
+    use_valid_start_date = use_valid_start_date,
+    use_valid_end_date   = use_valid_end_date
+    ) |>
+  write_rds("data/onlineretail_simulation_dates.rds")
 ```
 
 

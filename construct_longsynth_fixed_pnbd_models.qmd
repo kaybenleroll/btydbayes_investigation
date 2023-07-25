@@ -82,15 +82,6 @@ synthetic data with the longer timeframe.
 We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
-```{r set_start_end_dates}
-use_fit_start_date <- as.Date("2010-01-01")
-use_fit_end_date   <- as.Date("2022-01-01")
-
-use_valid_start_date <- as.Date("2022-01-01")
-use_valid_end_date   <- as.Date("2023-01-01")
-```
-
-
 
 ## Load Long Time-frame Synthetic Data
 
@@ -111,9 +102,9 @@ customer_transactions_tbl |> glimpse()
 ```
 
 
-## Load Derived Datasets
+## Load Derived Data
 
-```{r write_data_disk}
+```{r load_modelling_data}
 #| echo: TRUE
 
 id_1000  <- read_rds("data/longsynth_id_1000.rds")
@@ -128,15 +119,48 @@ customer_summarystats_tbl <- read_rds("data/longsynth_customer_summarystats_tbl.
 
 obs_fitdata_tbl   <- read_rds("data/longsynth_obs_fitdata_tbl.rds")
 obs_validdata_tbl <- read_rds("data/longsynth_obs_validdata_tbl.rds")
+
+customer_subset_id <- id_1000
 ```
 
 
+## Load Subset Data
 
-# Fit First P/NBD Model
+We also want to construct our data subsets for the purposes of speeding up our
+valuations.
 
-We need to set up a number of workbook parameters, such as some directories
-for the Stan model.
+```{r construct_customer_subset_data}
+#| echo: TRUE
 
+customer_fit_subset_tbl <- obs_fitdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_fit_subset_tbl |> glimpse()
+
+
+customer_valid_subset_tbl <- obs_validdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_valid_subset_tbl |> glimpse()
+```
+
+We now use these datasets to set the start and end dates for our various
+validation methods.
+
+
+```{r set_start_end_dates}
+dates_lst <- read_rds("data/longsynth_simulation_dates.rds")
+
+use_fit_start_date <- dates_lst$use_fit_start_date
+use_fit_end_date   <- dates_lst$use_fit_end_date
+
+use_valid_start_date <- dates_lst$use_valid_start_date
+use_valid_end_date   <- dates_lst$use_valid_end_date
+```
+
+
+Finally, we need to set our directories where we save our Stan code and the
+model outputs.
 
 ```{r setup_workbook_parameters}
 #| echo: TRUE
@@ -145,6 +169,9 @@ stan_modeldir <- "stan_models"
 stan_codedir  <-   "stan_code"
 ```
 
+
+
+# Fit First P/NBD Model
 
 
 ## Compile and Fit Stan Model
@@ -270,10 +297,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_long_fixed1_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_long_fixed1_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_long_fixed1_assess_data_lst <- run_model_assessment(
-  model_stanfit       = pnbd_long_fixed1_stanfit,
-  insample_tbl        = customer_fit_stats_tbl,
-  outsample_tbl       = customer_valid_stats_tbl,
+  model_stanfit       = pnbd_stanfit,
+  insample_tbl        = customer_fit_subset_tbl,
   fit_label           = "pnbd_long_fixed1",
   fit_end_dttm        = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm    = use_valid_start_date |> as.POSIXct(),
@@ -446,10 +475,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_long_fixed2_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_long_fixed2_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_long_fixed2_assess_data_lst <- run_model_assessment(
-  model_stanfit       = pnbd_long_fixed2_stanfit,
-  insample_tbl        = customer_fit_stats_tbl,
-  outsample_tbl       = customer_valid_stats_tbl,
+  model_stanfit       = pnbd_stanfit,
+  insample_tbl        = customer_fit_subset_tbl,
   fit_label           = "pnbd_long_fixed2",
   fit_end_dttm        = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm    = use_valid_start_date |> as.POSIXct(),
@@ -619,10 +650,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_long_fixed3_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_long_fixed3_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_long_fixed3_assess_data_lst <- run_model_assessment(
-  model_stanfit       = pnbd_long_fixed3_stanfit,
-  insample_tbl        = customer_fit_stats_tbl,
-  outsample_tbl       = customer_valid_stats_tbl,
+  model_stanfit       = pnbd_stanfit,
+  insample_tbl        = customer_fit_subset_tbl,
   fit_label           = "pnbd_long_fixed3",
   fit_end_dttm        = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm    = use_valid_start_date |> as.POSIXct(),

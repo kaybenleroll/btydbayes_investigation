@@ -1,4 +1,5 @@
 .Rproj.user/
+.vscode/
 
 *_cache/*
 *_files/*
@@ -12,3 +13,5 @@
 *.log
 
 temp*.R
+
+

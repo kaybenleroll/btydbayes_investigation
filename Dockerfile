@@ -50,6 +50,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     fs \
     furrr \
     loo \
+    markdown \
     modeltime \
     posterior \
     projpred \
@@ -69,8 +70,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     tidyquant \
     timetk
 
-
-COPY build/logging.conf /etc/rstudio/
 
 WORKDIR /tmp
 

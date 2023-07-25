@@ -844,7 +844,7 @@ try to model real-life data.
 #| echo: true
 
 use_fit_start_date <- as.Date("1997-01-01")
-use_fit_end_date   <- as.Date("1997-12-31")
+use_fit_end_date   <- as.Date("1998-01-01")
 
 use_valid_start_date <- as.Date("1998-01-01")
 use_valid_end_date   <- as.Date("1998-07-01")
@@ -858,9 +858,6 @@ customer_transactions_tbl <- data_tbl
 customer_transactions_tbl |> glimpse()
 ```
 
-
-
-## Construct Datasets
 
 Having loaded the synthetic data we need to construct a number of datasets of
 derived values.
@@ -876,7 +873,7 @@ customer_summarystats_tbl |> glimpse()
 ```
 
 
-### Construct Customer Subsets
+## Construct Customer Subsets
 
 Rather run our validation on the entire datasets, we instead focus initially
 on using a subset of the data for validating the model as a whole.
@@ -899,7 +896,7 @@ cdnow_customer_subset_ids |> glimpse()
 
 
 
-### Construct Modelling Datasets
+## Construct Modelling Datasets
 
 As before, we construct a number of subsets of the data for use later on with
 the modelling and create some data subsets.
@@ -964,6 +961,15 @@ data_tbl |>
 
 obs_fitdata_tbl   |> write_rds("data/cdnow_obs_fitdata_tbl.rds")
 obs_validdata_tbl |> write_rds("data/cdnow_obs_validdata_tbl.rds")
+
+list(
+    use_fit_start_date = use_fit_start_date,
+    use_fit_end_date   = use_fit_end_date,
+  
+    use_valid_start_date = use_valid_start_date,
+    use_valid_end_date   = use_valid_end_date
+    ) |>
+  write_rds("data/cdnow_simulation_dates.rds")
 ```
 
 

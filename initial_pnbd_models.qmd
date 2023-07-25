@@ -603,8 +603,11 @@ on in sample data rather than using validation data.
 ```{r calculate_pnbd_init_short_fixed1_simstats}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_init_short_fixed1_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_init_short_fixed1_simstats_tbl <- construct_pnbd_posterior_statistics(
-  stanfit         = pnbd_init_short_fixed1_stanfit,
+  stanfit         = pnbd_stanfit,
   fitdata_tbl     = customer_fit_stats_tbl
   )
 
@@ -1197,8 +1200,11 @@ We now want to check our in-sample data.
 ```{r calculate_pnbd_init_short_fixed2_posterior_simstats}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_init_short_fixed2_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_init_short_fixed2_simstats_tbl <- construct_pnbd_posterior_statistics(
-  stanfit         = pnbd_init_short_fixed2_stanfit,
+  stanfit         = pnbd_stanfit,
   fitdata_tbl     = customer_fit_stats_tbl
   )
 
@@ -1280,7 +1286,7 @@ if(nrow(runsims_tbl) > 0) {
             ),
           packages   = c("tidyverse", "fs"),
           scheduling = Inf,
-          seed       = 421
+          seed       = 422
           ),
 
         .progress = TRUE
@@ -1502,7 +1508,7 @@ if(nrow(runsims_tbl) > 0) {
             ),
           packages   = c("tidyverse", "fs"),
           scheduling = Inf,
-          seed       = 421
+          seed       = 422
           ),
 
         .progress = TRUE
@@ -1783,8 +1789,11 @@ We now want to check our in-sample data.
 ```{r calculate_pnbd_init_short_fixed3_posterior_simstats}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_init_short_fixed3_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_init_short_fixed3_simstats_tbl <- construct_pnbd_posterior_statistics(
-  stanfit         = pnbd_init_short_fixed3_stanfit,
+  stanfit         = pnbd_stanfit,
   fitdata_tbl     = customer_fit_stats_tbl
   )
 
@@ -1867,7 +1876,7 @@ if(nrow(runsims_tbl) > 0) {
             ),
           packages   = c("tidyverse", "fs"),
           scheduling = Inf,
-          seed       = 421
+          seed       = 423
           ),
 
         .progress = TRUE
@@ -2089,7 +2098,7 @@ if(nrow(runsims_tbl) > 0) {
             ),
           packages   = c("tidyverse", "fs"),
           scheduling = Inf,
-          seed       = 421
+          seed       = 423
           ),
 
         .progress = TRUE

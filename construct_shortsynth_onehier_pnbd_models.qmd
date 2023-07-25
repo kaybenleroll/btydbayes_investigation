@@ -82,17 +82,9 @@ synthetic data with the longer timeframe.
 We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
-```{r set_start_end_dates}
-use_fit_start_date <- as.Date("2020-01-01")
-use_fit_end_date   <- as.Date("2022-01-01")
-
-use_valid_start_date <- as.Date("2022-01-01")
-use_valid_end_date   <- as.Date("2023-01-01")
-```
 
 
-
-## Load Long Time-frame Synthetic Data
+## Load Short Time-frame Synthetic Data
 
 We now want to load the short time-frame synthetic data.
 
@@ -112,10 +104,9 @@ customer_transactions_tbl |> glimpse()
 
 
 
+## Load Derived Datasets
 
-## Load Derived Data
-
-```{r load_modelling_data}
+```{r load_derived_data}
 #| echo: TRUE
 
 id_1000  <- read_rds("data/shortsynth_id_1000.rds")
@@ -130,6 +121,43 @@ customer_summarystats_tbl <- read_rds("data/shortsynth_customer_summarystats_tbl
 
 obs_fitdata_tbl   <- read_rds("data/shortsynth_obs_fitdata_tbl.rds")
 obs_validdata_tbl <- read_rds("data/shortsynth_obs_validdata_tbl.rds")
+
+customer_subset_id <- id_1000
+```
+
+
+## Load Subset Data
+
+We also want to construct our data subsets for the purposes of speeding up our
+valuations.
+
+```{r construct_customer_subset_data}
+#| echo: TRUE
+
+customer_fit_subset_tbl <- obs_fitdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_fit_subset_tbl |> glimpse()
+
+
+customer_valid_subset_tbl <- obs_validdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_valid_subset_tbl |> glimpse()
+```
+
+We now use these datasets to set the start and end dates for our various
+validation methods.
+
+
+```{r set_start_end_dates}
+dates_lst <- read_rds("data/shortsynth_simulation_dates.rds")
+
+use_fit_start_date <- dates_lst$use_fit_start_date
+use_fit_end_date   <- dates_lst$use_fit_end_date
+
+use_valid_start_date <- dates_lst$use_valid_start_date
+use_valid_end_date   <- dates_lst$use_valid_end_date
 ```
 
 
@@ -279,10 +307,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_init_short_onehierlambda1_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_init_short_onehierlambda1_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_init_short_onehierlambda1_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_init_short_onehierlambda1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_init_short_onehierlambda1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -465,10 +495,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_init_short_onehierlambda2_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_init_short_onehierlambda2_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_init_short_onehierlambda2_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_init_short_onehierlambda2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_init_short_onehierlambda2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -663,10 +695,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_init_short_onehiermu1_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_init_short_onehiermu1_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_init_short_onehiermu1_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_init_short_onehiermu1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_init_short_onehiermu1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -845,10 +879,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_init_short_onehiermu2_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_init_short_onehiermu2_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_init_short_onehiermu2_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_init_short_onehiermu2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_init_short_onehiermu2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -968,7 +1004,7 @@ obs_stats_tbl <- tribble(
   )
 
 
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_init_short_(one|fixed).*_assess") |>
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_init_short_(one|fixed).*_assess_.*simstats") |>
   enframe(name = NULL, value = "file_path") |>
   filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(

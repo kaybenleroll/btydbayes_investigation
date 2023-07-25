@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Mick Cooney mickcooney@gmail.com">
-<meta name="dcterms.date" content="2023-07-15">
+<meta name="dcterms.date" content="2023-07-21">
 
 <title>Exploring the CD-Now Transaction Dataset</title>
 <style>
@@ -2646,11 +2646,8 @@ vertical-align: -.125em;
   <li><a href="#custom-explorations" id="toc-custom-explorations" class="nav-link" data-scroll-target="#custom-explorations"><span class="toc-section-number">6</span>  Custom Explorations</a></li>
   <li><a href="#load-and-construct-datasets" id="toc-load-and-construct-datasets" class="nav-link" data-scroll-target="#load-and-construct-datasets"><span class="toc-section-number">7</span>  Load and Construct Datasets</a>
   <ul class="collapse">
-  <li><a href="#construct-datasets" id="toc-construct-datasets" class="nav-link" data-scroll-target="#construct-datasets"><span class="toc-section-number">7.1</span>  Construct Datasets</a>
-  <ul class="collapse">
-  <li><a href="#construct-customer-subsets" id="toc-construct-customer-subsets" class="nav-link" data-scroll-target="#construct-customer-subsets"><span class="toc-section-number">7.1.1</span>  Construct Customer Subsets</a></li>
-  <li><a href="#construct-modelling-datasets" id="toc-construct-modelling-datasets" class="nav-link" data-scroll-target="#construct-modelling-datasets"><span class="toc-section-number">7.1.2</span>  Construct Modelling Datasets</a></li>
-  </ul></li>
+  <li><a href="#construct-customer-subsets" id="toc-construct-customer-subsets" class="nav-link" data-scroll-target="#construct-customer-subsets"><span class="toc-section-number">7.1</span>  Construct Customer Subsets</a></li>
+  <li><a href="#construct-modelling-datasets" id="toc-construct-modelling-datasets" class="nav-link" data-scroll-target="#construct-modelling-datasets"><span class="toc-section-number">7.2</span>  Construct Modelling Datasets</a></li>
   </ul></li>
   <li><a href="#r-environment" id="toc-r-environment" class="nav-link" data-scroll-target="#r-environment"><span class="toc-section-number">8</span>  R Environment</a></li>
   </ul>
@@ -2679,7 +2676,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 15, 2023</p>
+      <p class="date">July 21, 2023</p>
     </div>
   </div>
   
@@ -3551,7 +3548,7 @@ $ total_tnx_count &lt;int&gt; 1, 2, 6, 4, 11, 1, 3, 8, 3, 1, 4, 1, 1, 1, 1, 4, 1
 <details>
 <summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>use_fit_start_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1997-01-01&quot;</span>)</span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>use_fit_end_date   <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1997-12-31&quot;</span>)</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>use_fit_end_date   <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1998-01-01&quot;</span>)</span>
 <span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>use_valid_start_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1998-01-01&quot;</span>)</span>
 <span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a>use_valid_end_date   <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;1998-07-01&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3576,8 +3573,6 @@ $ cd_count      &lt;int&gt; 1, 5, 1, 2, 2, 2, 5, 4, 1, 2, 2, 1, 2, 2, 1, 3, 3, 3
 $ total_spend   &lt;dbl&gt; 11.77, 77.00, 12.00, 20.76, 20.76, 19.54, 57.45, 20.96, …</code></pre>
 </div>
 </div>
-<section id="construct-datasets" class="level2" data-number="7.1">
-<h2 data-number="7.1" class="anchored" data-anchor-id="construct-datasets"><span class="header-section-number">7.1</span> Construct Datasets</h2>
 <p>Having loaded the synthetic data we need to construct a number of datasets of derived values.</p>
 <div class="cell">
 <details>
@@ -3596,11 +3591,11 @@ $ first_tnx_date &lt;dttm&gt; 1997-01-01 21:57:19, 1997-01-12 06:52:02, 1997-01-
 $ last_tnx_date  &lt;dttm&gt; 1997-01-01 21:57:19, 1997-01-12 22:29:23, 1997-11-25 0…
 $ x              &lt;dbl&gt; 0, 1, 4, 3, 9, 0, 1, 6, 1, 0, 2, 0, 0, 0, 0, 3, 0, 0, 1…
 $ t_x            &lt;dbl&gt; 0.00000000, 0.09299084, 46.61488842, 49.31851535, 49.39…
-$ T_cal          &lt;dbl&gt; 51.86931, 50.38769, 51.73851, 51.89928, 51.96351, 51.98…</code></pre>
+$ T_cal          &lt;dbl&gt; 52.01217, 50.53055, 51.88136, 52.04213, 52.10637, 52.13…</code></pre>
 </div>
 </div>
-<section id="construct-customer-subsets" class="level3" data-number="7.1.1">
-<h3 data-number="7.1.1" class="anchored" data-anchor-id="construct-customer-subsets"><span class="header-section-number">7.1.1</span> Construct Customer Subsets</h3>
+<section id="construct-customer-subsets" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="construct-customer-subsets"><span class="header-section-number">7.1</span> Construct Customer Subsets</h2>
 <p>Rather run our validation on the entire datasets, we instead focus initially on using a subset of the data for validating the model as a whole.</p>
 <p>The idea is to fit our models on the whole dataset, but just run our simulation code on the subset to reduce computation time. Once we are happy with a number of candidate models we can run the simulations on the full set.</p>
 <div class="cell">
@@ -3619,8 +3614,8 @@ $ T_cal          &lt;dbl&gt; 51.86931, 50.38769, 51.73851, 51.89928, 51.96351, 5
 </div>
 </div>
 </section>
-<section id="construct-modelling-datasets" class="level3" data-number="7.1.2">
-<h3 data-number="7.1.2" class="anchored" data-anchor-id="construct-modelling-datasets"><span class="header-section-number">7.1.2</span> Construct Modelling Datasets</h3>
+<section id="construct-modelling-datasets" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="construct-modelling-datasets"><span class="header-section-number">7.2</span> Construct Modelling Datasets</h2>
 <p>As before, we construct a number of subsets of the data for use later on with the modelling and create some data subsets.</p>
 <div class="cell">
 <details>
@@ -3636,7 +3631,7 @@ $ first_tnx_date &lt;dttm&gt; 1997-01-01 21:57:19, 1997-01-12 06:52:02, 1997-01-
 $ last_tnx_date  &lt;dttm&gt; 1997-01-01 21:57:19, 1997-01-12 22:29:23, 1997-11-25 0…
 $ x              &lt;dbl&gt; 0, 1, 4, 3, 9, 0, 1, 6, 1, 0, 2, 0, 0, 0, 0, 3, 0, 0, 1…
 $ t_x            &lt;dbl&gt; 0.00000000, 0.09299084, 46.61488842, 49.31851535, 49.39…
-$ T_cal          &lt;dbl&gt; 51.86931, 50.38769, 51.73851, 51.89928, 51.96351, 51.98…</code></pre>
+$ T_cal          &lt;dbl&gt; 52.01217, 50.53055, 51.88136, 52.04213, 52.10637, 52.13…</code></pre>
 </div>
 <details>
 <summary>Show code</summary>
@@ -3698,10 +3693,18 @@ $ tnx_last_interval &lt;dbl&gt; 21.0938560, 0.4209526, 11.5579626, 12.5475594, 2
 <span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_transaction_data_tbl.rds&quot;</span>)</span>
 <span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>obs_fitdata_tbl   <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_obs_fitdata_tbl.rds&quot;</span>)</span>
-<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>obs_validdata_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_obs_validdata_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>obs_validdata_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_obs_validdata_tbl.rds&quot;</span>)</span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(</span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_fit_start_date =</span> use_fit_start_date,</span>
+<span id="cb64-17"><a href="#cb64-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_fit_end_date   =</span> use_fit_end_date,</span>
+<span id="cb64-18"><a href="#cb64-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb64-19"><a href="#cb64-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_valid_start_date =</span> use_valid_start_date,</span>
+<span id="cb64-20"><a href="#cb64-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_valid_end_date   =</span> use_valid_end_date</span>
+<span id="cb64-21"><a href="#cb64-21" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb64-22"><a href="#cb64-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/cdnow_simulation_dates.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-</section>
 </section>
 </section>
 <section id="r-environment" class="level1" data-number="8">
@@ -3722,8 +3725,8 @@ $ tnx_last_interval &lt;dbl&gt; 21.0938560, 0.4209526, 11.5579626, 12.5475594, 2
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-07-15
- pandoc   2.19.2 @ /usr/lib/rstudio-server/bin/quarto/bin/tools/ (via rmarkdown)
+ date     2023-07-21
+ pandoc   2.19.2 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
  package      * version date (UTC) lib source
@@ -3769,7 +3772,6 @@ $ tnx_last_interval &lt;dbl&gt; 21.0938560, 0.4209526, 11.5579626, 12.5475594, 2
  readr        * 2.1.4   2023-02-10 [1] RSPM (R 4.2.0)
  rlang        * 1.1.0   2023-03-14 [1] RSPM (R 4.2.0)
  rmarkdown      2.21    2023-03-26 [1] RSPM (R 4.2.0)
- rstudioapi     0.14    2022-08-22 [1] RSPM (R 4.2.0)
  scales       * 1.2.1   2022-08-20 [1] RSPM (R 4.2.0)
  sessioninfo    1.2.2   2021-12-06 [1] RSPM (R 4.2.0)
  snakecase    * 0.11.0  2019-05-25 [1] RSPM (R 4.2.0)

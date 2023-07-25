@@ -83,19 +83,11 @@ synthetic data with the longer timeframe.
 We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
-```{r set_start_end_dates}
-use_fit_start_date <- as.Date("2009-12-01")
-use_fit_end_date   <- as.Date("2010-12-01")
-
-use_valid_start_date <- as.Date("2010-12-01")
-use_valid_end_date   <- as.Date("2011-12-31")
-```
-
 
 
 ## Load Online Retail Data
 
-We now want to load the short time-frame synthetic data.
+We now want to load the online retail transaction data.
 
 
 ```{r load_online_retail_data}
@@ -104,8 +96,11 @@ We now want to load the short time-frame synthetic data.
 customer_cohortdata_tbl <- read_rds("data/onlineretail_cohort_tbl.rds")
 customer_cohortdata_tbl |> glimpse()
 
-customer_transactions_tbl <- read_rds("data/onlineretail_invoice_cleaned_tbl.rds")
+customer_transactions_tbl <- read_rds("data/onlineretail_transactions_tbl.rds")
 customer_transactions_tbl |> glimpse()
+
+customer_subset_id <- read_rds("data/onlineretail_customer_subset_ids.rds")
+customer_subset_id |> glimpse()
 ```
 
 
@@ -115,13 +110,67 @@ customer_transactions_tbl |> glimpse()
 
 ```{r load_derived_data}
 #| echo: TRUE
-customer_summarystats_tbl <- read_rds("data/onlineretail_customer_summarystats_tbl.rds")
 
-obs_fitdata_tbl   <- read_rds("data/onlineretail_obs_fitdata_tbl.rds")
-obs_validdata_tbl <- read_rds("data/onlineretail_obs_validdata_tbl.rds")
+id_1000  <- read_rds("data/longsynth_id_1000.rds")
+id_5000  <- read_rds("data/longsynth_id_5000.rds")
+id_10000 <- read_rds("data/longsynth_id_10000.rds")
 
-customer_fit_stats_tbl <- obs_fitdata_tbl |>
-  rename(x = tnx_count)
+fit_1000_data_tbl  <- read_rds("data/longsynth_fit_1000_data_tbl.rds")
+fit_10000_data_tbl <- read_rds("data/longsynth_fit_10000_data_tbl.rds")
+
+customer_fit_stats_tbl    <- fit_1000_data_tbl
+customer_summarystats_tbl <- read_rds("data/longsynth_customer_summarystats_tbl.rds")
+
+obs_fitdata_tbl   <- read_rds("data/longsynth_obs_fitdata_tbl.rds")
+obs_validdata_tbl <- read_rds("data/longsynth_obs_validdata_tbl.rds")
+
+customer_subset_id <- id_1000
+```
+
+
+## Load Subset Data
+
+We also want to construct our data subsets for the purposes of speeding up our
+valuations.
+
+```{r construct_customer_subset_data}
+#| echo: TRUE
+
+customer_fit_subset_tbl <- obs_fitdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_fit_subset_tbl |> glimpse()
+
+
+customer_valid_subset_tbl <- obs_validdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_valid_subset_tbl |> glimpse()
+```
+
+We now use these datasets to set the start and end dates for our various
+validation methods.
+
+
+```{r set_start_end_dates}
+dates_lst <- read_rds("data/onlineretail_simulation_dates.rds")
+
+use_fit_start_date <- dates_lst$use_fit_start_date
+use_fit_end_date   <- dates_lst$use_fit_end_date
+
+use_valid_start_date <- dates_lst$use_valid_start_date
+use_valid_end_date   <- dates_lst$use_valid_end_date
+```
+
+
+Finally, we need to set our directories where we save our Stan code and the
+model outputs.
+
+```{r setup_workbook_parameters}
+#| echo: TRUE
+
+stan_modeldir <- "stan_models"
+stan_codedir  <-   "stan_code"
 ```
 
 
@@ -130,16 +179,6 @@ customer_fit_stats_tbl <- obs_fitdata_tbl |>
 
 We now construct our Stan model and prepare to fit it with our synthetic
 dataset.
-
-Before we start on that, we set a few parameters for the workbook to organise
-our Stan code.
-
-```{r setup_workbook_parameters}
-#| echo: TRUE
-
-stan_modeldir <- "stan_models"
-stan_codedir  <-   "stan_code"
-```
 
 We also want to set a number of overall parameters for this workbook
 
@@ -268,9 +307,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_onlineretail_fixed1_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_onlineretail_fixed1_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_onlineretail_fixed1_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_onlineretail_fixed1",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -448,9 +490,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_onlineretail_fixed2_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_onlineretail_fixed2_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_onlineretail_fixed2_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_onlineretail_fixed2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -628,10 +673,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_onlineretail_fixed3_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_onlineretail_fixed3_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_onlineretail_fixed3_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed3_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_onlineretail_fixed3",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -809,9 +856,12 @@ run the simulations and combine the datasets.
 ```{r run_pnbd_onlineretail_fixed4_assessment}
 #| echo: TRUE
 
+pnbd_stanfit <- pnbd_onlineretail_fixed4_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
 pnbd_onlineretail_fixed4_assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed4_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_onlineretail_fixed4",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),

@@ -962,6 +962,15 @@ data_tbl |>
 
 obs_fitdata_tbl   |> write_rds("data/shortsynth_obs_fitdata_tbl.rds")
 obs_validdata_tbl |> write_rds("data/shortsynth_obs_validdata_tbl.rds")
+
+list(
+    use_fit_start_date = use_fit_start_date,
+    use_fit_end_date   = use_fit_end_date,
+  
+    use_valid_start_date = use_valid_start_date,
+    use_valid_end_date   = use_valid_end_date
+    ) |>
+  write_rds("data/shortsynth_simulation_dates.rds")
 ```
 
 
