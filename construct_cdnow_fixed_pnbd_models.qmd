@@ -80,18 +80,6 @@ transaction data.
 
 # Load and Construct Datasets
 
-We start by modelling the P/NBD model using our synthetic datasets before we
-try to model real-life data.
-
-```{r set_start_end_dates}
-use_fit_start_date <- as.Date("1997-01-01")
-use_fit_end_date   <- as.Date("1998-01-01")
-
-use_valid_start_date <- as.Date("1998-01-01")
-use_valid_end_date   <- as.Date("1998-07-01")
-```
-
-
 
 ## Load CD-NOW Transaction Data
 
@@ -173,11 +161,20 @@ customer_valid_subset_tbl |> glimpse()
 ```
 
 
+We now use these datasets to set the start and end dates for our various
+validation methods.
 
-# Fit First P/NBD Model
 
-We now construct our Stan model and prepare to fit it with our synthetic
-dataset.
+```{r set_start_end_dates}
+dates_lst <- read_rds("data/cdnow_simulation_dates.rds")
+
+use_fit_start_date <- dates_lst$use_fit_start_date
+use_fit_end_date   <- dates_lst$use_fit_end_date
+
+use_valid_start_date <- dates_lst$use_valid_start_date
+use_valid_end_date   <- dates_lst$use_valid_end_date
+```
+
 
 Before we start on that, we set a few parameters for the workbook to organise
 our Stan code.
@@ -188,6 +185,14 @@ our Stan code.
 stan_modeldir <- "stan_models"
 stan_codedir  <-   "stan_code"
 ```
+
+
+
+# Fit First P/NBD Model
+
+We now construct our Stan model and prepare to fit it with our synthetic
+dataset.
+
 
 We also want to set a number of overall parameters for this workbook
 

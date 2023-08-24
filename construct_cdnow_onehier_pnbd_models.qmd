@@ -78,25 +78,13 @@ synthetic data with the longer timeframe.
 
 # Load and Construct Datasets
 
-We start by modelling the P/NBD model using our synthetic datasets before we
-try to model real-life data.
 
-```{r set_start_end_dates}
-use_fit_start_date <- as.Date("1997-01-01")
-use_fit_end_date   <- as.Date("1998-01-01")
+## Load CD-NOW Transaction Data
 
-use_valid_start_date <- as.Date("1998-01-01")
-use_valid_end_date   <- as.Date("1999-01-10")
-```
+We now want to load the CD-NOW transaction data.
 
 
-
-## Load CD-Now Data
-
-We now want to load the online retail transaction data.
-
-
-```{r load_cdnow_data}
+```{r load_cdnow_transaction_data}
 #| echo: TRUE
 
 customer_cohortdata_tbl <- read_rds("data/cdnow_customer_cohort_data_tbl.rds")
@@ -108,6 +96,31 @@ customer_transactions_tbl |> glimpse()
 customer_subset_id <- read_rds("data/cdnow_customer_subset_ids.rds")
 customer_subset_id |> glimpse()
 ```
+
+
+We re-produce the visualisation of the transaction times we used in previous
+workbooks.
+
+```{r plot_customer_transaction_times}
+#| echo: TRUE
+
+plot_tbl <- customer_transactions_tbl |>
+  group_nest(customer_id, .key = "cust_data") |>
+  filter(map_int(cust_data, nrow) > 3) |>
+  slice_sample(n = 30) |>
+  unnest(cust_data)
+
+ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
+  geom_line() +
+  geom_point() +
+  labs(
+      x = "Date",
+      y = "Customer ID",
+      title = "Visualisation of Customer Transaction Times"
+    ) +
+  theme(axis.text.y = element_text(size = 10))
+```
+
 
 
 
@@ -146,10 +159,23 @@ customer_valid_subset_tbl |> glimpse()
 ```
 
 
+We now use these datasets to set the start and end dates for our various
+validation methods.
 
 
-Finally, we need to set our directories where we save our Stan code and the
-model outputs.
+```{r set_start_end_dates}
+dates_lst <- read_rds("data/cdnow_simulation_dates.rds")
+
+use_fit_start_date <- dates_lst$use_fit_start_date
+use_fit_end_date   <- dates_lst$use_fit_end_date
+
+use_valid_start_date <- dates_lst$use_valid_start_date
+use_valid_end_date   <- dates_lst$use_valid_end_date
+```
+
+
+Before we start on that, we set a few parameters for the workbook to organise
+our Stan code.
 
 ```{r setup_workbook_parameters}
 #| echo: TRUE
@@ -157,7 +183,6 @@ model outputs.
 stan_modeldir <- "stan_models"
 stan_codedir  <-   "stan_code"
 ```
-
 
 
 # Fit First Hierarchical Lambda Model

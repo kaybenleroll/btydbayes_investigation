@@ -50,8 +50,8 @@ transformed parameters {
 
 model {
   // creating hierarchical values
-  lambda_mn ~ gamma(hier_lambda_shape, hier_lambda_rate);
-  lambda_cv ~ gamma(hier_mu_shape,     hier_mu_rate);
+  lambda_mn ~ gamma(hier_lambda_mn_shape, hier_lambda_mn_rate);
+  lambda_cv ~ gamma(hier_lambda_cv_shape, hier_lambda_cv_rate);
 
   // setting priors
   lambda ~ gamma(r, alpha);

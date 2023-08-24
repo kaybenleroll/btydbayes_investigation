@@ -991,19 +991,19 @@ calculate_simulation_statistics <- function(file_rds) {
 ```{r load_model_assessment_data}
 #| echo: TRUE
 
-obs_fit_customer_count <- obs_fitdata_tbl |>
+obs_fit_customer_count <- customer_fit_subset_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-obs_valid_customer_count <- obs_validdata_tbl |>
+obs_valid_customer_count <- customer_valid_subset_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-obs_fit_total_count <- obs_fitdata_tbl |>
+obs_fit_total_count <- customer_fit_subset_tbl |>
   pull(tnx_count) |>
   sum()
 
-obs_valid_total_count <- obs_validdata_tbl |>
+obs_valid_total_count <- customer_valid_subset_tbl |>
   pull(tnx_count) |>
   sum()
 
