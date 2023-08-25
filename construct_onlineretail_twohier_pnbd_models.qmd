@@ -285,7 +285,6 @@ We also check $N_{eff}$ as a quick diagnostic of the fit.
 
 pnbd_onlineretail_twohiermean_stanfit |>
   neff_ratio(pars = c("lambda_mn", "mu_mn", "lambda", "mu")) |>
-  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
 ```
@@ -570,8 +569,6 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 As for our short time frame data, overall our model is working well.
-
-
 
 
 

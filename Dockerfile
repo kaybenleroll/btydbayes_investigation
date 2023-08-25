@@ -1,4 +1,11 @@
-FROM rocker/tidyverse:4.2.3
+FROM rocker/tidyverse:4.3.0
+
+ARG BUILD_DATE
+
+LABEL org.opencontainers.image.source="https://github.com/kaybenleroll/btydbayes_investigation" \
+      org.opencontainers.image.authors="Mick Cooney <mickcooney@gmail.com>" \
+      org.label-schema.build-date=$BUILD_DATE
+
 
 ENV TZ=Europe/Dublin
 

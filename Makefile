@@ -89,10 +89,12 @@ clean-models:
 
 ### Docker targets
 docker-build-image: Dockerfile
-	docker build -t ${IMAGE_TAG} -f Dockerfile .
+	docker build -t ${IMAGE_TAG} \
+	  --build-arg BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ') \
+	  -f Dockerfile .
 
 docker-show-context:
-	docker build -f context.dockerfile -t context-image .
+	docker build -f build/context.dockerfile -t context-image .
 	docker run --rm -it context-image find /tmp/build
 	docker rmi test:latest
 

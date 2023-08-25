@@ -288,8 +288,7 @@ We also check $N_{eff}$ as a quick diagnostic of the fit.
 #| echo: TRUE
 
 pnbd_init_short_twohiermean_stanfit |>
-  neff_ratio(pars = c("lambda", "mu")) |>
-  as.numeric() |>
+  neff_ratio(pars = c("lambda_mn", "mu_mn", "lambda", "mu")) |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
 ```
