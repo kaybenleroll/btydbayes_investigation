@@ -109,6 +109,10 @@ docker-run:
 	  --name ${CONTAINER_NAME} \
 	  ${IMAGE_TAG}
 
+docker-fix-permissions:
+	docker exec ${CONTAINER_NAME} bash -c "chown -R ${DOCKER_USER}:${DOCKER_USER} /home/${DOCKER_USER}"
+
+
 docker-bash:
 	docker exec -it -u ${DOCKER_USER} ${CONTAINER_NAME} bash
 

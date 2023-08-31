@@ -1,12 +1,5 @@
 FROM rocker/tidyverse:4.3.0
 
-ARG BUILD_DATE
-
-LABEL org.opencontainers.image.source="https://github.com/kaybenleroll/btydbayes_investigation" \
-      org.opencontainers.image.authors="Mick Cooney <mickcooney@gmail.com>" \
-      org.label-schema.build-date=$BUILD_DATE
-
-
 ENV TZ=Europe/Dublin
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
@@ -115,4 +108,12 @@ USER root
 RUN chown -R rstudio:rstudio /home/rstudio \
   && chmod ugo+rx /home/rstudio \
   && chown -R rstudio:rstudio /home/rstudio/.cmdstan
+
+
+ARG BUILD_DATE
+
+LABEL org.opencontainers.image.source="https://github.com/kaybenleroll/btydbayes_investigation" \
+      org.opencontainers.image.authors="Mick Cooney <mickcooney@gmail.com>" \
+      org.label-schema.build-date=$BUILD_DATE
+
 
