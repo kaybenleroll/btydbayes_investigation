@@ -9,6 +9,7 @@ DOCKER_USER=rstudio
 DOCKER_PASS=CHANGEME
 DOCKER_UID=$(shell id -u)
 DOCKER_GID=$(shell id -g)
+DOCKER_BUILD_ARGS=
 
 RSTUDIO_PORT=8787
 
@@ -90,8 +91,9 @@ clean-models:
 ### Docker targets
 docker-build-image: Dockerfile
 	docker build -t ${IMAGE_TAG} \
+	  ${DOCKER_BUILD_ARGS} \
 	  --build-arg BUILD_DATE=$(shell date -u +'%Y-%m-%dT%H:%M:%SZ') \
-	  -f Dockerfile .
+	  -f Dockerfile . 2>&1 | tee -a docker_build.log
 
 docker-show-context:
 	docker build -f build/context.dockerfile -t context-image .

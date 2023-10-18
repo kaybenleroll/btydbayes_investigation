@@ -1,4 +1,7 @@
-FROM rocker/tidyverse:4.3.0
+FROM rocker/tidyverse:4.3.1
+
+COPY build/Rprofile.site /usr/local/lib/R/etc/
+COPY build/Renviron.site /usr/local/lib/R/etc/
 
 ENV TZ=Europe/Dublin
 
@@ -17,6 +20,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     libglpk-dev \
     libgsl-dev \
     libnlopt-dev \
+    libomp-dev \
     p7zip-full \
     pbzip2 \
     rsyslog \
@@ -24,15 +28,29 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p $HOME/.R \
   && echo "" > $HOME/.R/Makevars \
+  && echo "CC=clang"                                               >> $HOME/.R/Makevars \
   && echo "CXX=clang++"                                            >> $HOME/.R/Makevars \
   && echo "CXXFLAGS=-Os"                                           >> $HOME/.R/Makevars \
   && echo "CXXFLAGS+= -Wno-unused-variable -Wno-unused-function"   >> $HOME/.R/Makevars \
   && echo "CXXFLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined"   >> $HOME/.R/Makevars \
   && echo ""                                                       >> $HOME/.R/Makevars \
+  && echo "CC11=clang"                                             >> $HOME/.R/Makevars \
+  && echo "CXX11=clang++"                                          >> $HOME/.R/Makevars \
+  && echo "CXX11FLAGS=-Os"                                         >> $HOME/.R/Makevars \
+  && echo "CXX11FLAGS+= -Wno-unused-variable -Wno-unused-function" >> $HOME/.R/Makevars \
+  && echo "CXX11FLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined" >> $HOME/.R/Makevars \
+  && echo ""                                                       >> $HOME/.R/Makevars \
+  && echo "CC14=clang"                                             >> $HOME/.R/Makevars \
   && echo "CXX14=clang++"                                          >> $HOME/.R/Makevars \
   && echo "CXX14FLAGS=-Os"                                         >> $HOME/.R/Makevars \
   && echo "CXX14FLAGS+= -Wno-unused-variable -Wno-unused-function" >> $HOME/.R/Makevars \
   && echo "CXX14FLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined" >> $HOME/.R/Makevars \
+  && echo ""                                                       >> $HOME/.R/Makevars \
+  && echo "CC17=clang++"                                           >> $HOME/.R/Makevars \
+  && echo "CXX17=clang++"                                          >> $HOME/.R/Makevars \
+  && echo "CXX17FLAGS=-Os"                                         >> $HOME/.R/Makevars \
+  && echo "CXX17FLAGS+= -Wno-unused-variable -Wno-unused-function" >> $HOME/.R/Makevars \
+  && echo "CXX17FLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined" >> $HOME/.R/Makevars \
   && echo ""                                                       >> $HOME/.R/Makevars \
   && install2.r --error \
     anytime \
