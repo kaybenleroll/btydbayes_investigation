@@ -111,20 +111,13 @@ customer_subset_id |> glimpse()
 ```{r load_derived_data}
 #| echo: TRUE
 
-id_1000  <- read_rds("data/longsynth_id_1000.rds")
-id_5000  <- read_rds("data/longsynth_id_5000.rds")
-id_10000 <- read_rds("data/longsynth_id_10000.rds")
+customer_summarystats_tbl <- read_rds("data/onlineretail_customer_summarystats_tbl.rds")
 
-fit_1000_data_tbl  <- read_rds("data/longsynth_fit_1000_data_tbl.rds")
-fit_10000_data_tbl <- read_rds("data/longsynth_fit_10000_data_tbl.rds")
+obs_fitdata_tbl   <- read_rds("data/onlineretail_obs_fitdata_tbl.rds")
+obs_validdata_tbl <- read_rds("data/onlineretail_obs_validdata_tbl.rds")
 
-customer_fit_stats_tbl    <- fit_1000_data_tbl
-customer_summarystats_tbl <- read_rds("data/longsynth_customer_summarystats_tbl.rds")
-
-obs_fitdata_tbl   <- read_rds("data/longsynth_obs_fitdata_tbl.rds")
-obs_validdata_tbl <- read_rds("data/longsynth_obs_validdata_tbl.rds")
-
-customer_subset_id <- id_1000
+customer_fit_stats_tbl <- obs_fitdata_tbl |>
+  rename(x = tnx_count)
 ```
 
 
