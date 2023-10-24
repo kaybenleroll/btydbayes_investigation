@@ -1,4 +1,7 @@
-FROM rocker/tidyverse:4.2.3
+FROM rocker/tidyverse:4.3.1
+
+COPY build/Rprofile.site /usr/local/lib/R/etc/
+COPY build/Renviron.site /usr/local/lib/R/etc/
 
 ENV TZ=Europe/Dublin
 
@@ -17,6 +20,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     libglpk-dev \
     libgsl-dev \
     libnlopt-dev \
+    libomp-dev \
     p7zip-full \
     pbzip2 \
     rsyslog \
@@ -24,15 +28,29 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p $HOME/.R \
   && echo "" > $HOME/.R/Makevars \
+  && echo "CC=clang"                                               >> $HOME/.R/Makevars \
   && echo "CXX=clang++"                                            >> $HOME/.R/Makevars \
   && echo "CXXFLAGS=-Os"                                           >> $HOME/.R/Makevars \
   && echo "CXXFLAGS+= -Wno-unused-variable -Wno-unused-function"   >> $HOME/.R/Makevars \
   && echo "CXXFLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined"   >> $HOME/.R/Makevars \
   && echo ""                                                       >> $HOME/.R/Makevars \
+  && echo "CC11=clang"                                             >> $HOME/.R/Makevars \
+  && echo "CXX11=clang++"                                          >> $HOME/.R/Makevars \
+  && echo "CXX11FLAGS=-Os"                                         >> $HOME/.R/Makevars \
+  && echo "CXX11FLAGS+= -Wno-unused-variable -Wno-unused-function" >> $HOME/.R/Makevars \
+  && echo "CXX11FLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined" >> $HOME/.R/Makevars \
+  && echo ""                                                       >> $HOME/.R/Makevars \
+  && echo "CC14=clang"                                             >> $HOME/.R/Makevars \
   && echo "CXX14=clang++"                                          >> $HOME/.R/Makevars \
   && echo "CXX14FLAGS=-Os"                                         >> $HOME/.R/Makevars \
   && echo "CXX14FLAGS+= -Wno-unused-variable -Wno-unused-function" >> $HOME/.R/Makevars \
   && echo "CXX14FLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined" >> $HOME/.R/Makevars \
+  && echo ""                                                       >> $HOME/.R/Makevars \
+  && echo "CC17=clang++"                                           >> $HOME/.R/Makevars \
+  && echo "CXX17=clang++"                                          >> $HOME/.R/Makevars \
+  && echo "CXX17FLAGS=-Os"                                         >> $HOME/.R/Makevars \
+  && echo "CXX17FLAGS+= -Wno-unused-variable -Wno-unused-function" >> $HOME/.R/Makevars \
+  && echo "CXX17FLAGS+= -Wno-unknown-pragmas -Wno-macro-redefined" >> $HOME/.R/Makevars \
   && echo ""                                                       >> $HOME/.R/Makevars \
   && install2.r --error \
     anytime \
@@ -50,6 +68,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     fs \
     furrr \
     loo \
+    markdown \
     modeltime \
     posterior \
     projpred \
@@ -69,8 +88,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
     tidyquant \
     timetk
 
-
-COPY build/logging.conf /etc/rstudio/
 
 WORKDIR /tmp
 
@@ -107,5 +124,14 @@ RUN Rscript /tmp/docker_install_user_rpkgs.R
 USER root
 
 RUN chown -R rstudio:rstudio /home/rstudio \
-  && chmod ugo+rx /home/rstudio
+  && chmod ugo+rx /home/rstudio \
+  && chown -R rstudio:rstudio /home/rstudio/.cmdstan
+
+
+ARG BUILD_DATE
+
+LABEL org.opencontainers.image.source="https://github.com/kaybenleroll/btydbayes_investigation" \
+      org.opencontainers.image.authors="Mick Cooney <mickcooney@gmail.com>" \
+      org.label-schema.build-date=$BUILD_DATE
+
 

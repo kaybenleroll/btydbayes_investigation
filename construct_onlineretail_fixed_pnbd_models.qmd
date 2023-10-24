@@ -34,6 +34,7 @@ library(cowplot)
 library(directlabels)
 library(magrittr)
 library(rlang)
+library(lobstr)
 library(rsyslog)
 library(fs)
 library(purrr)
@@ -59,7 +60,7 @@ conflict_lst <- resolve_conflicts(
 options(
   width = 80L,
   warn  = 1,
-  mc.cores = parallel::detectCores()
+  mc.cores = parallelly::availableCores()
   )
 
 
@@ -72,10 +73,9 @@ theme_set(theme_cowplot())
 plan(multisession)
 ```
 
-In this workbook we construct the non-hierarchical P/NBD models on the
+
+In this workbook we construct our first hierarchical P/NBD models on the
 synthetic data with the longer timeframe.
-
-
 
 
 # Load and Construct Datasets
@@ -83,135 +83,81 @@ synthetic data with the longer timeframe.
 We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
-```{r set_start_end_dates}
-use_fit_start_date <- as.Date("2009-12-01")
-use_fit_end_date   <- as.Date("2010-12-01")
-
-use_valid_start_date <- as.Date("2010-12-01")
-use_valid_end_date   <- as.Date("2012-12-10")
-```
 
 
-
-## Load Online Retail Transaction Data
+## Load Online Retail Data
 
 We now want to load the online retail transaction data.
 
 
-```{r load_online_retail_transaction_data}
+```{r load_online_retail_data}
 #| echo: TRUE
 
-customer_cohortdata_tbl <- read_rds("data/retail_data_cohort_tbl.rds")
+customer_cohortdata_tbl <- read_rds("data/onlineretail_cohort_tbl.rds")
 customer_cohortdata_tbl |> glimpse()
 
-customer_transactions_tbl <- read_rds("data/retail_data_transactions_tbl.rds")
+customer_transactions_tbl <- read_rds("data/onlineretail_transactions_tbl.rds")
 customer_transactions_tbl |> glimpse()
+
+customer_subset_id <- read_rds("data/onlineretail_customer_subset_ids.rds")
+customer_subset_id |> glimpse()
 ```
 
 
-We re-produce the visualisation of the transaction times we used in previous
-workbooks.
 
-```{r plot_customer_transaction_times}
+
+## Load Derived Data
+
+```{r load_derived_data}
 #| echo: TRUE
 
-plot_tbl <- customer_transactions_tbl |>
-  group_nest(customer_id, .key = "cust_data") |>
-  filter(map_int(cust_data, nrow) > 3) |>
-  slice_sample(n = 30) |>
-  unnest(cust_data)
+customer_summarystats_tbl <- read_rds("data/onlineretail_customer_summarystats_tbl.rds")
 
-ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
-  geom_line() +
-  geom_point() +
-  labs(
-      x = "Date",
-      y = "Customer ID",
-      title = "Visualisation of Customer Transaction Times"
-    ) +
-  theme(axis.text.y = element_text(size = 10))
+obs_fitdata_tbl   <- read_rds("data/onlineretail_obs_fitdata_tbl.rds")
+obs_validdata_tbl <- read_rds("data/onlineretail_obs_validdata_tbl.rds")
+
+customer_fit_stats_tbl <- obs_fitdata_tbl |>
+  rename(x = tnx_count)
 ```
 
 
+## Load Subset Data
 
-## Construct Datasets
+We also want to construct our data subsets for the purposes of speeding up our
+valuations.
 
-Having loaded the synthetic data we need to construct a number of datasets of
-derived values.
-
-```{r construct_summary_stats_data}
+```{r construct_customer_subset_data}
 #| echo: TRUE
 
-customer_summarystats_tbl <- customer_transactions_tbl |>
-  drop_na(customer_id) |>
-  calculate_transaction_cbs_data(last_date = use_fit_end_date |> as.POSIXct())
+customer_fit_subset_tbl <- obs_fitdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
 
-customer_summarystats_tbl |> glimpse()
+customer_fit_subset_tbl |> glimpse()
+
+
+customer_valid_subset_tbl <- obs_validdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_valid_subset_tbl |> glimpse()
 ```
 
-As before, we construct a number of subsets of the data for use later on with
-the modelling and create some data subsets.
+We now use these datasets to set the start and end dates for our various
+validation methods.
 
 
-```{r select_fit_dataset}
-customer_fit_stats_tbl <- customer_summarystats_tbl
-customer_fit_stats_tbl |> glimpse()
+```{r set_start_end_dates}
+dates_lst <- read_rds("data/onlineretail_simulation_dates.rds")
 
+use_fit_start_date <- dates_lst$use_fit_start_date
+use_fit_end_date   <- dates_lst$use_fit_end_date
 
-customer_valid_stats_tbl <- customer_transactions_tbl |>
-  drop_na(customer_id) |>
-  filter(
-    tnx_timestamp > (use_valid_start_date |> as.POSIXct())
-    ) |>
-  summarise(
-    tnx_count = n(),
-    tnx_last_interval = difftime(
-        max(tnx_timestamp),
-        use_valid_start_date,
-        units = "weeks"
-        ) |>
-      as.numeric(),
-
-    .by = customer_id
-    )
-
-customer_valid_stats_tbl |> glimpse()
+use_valid_start_date <- dates_lst$use_valid_start_date
+use_valid_end_date   <- dates_lst$use_valid_end_date
 ```
 
 
-```{r}
-#| echo: TRUE
-
-obs_fitdata_tbl <- customer_fit_stats_tbl |>
-  rename(tnx_count = x)
-  
-
-### We need to add all the zero count customers into the valid data
-obs_validdata_tbl <- customer_fit_stats_tbl |>
-  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
-  transmute(customer_id, tnx_count = 0) |>
-  bind_rows(customer_valid_stats_tbl) |>
-  arrange(customer_id)
-```
-
-We then write this data to disk.
-
-```{r write_fit_valid_data_to_disk}
-#! echo: TRUE
-
-obs_fitdata_tbl   |> write_rds("data/onlineretail_obs_fitdata_tbl.rds")
-
-obs_validdata_tbl |> write_rds("data/onlineretail_obs_validdata_tbl.rds")
-```
-
-
-# Fit First P/NBD Model
-
-We now construct our Stan model and prepare to fit it with our synthetic
-dataset.
-
-Before we start on that, we set a few parameters for the workbook to organise
-our Stan code.
+Finally, we need to set our directories where we save our Stan code and the
+model outputs.
 
 ```{r setup_workbook_parameters}
 #| echo: TRUE
@@ -219,6 +165,13 @@ our Stan code.
 stan_modeldir <- "stan_models"
 stan_codedir  <-   "stan_code"
 ```
+
+
+
+# Fit First P/NBD Model
+
+We now construct our Stan model and prepare to fit it with our synthetic
+dataset.
 
 We also want to set a number of overall parameters for this workbook
 
@@ -247,12 +200,14 @@ We then use this compiled model with our data to produce a fit of the data.
 
 
 
-```{r fit_pnbd_fixed_stanmodel}
+```{r fit_pnbd_onlineretail_fixed1_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
-stan_modelname <- "pnbd_onlineretail_fixed"
+stan_modelname <- "pnbd_onlineretail_fixed1"
+stanfit_seed   <- stanfit_seed + 1
 stanfit_prefix <- str_c("fit_", stan_modelname) 
+
+stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -264,16 +219,23 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 1.00,
     )
 
-pnbd_onlineretail_fixed1_stanfit <- pnbd_fixed_stanmodel$sample(
-  data            =                stan_data_lst,
-  chains          =                            4,
-  iter_warmup     =                          500,
-  iter_sampling   =                          500,
-  seed            =                         4201,
-  save_warmup     =                         TRUE,
-  output_dir      =                stan_modeldir,
-  output_basename =               stanfit_prefix,
-  )
+if(!file_exists(stanfit_object_file)) {
+  pnbd_onlineretail_fixed1_stanfit <- pnbd_fixed_stanmodel$sample(
+    data            =                stan_data_lst,
+    chains          =                            4,
+    iter_warmup     =                          500,
+    iter_sampling   =                          500,
+    seed            =                 stanfit_seed,
+    save_warmup     =                         TRUE,
+    output_dir      =                stan_modeldir,
+    output_basename =               stanfit_prefix,
+    )
+  
+  pnbd_onlineretail_fixed1_stanfit$save_object(stanfit_object_file, compress = "gzip")
+
+} else {
+  pnbd_onlineretail_fixed1_stanfit <- read_rds(stanfit_object_file)
+}
 
 pnbd_onlineretail_fixed1_stanfit$summary()
 ```
@@ -335,6 +297,26 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
+```{r run_pnbd_onlineretail_fixed1_assessment}
+#| echo: TRUE
+
+pnbd_stanfit <- pnbd_onlineretail_fixed1_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
+pnbd_onlineretail_fixed1_assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
+  fit_label        = "pnbd_onlineretail_fixed1",
+  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
+  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
+  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
+  sim_seed         = 10
+  )
+
+pnbd_onlineretail_fixed1_assess_data_lst |> glimpse()
+```
+
+
 ### Check In-Sample Data Validation
 
 We first check the model against the in-sample data.
@@ -342,20 +324,13 @@ We first check the model against the in-sample data.
 ```{r run_pnbd_onlineretail_fixed1_fit_assessment}
 #| echo: TRUE
 
-assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed1_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
-  fit_label        = "pnbd_onlineretail_fixed",
-  fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
-  valid_start_dttm = use_valid_start_date |> as.POSIXct(),
-  valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 10
-  )
+simdata_tbl <- pnbd_onlineretail_fixed1_assess_data_lst |>
+  use_series(model_fit_simstats_filepath) |>
+  read_rds()
 
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
-  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 insample_plots_lst$multi_plot |> print()
@@ -375,9 +350,13 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_onlineretail_fixed1_valid_assessment}
 #| echo: TRUE
 
+simdata_tbl <- pnbd_onlineretail_fixed1_assess_data_lst |>
+  use_series(model_valid_simstats_filepath) |>
+  read_rds()
+
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
-  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 outsample_plots_lst$multi_plot |> print()
@@ -387,16 +366,16 @@ outsample_plots_lst$quant_plot |> print()
 
 As for our short time frame data, overall our model is working well.
 
+```{r delete_pnbd_onlineretail_fixed1_valid_assessment}
+#| echo: false
 
-## Write Assess Data to Disk
+rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
 
-We now store this assessment data to disk.
-
-```{r write_pnbd_onlineretail_fixed1_assessment_data}
-#| echo: TRUE
-
-assess_data_lst |> write_rds("data/pnbd_onlineretail_fixed1_data.rds")
+gc()
 ```
+
 
 
 # Fit Alternate Prior Model.
@@ -407,12 +386,12 @@ to see what impact it has on our procedures.
 
 ```{r fit_pnbd_onlineretail_fixed2_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_onlineretail_fixed2"
-stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_seed   <- stanfit_seed + 1
+stanfit_prefix <- str_c("fit_", stan_modelname) 
 
+stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 stan_data_lst <- customer_fit_stats_tbl |>
   select(customer_id, x, t_x, T_cal) |>
@@ -424,16 +403,23 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 0.50,
     )
 
-pnbd_onlineretail_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
-  data            =                stan_data_lst,
-  chains          =                            4,
-  iter_warmup     =                          500,
-  iter_sampling   =                          500,
-  seed            =                 stanfit_seed,
-  save_warmup     =                         TRUE,
-  output_dir      =                stan_modeldir,
-  output_basename =               stanfit_prefix,
-  )
+if(!file_exists(stanfit_object_file)) {
+  pnbd_onlineretail_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
+    data            =                stan_data_lst,
+    chains          =                            4,
+    iter_warmup     =                          500,
+    iter_sampling   =                          500,
+    seed            =                 stanfit_seed,
+    save_warmup     =                         TRUE,
+    output_dir      =                stan_modeldir,
+    output_basename =               stanfit_prefix,
+    )
+  
+  pnbd_onlineretail_fixed2_stanfit$save_object(stanfit_object_file, compress = "gzip")
+
+} else {
+  pnbd_onlineretail_fixed2_stanfit <- read_rds(stanfit_object_file)
+}
 
 pnbd_onlineretail_fixed2_stanfit$summary()
 ```
@@ -493,17 +479,16 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_onlineretail_fixed2_fit_assessment}
+```{r run_pnbd_onlineretail_fixed2_assessment}
 #| echo: TRUE
 
-assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed2_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+pnbd_stanfit <- pnbd_onlineretail_fixed2_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
+pnbd_onlineretail_fixed2_assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_onlineretail_fixed2",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -511,9 +496,23 @@ assess_data_lst <- run_model_assessment(
   sim_seed         = 20
   )
 
+pnbd_onlineretail_fixed2_assess_data_lst |> glimpse()
+```
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_onlineretail_fixed2_fit_assessment}
+#| echo: TRUE
+
+simdata_tbl <- pnbd_onlineretail_fixed2_assess_data_lst |>
+  use_series(model_fit_simstats_filepath) |>
+  read_rds()
+
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
-  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 insample_plots_lst$multi_plot |> print()
@@ -533,9 +532,13 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_onlineretail_fixed2_valid_assessment}
 #| echo: TRUE
 
+simdata_tbl <- pnbd_onlineretail_fixed2_assess_data_lst |>
+  use_series(model_valid_simstats_filepath) |>
+  read_rds()
+
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
-  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 outsample_plots_lst$multi_plot |> print()
@@ -544,17 +547,17 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 
-## Write Assess Data to Disk
 
-We now store this assessment data to disk.
 
-```{r write_pnbd_onlineretail_fixed2_assessment_data}
-#| echo: TRUE
+```{r delete_pnbd_onlineretail_fixed2_valid_assessment}
+#| echo: false
 
-assess_data_lst |> write_rds("data/pnbd_onlineretail_fixed2_data.rds")
+rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
+
+gc()
 ```
-
-
 
 
 # Fit Tight-Lifetime Model
@@ -565,11 +568,12 @@ variation for lifetime but keep the CoV for transaction frequency.
 
 ```{r fit_pnbd_onlineretail_fixed3_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_onlineretail_fixed3"
-stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_seed   <- stanfit_seed + 1
+stanfit_prefix <- str_c("fit_", stan_modelname) 
+
+stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
 stan_data_lst <- customer_fit_stats_tbl |>
@@ -582,16 +586,23 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 0.50,
     )
 
-pnbd_onlineretail_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
-  data            =                stan_data_lst,
-  chains          =                            4,
-  iter_warmup     =                          500,
-  iter_sampling   =                          500,
-  seed            =                 stanfit_seed,
-  save_warmup     =                         TRUE,
-  output_dir      =                stan_modeldir,
-  output_basename =               stanfit_prefix,
-  )
+if(!file_exists(stanfit_object_file)) {
+  pnbd_onlineretail_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
+    data            =                stan_data_lst,
+    chains          =                            4,
+    iter_warmup     =                          500,
+    iter_sampling   =                          500,
+    seed            =                 stanfit_seed,
+    save_warmup     =                         TRUE,
+    output_dir      =                stan_modeldir,
+    output_basename =               stanfit_prefix,
+    )
+  
+  pnbd_onlineretail_fixed3_stanfit$save_object(stanfit_object_file, compress = "gzip")
+
+} else {
+  pnbd_onlineretail_fixed3_stanfit <- read_rds(stanfit_object_file)
+}
 
 pnbd_onlineretail_fixed3_stanfit$summary()
 ```
@@ -651,17 +662,16 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_onlineretail_fixed3_fit_assessment}
+```{r run_pnbd_onlineretail_fixed3_assessment}
 #| echo: TRUE
 
-assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed3_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+pnbd_stanfit <- pnbd_onlineretail_fixed3_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
+pnbd_onlineretail_fixed3_assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_onlineretail_fixed3",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -669,9 +679,24 @@ assess_data_lst <- run_model_assessment(
   sim_seed         = 30
   )
 
+pnbd_onlineretail_fixed3_assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_onlineretail_fixed3_fit_assessment}
+#| echo: TRUE
+
+simdata_tbl <- pnbd_onlineretail_fixed3_assess_data_lst |>
+  use_series(model_fit_simstats_filepath) |>
+  read_rds()
+
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
-  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 insample_plots_lst$multi_plot |> print()
@@ -691,9 +716,13 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_onlineretail_fixed3_valid_assessment}
 #| echo: TRUE
 
+simdata_tbl <- pnbd_onlineretail_fixed3_assess_data_lst |>
+  use_series(model_valid_simstats_filepath) |>
+  read_rds()
+
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
-  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 outsample_plots_lst$multi_plot |> print()
@@ -702,14 +731,15 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 
-## Write Assess Data to Disk
 
-We now store this assessment data to disk.
+```{r delete_pnbd_onlineretail_fixed3_valid_assessment}
+#| echo: false
 
-```{r write_pnbd_onlineretail_fixed3_assessment_data}
-#| echo: TRUE
+rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
 
-assess_data_lst |> write_rds("data/pnbd_onlineretail_fixed3_data.rds")
+gc()
 ```
 
 
@@ -721,11 +751,12 @@ variation for lifetime but keep the CoV for transaction frequency.
 
 ```{r fit_pnbd_onlineretail_fixed4_stanmodel}
 #| echo: TRUE
-#| cache: TRUE
 
 stan_modelname <- "pnbd_onlineretail_fixed4"
-stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_seed   <- stanfit_seed + 1
+stanfit_prefix <- str_c("fit_", stan_modelname) 
+
+stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
 
 
 stan_data_lst <- customer_fit_stats_tbl |>
@@ -738,16 +769,23 @@ stan_data_lst <- customer_fit_stats_tbl |>
     mu_cv     = 0.30,
     )
 
-pnbd_onlineretail_fixed4_stanfit <- pnbd_fixed_stanmodel$sample(
-  data            =                stan_data_lst,
-  chains          =                            4,
-  iter_warmup     =                          500,
-  iter_sampling   =                          500,
-  seed            =                 stanfit_seed,
-  save_warmup     =                         TRUE,
-  output_dir      =                stan_modeldir,
-  output_basename =               stanfit_prefix,
-  )
+if(!file_exists(stanfit_object_file)) {
+  pnbd_onlineretail_fixed4_stanfit <- pnbd_fixed_stanmodel$sample(
+    data            =                stan_data_lst,
+    chains          =                            4,
+    iter_warmup     =                          500,
+    iter_sampling   =                          500,
+    seed            =                 stanfit_seed,
+    save_warmup     =                         TRUE,
+    output_dir      =                stan_modeldir,
+    output_basename =               stanfit_prefix,
+    )
+  
+  pnbd_onlineretail_fixed4_stanfit$save_object(stanfit_object_file, compress = "gzip")
+
+} else {
+  pnbd_onlineretail_fixed4_stanfit <- read_rds(stanfit_object_file)
+}
 
 pnbd_onlineretail_fixed4_stanfit$summary()
 ```
@@ -807,17 +845,16 @@ As we intend to run the same logic to assess each of our models, we have
 combined all this logic into a single function `run_model_assessment`, to 
 run the simulations and combine the datasets.
 
-### Check In-Sample Data Validation
 
-We first check the model against the in-sample data.
-
-```{r run_pnbd_onlineretail_fixed4_fit_assessment}
+```{r run_pnbd_onlineretail_fixed4_assessment}
 #| echo: TRUE
 
-assess_data_lst <- run_model_assessment(
-  model_stanfit    = pnbd_onlineretail_fixed4_stanfit,
-  insample_tbl     = customer_fit_stats_tbl,
-  outsample_tbl    = customer_valid_stats_tbl,
+pnbd_stanfit <- pnbd_onlineretail_fixed4_stanfit |>
+  recover_types(customer_fit_stats_tbl)
+
+pnbd_onlineretail_fixed4_assess_data_lst <- run_model_assessment(
+  model_stanfit    = pnbd_stanfit,
+  insample_tbl     = customer_fit_subset_tbl,
   fit_label        = "pnbd_onlineretail_fixed4",
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
@@ -825,9 +862,24 @@ assess_data_lst <- run_model_assessment(
   sim_seed         = 40
   )
 
+pnbd_onlineretail_fixed4_assess_data_lst |> glimpse()
+```
+
+
+### Check In-Sample Data Validation
+
+We first check the model against the in-sample data.
+
+```{r run_pnbd_onlineretail_fixed4_fit_assessment}
+#| echo: TRUE
+
+simdata_tbl <- pnbd_onlineretail_fixed4_assess_data_lst |>
+  use_series(model_fit_simstats_filepath) |>
+  read_rds()
+
 insample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_fitdata_tbl,
-  simdata_tbl = assess_data_lst$model_fit_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 insample_plots_lst$multi_plot |> print()
@@ -847,9 +899,13 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_onlineretail_fixed4_valid_assessment}
 #| echo: TRUE
 
+simdata_tbl <- pnbd_onlineretail_fixed4_assess_data_lst |>
+  use_series(model_valid_simstats_filepath) |>
+  read_rds()
+
 outsample_plots_lst <- create_model_assessment_plots(
   obsdata_tbl = obs_validdata_tbl,
-  simdata_tbl = assess_data_lst$model_valid_simstats_tbl
+  simdata_tbl = simdata_tbl
   )
 
 outsample_plots_lst$multi_plot |> print()
@@ -858,19 +914,167 @@ outsample_plots_lst$quant_plot |> print()
 ```
 
 
-## Write Assess Data to Disk
+```{r delete_pnbd_onlineretail_fixed4_valid_assessment}
+#| echo: false
 
-We now store this assessment data to disk.
+rm(simdata_tbl)
+rm(insample_plots_lst)
+rm(outsample_plots_lst)
 
-```{r write_pnbd_onlineretail_fixed4_assessment_data}
+gc()
+```
+
+
+# Compare Model Outputs
+
+We have looked at each of the models individually, but it is also worth looking
+at each of the models as a group.
+
+```{r calculate_simulation_statistics}
 #| echo: TRUE
 
-assess_data_lst |> write_rds("data/pnbd_onlineretail_fixed4_data.rds")
+calculate_simulation_statistics <- function(file_rds) {
+  simdata_tbl <- read_rds(file_rds)
+  
+  multicount_cust_tbl <- simdata_tbl |>
+    filter(sim_tnx_count > 0) |>
+    count(draw_id, name = "multicust_count")
+  
+  totaltnx_data_tbl <- simdata_tbl |>
+    count(draw_id, wt = sim_tnx_count, name = "simtnx_count")
+  
+  simstats_tbl <- multicount_cust_tbl |>
+    inner_join(totaltnx_data_tbl, by = "draw_id")
+  
+  return(simstats_tbl)
+}
 ```
 
 
 
+```{r load_model_assessment_data}
+#| echo: TRUE
+
+obs_fit_customer_count <- obs_fitdata_tbl |>
+  filter(tnx_count > 0) |>
+  nrow()
+
+obs_valid_customer_count <- obs_validdata_tbl |>
+  filter(tnx_count > 0) |>
+  nrow()
+
+obs_fit_total_count <- obs_fitdata_tbl |>
+  pull(tnx_count) |>
+  sum()
+
+obs_valid_total_count <- obs_validdata_tbl |>
+  pull(tnx_count) |>
+  sum()
+
+obs_stats_tbl <- tribble(
+  ~assess_type, ~name,               ~obs_value,
+  "fit",        "multicust_count",   obs_fit_customer_count,
+  "fit",        "simtnx_count",      obs_fit_total_count,
+  "valid",      "multicust_count",   obs_valid_customer_count,
+  "valid",      "simtnx_count",      obs_valid_total_count
+  )
+
+model_assess_tbl <- dir_ls("data", regexp = "pnbd_onlineretail_fixed.*_assess_.*simstats") |>
+  enframe(name = NULL, value = "file_path") |>
+  filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
+  mutate(
+    model_label = str_replace(file_path, "data/pnbd_onlineretail_(.*?)_assess_.*", "\\1"),
+    assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
+    
+    sim_data = map(
+      file_path, calculate_simulation_statistics,
+      
+      .progress = "calculate_simulation_statistics"
+      )
+    )
+
+model_assess_tbl |> glimpse()
+```
+
+We have now constructed the simulation summary statistics and now reshape our
+data to aid in our model assessment.
+
+
+```{r calculate_model_assess_summary_stats}
+#| echo: TRUE
+
+model_assess_summstat_tbl <- model_assess_tbl |>
+  select(model_label, assess_type, sim_data) |>
+  unnest(sim_data) |>
+  pivot_longer(
+    cols = !c(model_label, assess_type, draw_id)
+    ) |>
+  group_by(model_label, assess_type, name) |>
+  summarise(
+    .groups = "drop",
+    
+    mean_val = mean(value),
+    p10 = quantile(value, 0.10),
+    p25 = quantile(value, 0.25),
+    p50 = quantile(value, 0.50),
+    p75 = quantile(value, 0.75),
+    p90 = quantile(value, 0.90)
+    )
+
+model_assess_summstat_tbl |> glimpse()
+```
+
+
+We now use this data to construct model comparison plots for the different
+models we have fit.
+
+
+```{r construct_model_comparison_plot}
+#! echo: TRUE
+
+ggplot(model_assess_summstat_tbl) +
+  geom_errorbar(
+    aes(x = model_label, ymin = p10, ymax = p90), width = 0
+    ) +
+  geom_errorbar(
+    aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3
+    ) +
+  geom_hline(
+    aes(yintercept = obs_value),
+    data = obs_stats_tbl, colour = "red"
+    ) +
+  scale_y_continuous(labels = label_comma()) +
+  expand_limits(y = 0) +
+  facet_wrap(
+    vars(assess_type, name), scale = "free_y"
+    ) +
+  labs(
+    x = "Model",
+    y = "Count",
+    title = "Comparison Plot for the Different Models"
+    ) +
+  theme(
+    axis.text.x = element_text(angle = 20, vjust = 0.5, size = 8)
+    )
+```
+
+
+## Write Assessment Data to Disk
+
+We now want to save the assessment data to disk.
+
+```{r write_model_assessment_data}
+#| echo: TRUE
+
+model_assess_tbl |> write_rds("data/assess_data_pnbd_onlineretail_fixed_tbl.rds")
+```
+
+
+
+
+
 # R Environment
+
 
 ```{r show_session_info}
 #| echo: TRUE
