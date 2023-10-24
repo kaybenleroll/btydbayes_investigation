@@ -595,10 +595,6 @@ As for our short time frame data, overall our model is working well.
 
 
 
-
-
-
-
 # Compare Model Outputs
 
 We have looked at each of the models individually, but it is also worth looking
