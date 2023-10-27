@@ -136,10 +136,12 @@ generate_pnbd_individual_transactions <- function(
 
   first_tnx_dttm <- as.POSIXct(first_date) + runif(1, min = 0, max = 24 * 60 * 60 - 1)
 
+  use_block <- pmax(10, 2 * ceiling(tnx_rate * tnx_window))
+
   tnx_intervals <- calculate_event_times(
     rate       = tnx_rate,
     total_time = tnx_window,
-    block_size = 1000
+    block_size = use_block
     )
 
   event_dates <- first_tnx_dttm + (cumsum(tnx_intervals) * (7 * 24 * 60 * 60))
@@ -232,14 +234,13 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
 
 construct_pnbd_posterior_statistics <- function(stanfit, fitdata_tbl) {
   post_stats_tbl <- stanfit |>
-    recover_types(fitdata_tbl) |>
     spread_draws(lambda[customer_id], mu[customer_id], p_alive[customer_id]) |>
     ungroup() |>
     inner_join(fitdata_tbl, by = "customer_id") |>
     select(
       customer_id, first_tnx_date, draw_id = .draw,
       post_lambda = lambda, post_mu = mu, p_alive
-    )
+      )
 
   return(post_stats_tbl)
 }
@@ -248,7 +249,7 @@ construct_pnbd_posterior_statistics <- function(stanfit, fitdata_tbl) {
 run_simulations_chunk <- function(sim_param_tbl, sim_file, sim_func) {
 
   simdata_tbl <- sim_param_tbl |>
-    group_nest(draw_id, .key = "sim_params") |>
+    group_nest(customer_id, draw_id, .key = "sim_params") |>
     mutate(
       sim_data      = map(sim_params, sim_func),
       sim_tnx_count = map_int(sim_data, nrow),
@@ -260,7 +261,8 @@ run_simulations_chunk <- function(sim_param_tbl, sim_file, sim_func) {
         )
       ) |>
     unnest(last_data, keep_empty = TRUE) |>
-    unnest(sim_params)
+    unnest(sim_params) |>
+    select(customer_id, draw_id, sim_data, sim_tnx_count, sim_tnx_last)
 
   simdata_tbl |> write_rds(sim_file)
 
@@ -288,10 +290,12 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
   if(customer_active) {
     obs_time <- min(extra_tau, max_observed)
 
+    use_block <- pmax(10, 2 * ceiling(obs_time * lambda))
+
     tnx_intervals <- calculate_event_times(
       rate       = lambda,
       total_time = obs_time,
-      block_size = 1000
+      block_size = use_block
       )
 
     event_dates <- start_dttm + (cumsum(tnx_intervals) * (7 * 24 * 60 * 60))
@@ -314,38 +318,88 @@ generate_pnbd_validation_transactions <- function(sim_params_tbl) {
       slice(0)
   }
 
-
   return(tnxdata_tbl)
 }
 
 
 run_model_assessment <- function(
-    model_stanfit, insample_tbl, outsample_tbl, fit_label,
+    model_stanfit, insample_tbl, fit_label,
     fit_end_dttm, valid_start_dttm, valid_end_dttm,
-    sim_seed = 420) {
+    precompute_rootdir = "precompute", data_dir = "data",
+    summary_include_tnx = FALSE, sim_seed = 420) {
 
 
-  syslog(
-    glue("Calculating the posterior statistics"),
-    level = "INFO"
+  write_assessment_logentry(
+    glue("-------------------- New model assessment --------------------"),
+    prefix_label = fit_label
     )
 
-  model_simstats_tbl <- construct_pnbd_posterior_statistics(
-    stanfit         = model_stanfit,
-    fitdata_tbl     = insample_tbl
-    )
 
-  precompute_dir <- glue("precompute/{fit_label}")
+  ###
+  ### Ensuring the precompute_dir folder exists
+  ###
+  precompute_dir <- glue("{precompute_rootdir}/{fit_label}")
+
+  write_assessment_logentry(
+    glue("Ensuring precompute directory {precompute_dir} exists"),
+    prefix_label = fit_label
+    )
 
   ensure_exists_precompute_directory(precompute_dir)
 
 
-  syslog(
-    glue("Setting up model_fitsims_index_tbl"),
-    level = "INFO"
-  )
+  ###
+  ### Setting up the simulation statistics
+  ###
+  write_assessment_logentry(
+    glue("Calculating the posterior statistics"),
+    prefix_label = fit_label
+    )
 
-  model_fitsims_index_tbl <- model_simstats_tbl |>
+  model_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_model_simstats_tbl.rds")
+
+  if(!file_exists(model_simstats_filepath)) {
+    model_simstats_tbl <- construct_pnbd_posterior_statistics(
+      stanfit     = model_stanfit,
+      fitdata_tbl = insample_tbl
+    )
+
+    model_simstats_tbl |> write_rds(model_simstats_filepath, compress = "gz")
+  } else {
+
+    model_simstats_tbl <- read_rds(model_simstats_filepath)
+  }
+
+
+  ### Setting up the sim_stats function
+
+  if(summary_include_tnx) {
+    retrieve_sim_stats <- ~ .x |>
+      read_rds() |>
+      select(draw_id, sim_data, sim_tnx_count, sim_tnx_last)
+  } else {
+    retrieve_sim_stats <- ~ .x |>
+      read_rds() |>
+      select(draw_id, sim_tnx_count, sim_tnx_last)
+  }
+
+
+  ### We also want to get the contents of the precompute_dir directory
+  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
+    as.character() |>
+    enframe(name = NULL, value = "sim_file")
+
+
+
+  ###
+  ### Setting up and calculating the in-sample simulations
+  ###
+  write_assessment_logentry(
+    glue("Setting up insample model_index_tbl"),
+    prefix_label = fit_label
+    )
+
+  model_index_tbl <- model_simstats_tbl |>
     mutate(
       start_dttm = first_tnx_date,
       end_dttm   = fit_end_dttm,
@@ -355,61 +409,31 @@ run_model_assessment <- function(
       tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
       tnx_cv     = 1       ###
       ) |>
-    group_nest(customer_id, .key = "cust_params") |>
+    group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
     mutate(
       sim_file = glue(
         "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
         )
       )
 
-  syslog(
-    glue("Setting up model_validsims_index_tbl"),
-    level = "INFO"
+  write_assessment_logentry(
+    glue("Configuring the insample fit simulations"),
+    prefix_label = fit_label
     )
 
-  model_validsims_index_tbl <- model_simstats_tbl |>
-    mutate(
-      start_dttm = valid_start_dttm,
-      end_dttm   = valid_end_dttm,
-      lambda     = post_lambda,
-      mu         = post_mu,
-      tnx_mu     = 1,      ### We are not simulating tnx size
-      tnx_cv     = 1       ###
-      ) |>
-    group_nest(customer_id, .key = "cust_params") |>
-    mutate(
-      sim_file = glue(
-        "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
-        )
-      )
-
-
-
-  syslog(
-    glue("Configuring the insample validation simulations"),
-    level = "INFO"
-    )
-
-  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-    as.character() |>
-    enframe(name = NULL, value = "sim_file")
-
-
-  runsims_tbl <- model_fitsims_index_tbl |>
+  runsims_tbl <- model_index_tbl |>
     anti_join(precomputed_tbl, by = "sim_file")
 
   n_sims <- runsims_tbl |> nrow()
 
   if(n_sims > 0) {
 
-    syslog(
-      glue("Running {n_sims} in-sample simulations to {precompute_dir}"),
-      level = "INFO"
-    )
+    write_assessment_logentry(
+      glue("Generating {n_sims} in-sample simulations to {precompute_dir}"),
+      prefix_label = fit_label
+      )
 
-    plan(multisession)
-
-    model_fitsims_index_tbl <- runsims_tbl |>
+    output_tbl <- runsims_tbl |>
       mutate(
         chunk_data = future_map2_int(
           cust_params, sim_file,
@@ -433,30 +457,90 @@ run_model_assessment <- function(
   }
 
 
-  syslog(
-    glue("Configuring the out-of-sample validation simulations"),
-    level = "INFO"
+  write_assessment_logentry(
+    glue("Setting up model_fit_simstats_tbl"),
+    prefix_label = fit_label
     )
 
-  precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-    as.character() |>
-    enframe(name = NULL, value = "sim_file")
+  ### Trying to reduce the memory footprint for this
+  model_fit_index_tbl <- model_index_tbl |>
+    select(customer_id, sim_file)
+
+  rm(model_index_tbl)
+  gc(verbose = TRUE, full = TRUE)
+
+  model_fit_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_fit_simstats_tbl.rds")
+
+  if(!file_exists(model_fit_simstats_filepath)) {
+
+    write_assessment_logentry(
+      glue("Retrieving fit stats data from files"),
+      prefix_label = fit_label
+      )
+
+    model_simdata_tbl <- model_fit_index_tbl |>
+      mutate(
+        sim_data = map(
+          sim_file, retrieve_sim_stats,
+
+          .progress = "retrieve_fit_stats"
+          )
+        ) |>
+      select(customer_id, sim_data) |>
+      unnest(sim_data)
+
+    model_simdata_tbl |> write_rds(model_fit_simstats_filepath, compress = "gz")
+
+    rm(model_simdata_tbl)
+  }
+
+  model_fit_index_filepath <- glue("{data_dir}/{fit_label}_assess_fit_index_tbl.rds")
+
+  model_fit_index_tbl |> write_rds(model_fit_index_filepath)
 
 
-  runsims_tbl <- model_validsims_index_tbl |>
+  ###
+  ### Setting up and calculating the out-of-sample simulations
+  ###
+
+  write_assessment_logentry(
+    glue("Setting up out-of-sample validation model_index_tbl"),
+    prefix_label = fit_label
+    )
+
+  model_index_tbl <- model_simstats_tbl |>
+    mutate(
+      start_dttm = valid_start_dttm,
+      end_dttm   = valid_end_dttm,
+      lambda     = post_lambda,
+      mu         = post_mu,
+      tnx_mu     = 1,      ### We are not simulating tnx size
+      tnx_cv     = 1       ###
+      ) |>
+    group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
+    mutate(
+      sim_file = glue(
+        "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
+        )
+      )
+
+  write_assessment_logentry(
+    glue("Configuring the out-of-sample validation simulations"),
+    prefix_label = fit_label
+    )
+
+  runsims_tbl <- model_index_tbl |>
     anti_join(precomputed_tbl, by = "sim_file")
 
   n_sims <- runsims_tbl |> nrow()
 
   if(n_sims > 0) {
-    syslog(
-      glue("Running {n_sims} out-of-sample simulations to {precompute_dir}"),
-      level = "INFO"
-    )
+    write_assessment_logentry(
+      glue("Generating {n_sims} out-of-sample simulations to {precompute_dir}"),
+      prefix_label = fit_label
+      )
 
-    plan(multisession)
-
-    model_validsims_index_tbl <- runsims_tbl |>
+    output_tbl <- runsims_tbl |>
       mutate(
         chunk_data = future_map2_int(
           cust_params, sim_file,
@@ -480,44 +564,62 @@ run_model_assessment <- function(
   }
 
 
-  syslog(
+  write_assessment_logentry(
     glue("Loading the calculated simulations"),
-    level = "INFO"
+    prefix_label = fit_label
     )
 
-  retrieve_sim_stats <- ~ .x |>
-    read_rds() |>
-    select(draw_id, sim_tnx_count, sim_tnx_last)
+
+  model_valid_index_tbl <- model_index_tbl |>
+    select(customer_id, sim_file)
+
+  rm(model_index_tbl)
+  gc(verbose = TRUE, full = TRUE)
 
 
-  model_fit_simstats_tbl <- model_fitsims_index_tbl |>
-    mutate(
-      sim_data = map(
-        sim_file, retrieve_sim_stats,
-
-        .progress = "retrieve_fit_stats"
-        )
-      ) |>
-    select(customer_id, sim_data) |>
-    unnest(sim_data)
+  model_valid_simstats_filepath <- glue("{data_dir}/{fit_label}_assess_valid_simstats_tbl.rds")
 
 
-  model_valid_simstats_tbl <- model_validsims_index_tbl |>
-    mutate(
-      sim_data = map(
-        sim_file, retrieve_sim_stats,
+  if(!file_exists(model_valid_simstats_filepath)) {
+    write_assessment_logentry(
+      glue("Retrieving valid stats data from files"),
+      prefix_label = fit_label
+      )
 
-        .progress = "retrieve_valid_stats"
-        )
-      ) |>
-    select(customer_id, sim_data) |>
-    unnest(sim_data)
+    model_simdata_tbl <- model_valid_index_tbl |>
+      mutate(
+        sim_data = map(
+          sim_file, retrieve_sim_stats,
+
+          .progress = "retrieve_valid_stats"
+          )
+        ) |>
+      select(customer_id, sim_data) |>
+      unnest(sim_data)
+
+    model_simdata_tbl |> write_rds(model_valid_simstats_filepath, compress = "gz")
+
+    rm(model_simdata_tbl)
+  }
+
+  model_valid_index_filepath <- glue("{data_dir}/{fit_label}_assess_valid_index_tbl.rds")
+
+  model_valid_index_tbl |> write_rds(model_valid_index_filepath)
+
+
+  write_assessment_logentry(
+    glue("-------------------- End model assessment --------------------"),
+    prefix_label = fit_label
+    )
+
 
 
   assessment_lst <- list(
-    model_simstats_tbl       = model_simstats_tbl,
-    model_fit_simstats_tbl   = model_fit_simstats_tbl,
-    model_valid_simstats_tbl = model_valid_simstats_tbl
+    model_fit_index_filepath      = model_fit_index_filepath,
+    model_valid_index_filepath    = model_valid_index_filepath,
+    model_simstats_filepath       = model_simstats_filepath,
+    model_fit_simstats_filepath   = model_fit_simstats_filepath,
+    model_valid_simstats_filepath = model_valid_simstats_filepath
     )
 
 
@@ -527,7 +629,6 @@ run_model_assessment <- function(
 
 create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
 
-
   ##
   ## First we check the counts of customer with more than 1 transaction
   ##
@@ -535,11 +636,11 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
     filter(tnx_count > 0) |>
     nrow()
 
-  sim_data_tbl <- simdata_tbl |>
+  plotdata_tbl <- simdata_tbl |>
     filter(sim_tnx_count > 0) |>
     count(draw_id, name = "sim_customer_count")
 
-  multi_customer_count_plot <- ggplot(sim_data_tbl) +
+  multi_customer_count_plot <- ggplot(plotdata_tbl) +
     geom_histogram(aes(x = sim_customer_count), bins = 50) +
     geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
     labs(
@@ -557,11 +658,11 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
     pull(tnx_count) |>
     sum()
 
-  sim_data_tbl <- simdata_tbl |>
+  plotdata_tbl <- simdata_tbl |>
     count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
 
 
-  total_tnxcount_plot <- ggplot(sim_data_tbl) +
+  total_tnxcount_plot <- ggplot(plotdata_tbl) +
     geom_histogram(aes(x = sim_total_count), bins = 50) +
     geom_vline(aes(xintercept = obs_total_count), colour = "red") +
     labs(
@@ -583,7 +684,7 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
       prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
       )
 
-  sim_data_tbl <- simdata_tbl |>
+  plotdata_tbl <- simdata_tbl |>
     filter(sim_tnx_count > 0) |>
     group_by(draw_id) |>
     summarise(
@@ -601,7 +702,7 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
       ) |>
     inner_join(obs_quantiles_tbl, by = "prob_label")
 
-  customer_tnxquant_plot <- ggplot(sim_data_tbl) +
+  customer_tnxquant_plot <- ggplot(plotdata_tbl) +
     geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
     geom_vline(aes(xintercept = prob_value), colour = "red") +
     facet_wrap(vars(prob_label), nrow = 2, scales = "free") +
@@ -624,3 +725,13 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
 
   return(assess_plots_lst)
 }
+
+
+write_assessment_logentry <- function(log_str, prefix_label) {
+  log_message <- glue(
+      "[{timestamp}] - [{prefix_label}] - {log_str}",
+      timestamp = Sys.time()
+      ) |>
+    write_lines(file = "model_assessment.log", append = TRUE)
+}
+

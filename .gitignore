@@ -1,15 +1,18 @@
-.Rhistory
-.RData
-
 .Rproj.user/
-
-temp.R
+.vscode/
 
 *_cache/*
 *_files/*
 
-output.log
-
 *.rmarkdown
 *.dot
+
+.Rhistory
+.RData
+
+*.log
+
+temp*.R
+
+precompute_*.bz2
 

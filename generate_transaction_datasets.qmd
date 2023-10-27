@@ -1,5 +1,5 @@
 ---
-title: "Retrieve BTYD Data"
+title: "Generate Synthetic Transaction Datasets"
 author: "Mick Cooney <mickcooney@gmail.com>"
 editor: source
 execute:
