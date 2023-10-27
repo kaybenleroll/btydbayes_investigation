@@ -1,5 +1,5 @@
 R_LIBS=${R_LIBS-'/usr/local/lib/R/site-library:/usr/local/lib/R/library'}
-CRAN=https://packagemanager.posit.co/cran/2023-10-06
+CRAN=https://packagemanager.posit.co/cran/__linux__/jammy/2023-10-20
 CWD=/home/rstudio
 DEFAULT_USER=rstudio
 GROUPID=1000
