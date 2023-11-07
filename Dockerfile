@@ -1,7 +1,7 @@
 FROM rocker/tidyverse:4.3.1
 
-COPY build/Rprofile.site /usr/local/lib/R/etc/
-COPY build/Renviron.site /usr/local/lib/R/etc/
+#COPY build/Rprofile.site /usr/local/lib/R/etc/
+#COPY build/Renviron.site /usr/local/lib/R/etc/
 
 ENV TZ=Europe/Dublin
 

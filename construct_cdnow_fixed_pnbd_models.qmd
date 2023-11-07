@@ -306,7 +306,6 @@ We also check $N_{eff}$ as a quick diagnostic of the fit.
 
 pnbd_cdnow_fixed1_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
-#  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
 ```
@@ -490,7 +489,6 @@ We want to check the $N_{eff}$ statistics also.
 
 pnbd_cdnow_fixed2_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
-  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
 ```
@@ -674,7 +672,6 @@ We want to check the $N_{eff}$ statistics also.
 
 pnbd_cdnow_fixed3_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
-  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
 ```
@@ -858,7 +855,6 @@ We want to check the $N_{eff}$ statistics also.
 
 pnbd_cdnow_fixed4_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
-  as.numeric() |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
 ```
