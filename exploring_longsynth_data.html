@@ -2,12 +2,12 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.433">
+<meta name="generator" content="quarto-1.3.353">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Mick Cooney mickcooney@gmail.com">
-<meta name="dcterms.date" content="2023-10-10">
+<meta name="dcterms.date" content="2023-10-24">
 
 <title>Exploring the Synthetic Long-Timeframe Transaction Dataset</title>
 <style>
@@ -3092,7 +3092,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 10, 2023</p>
+      <p class="date">October 24, 2023</p>
     </div>
   </div>
   
@@ -3109,7 +3109,7 @@ vertical-align: -.125em;
 <p>This workbook performs the basic data exploration of the dataset.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>dataexp_level_exclusion_threshold <span class="ot">&lt;-</span> <span class="dv">100</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>dataexp_cat_level_count <span class="ot">&lt;-</span> <span class="dv">60</span></span>
@@ -3122,7 +3122,7 @@ vertical-align: -.125em;
 <p>First we load the dataset.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Data is loaded into dataset rawdata_tbl here</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>rawdata_tbl <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">&quot;data/synthdata_longframe_transactions_tbl.rds&quot;</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3141,7 +3141,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <h2 data-number="2.1" class="anchored" data-anchor-id="perform-quick-data-cleaning"><span class="header-section-number">2.1</span> Perform Quick Data Cleaning</h2>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="do">### _TEMPLATE_</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="do">### Do simple datatype transforms and save output in data_tbl</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="ot">&lt;-</span> rawdata_tbl <span class="sc">%&gt;%</span> <span class="fu">set_colnames</span>(<span class="fu">names</span>(.) <span class="sc">|&gt;</span> <span class="fu">to_snake_case</span>())</span>
@@ -3163,7 +3163,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>We now create derived features useful for modelling. These values are new variables calculated from existing variables in the data.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dow_order   <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Mon&quot;</span>, <span class="st">&quot;Tue&quot;</span>, <span class="st">&quot;Wed&quot;</span>, <span class="st">&quot;Thu&quot;</span>, <span class="st">&quot;Fri&quot;</span>, <span class="st">&quot;Sat&quot;</span>, <span class="st">&quot;Sun&quot;</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>month_order <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Jan&quot;</span>, <span class="st">&quot;Feb&quot;</span>, <span class="st">&quot;Mar&quot;</span>, <span class="st">&quot;Apr&quot;</span>, <span class="st">&quot;May&quot;</span>, <span class="st">&quot;Jun&quot;</span>, <span class="st">&quot;Jul&quot;</span>, <span class="st">&quot;Aug&quot;</span>, <span class="st">&quot;Sep&quot;</span>, <span class="st">&quot;Oct&quot;</span>,</span>
@@ -3203,7 +3203,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>We first want to look at a visualisation of some high-level summarys of the meta-data on this dataset. This gives us a quick view of the categorical and 1numeric values in the dataset, as well as the proportions of missing values.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="sc">|&gt;</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_intro</span>(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">title   =</span> <span class="st">&quot;High Level Table Summary&quot;</span>,</span>
@@ -3220,7 +3220,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>Before we do anything with the data, we first check for missing values in the dataset. In some cases, missing data is coded by a special character rather than as a blank, so we first correct for this.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="do">### _TEMPLATE_</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="do">### ADD CODE TO CORRECT FOR DATA ENCODING HERE</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
@@ -3230,7 +3230,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <h3 data-number="3.2.1" class="anchored" data-anchor-id="univariate-missing-data"><span class="header-section-number">3.2.1</span> Univariate Missing Data</h3>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="sc">|&gt;</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_missing</span>(</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">title   =</span> <span class="st">&quot;Summary of Data Missingness&quot;</span>,</span>
@@ -3245,7 +3245,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>We now want to repeat this plot but only for those columns that have some missing values.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>data_tbl <span class="sc">|&gt;</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_missing</span>(</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">title        =</span> <span class="st">&quot;Summary of Data Missingness (missing variables only)&quot;</span>,</span>
@@ -3264,7 +3264,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>It is useful to get an idea of what combinations of variables tend to have variables with missing values simultaneously, so to construct a visualisation for this we create a count of all the times given combinations of variables have missing values, producing a heat map for these combination counts.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>dataexp_missing_group_count <span class="ot">&lt;-</span> <span class="dv">20</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>row_count <span class="ot">&lt;-</span> rawdata_tbl <span class="sc">|&gt;</span> <span class="fu">nrow</span>()</span>
@@ -3322,7 +3322,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>With the raw data loaded up we now remove obvious unique or near-unique variables that are not amenable to basic exploration and plotting.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>coltype_lst <span class="ot">&lt;-</span> <span class="fu">create_coltype_list</span>(data_tbl)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>count_levels <span class="ot">&lt;-</span> <span class="er">~</span> .x <span class="sc">|&gt;</span> <span class="fu">unique</span>() <span class="sc">|&gt;</span> <span class="fu">length</span>()</span>
@@ -3353,7 +3353,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 5 tnx_dow               7</code></pre>
 </div>
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>row_count <span class="ot">&lt;-</span> data_tbl <span class="sc">|&gt;</span> <span class="fu">nrow</span>()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">glue</span>(<span class="st">&quot;Dataset has {row_count} rows</span><span class="sc">\n</span><span class="st">&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3365,7 +3365,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>Now that we a table of the counts of all the categorical variables we can automatically exclude unique variables from the exploration, as the level count will match the row count.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>unique_vars <span class="ot">&lt;-</span> catvar_valuecount_tbl <span class="sc">|&gt;</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(level_count <span class="sc">==</span> row_count) <span class="sc">|&gt;</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(var_name)</span>
@@ -3376,7 +3376,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <pre><code>[1] &quot;invoice_id&quot;</code></pre>
 </div>
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>explore_data_tbl <span class="ot">&lt;-</span> data_tbl <span class="sc">|&gt;</span></span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">one_of</span>(unique_vars))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
@@ -3384,7 +3384,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>Having removed the unique identifier variables from the dataset, we may also wish to exclude categoricals with high level counts also, so we create a vector of those variable names.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>highcount_vars <span class="ot">&lt;-</span> catvar_valuecount_tbl <span class="sc">|&gt;</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    level_count <span class="sc">&gt;=</span> dataexp_level_exclusion_threshold,</span>
@@ -3401,7 +3401,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>We now can continue doing some basic exploration of the data. We may also choose to remove some extra columns from the dataset.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="do">### You may want to comment out these next few lines to customise which</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="do">### categoricals are kept in the exploration.</span></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>drop_vars <span class="ot">&lt;-</span> <span class="fu">c</span>(highcount_vars)</span>
@@ -3428,7 +3428,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>We first look at the barplots of categorical variables.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_bar</span>(</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  data_tbl,</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol    =</span> <span class="dv">2</span>,</span>
@@ -3444,7 +3444,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>We then have a quick look at histograms of the numeric variables.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_histogram</span>(</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  data_tbl,</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">ncol    =</span> <span class="dv">2</span>,</span>
@@ -3460,7 +3460,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 <p>Finally, we split the remaining variables into different categories and then produce a sequence of plots for each variable.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>coltype_lst <span class="ot">&lt;-</span> <span class="fu">create_coltype_list</span>(explore_data_tbl)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(coltype_lst)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3488,7 +3488,7 @@ tnx_timestamp       tnx_dow     tnx_month      tnx_week    tnx_amount
 <p>Logical variables only take two values: TRUE or FALSE. It is useful to see missing data as well though, so we also plot the count of those.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>logical_vars <span class="ot">&lt;-</span> coltype_lst<span class="sc">$</span>split<span class="sc">$</span>logical <span class="sc">|&gt;</span> <span class="fu">sort</span>()</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (plot_varname <span class="cf">in</span> logical_vars) {</span>
@@ -3517,7 +3517,7 @@ tnx_timestamp       tnx_dow     tnx_month      tnx_week    tnx_amount
 <p>Numeric variables are usually continuous in nature, though we also have integer data.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>numeric_vars <span class="ot">&lt;-</span> coltype_lst<span class="sc">$</span>split<span class="sc">$</span>continuous <span class="sc">|&gt;</span> <span class="fu">sort</span>()</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (plot_varname <span class="cf">in</span> numeric_vars) {</span>
@@ -3598,7 +3598,7 @@ tnx_amount   Min. 1st Qu.  Median    Mean 3rd Qu.    Max.
 <p>Categorical variables only have values from a limited, and usually fixed, number of possible values</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>categorical_vars <span class="ot">&lt;-</span> coltype_lst<span class="sc">$</span>split<span class="sc">$</span>discrete <span class="sc">|&gt;</span> <span class="fu">sort</span>()</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (plot_varname <span class="cf">in</span> categorical_vars) {</span>
@@ -3679,7 +3679,7 @@ tnx_week</code></pre>
 <p>Date/Time variables represent calendar or time-based data should as time of the day, a date, or a timestamp.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>datetime_vars <span class="ot">&lt;-</span> coltype_lst<span class="sc">$</span>split<span class="sc">$</span>datetime <span class="sc">|&gt;</span> <span class="fu">sort</span>()</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (plot_varname <span class="cf">in</span> datetime_vars) {</span>
@@ -3725,7 +3725,7 @@ tnx_timestamp                      Min.                    1st Qu.
 <p>A natural way to explore relationships in data is to create univariate visualisations facetted by a categorical value.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="do">### _TEMPLATE_</span></span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="do">### facet_varname &lt;- &#39;&#39;</span></span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>facet_varname <span class="ot">&lt;-</span> <span class="st">&quot;tnx_month&quot;</span></span>
@@ -3738,7 +3738,7 @@ tnx_timestamp                      Min.                    1st Qu.
 <p>For logical variables we facet on barplots of the levels, comparing TRUE, FALSE and missing data.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>logical_vars <span class="ot">&lt;-</span> logical_vars[<span class="sc">!</span>logical_vars <span class="sc">%in%</span> facet_varname] <span class="sc">|&gt;</span> <span class="fu">sort</span>()</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3767,7 +3767,7 @@ tnx_timestamp                      Min.                    1st Qu.
 <p>For numeric variables, we facet on histograms of the data.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (plot_varname <span class="cf">in</span> numeric_vars) {</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;--</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(plot_varname)</span>
@@ -3801,7 +3801,7 @@ tnx_amount</code></pre>
 <p>We treat categorical variables like logical variables, faceting the barplots of the different levels of the data.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>categorical_vars <span class="ot">&lt;-</span> categorical_vars[<span class="sc">!</span>categorical_vars <span class="sc">%in%</span> facet_varname] <span class="sc">|&gt;</span> <span class="fu">sort</span>()</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (plot_varname <span class="cf">in</span> categorical_vars) {</span>
@@ -3848,7 +3848,7 @@ tnx_week</code></pre>
 <p>Like the univariate plots, we facet on histograms of the years in the dates.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (plot_varname <span class="cf">in</span> datetime_vars) {</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">&quot;--</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(plot_varname)</span>
@@ -3883,7 +3883,7 @@ tnx_timestamp</code></pre>
 <p>We now want to construct some customer cohort data.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>customer_cohort_data_tbl <span class="ot">&lt;-</span> data_tbl <span class="sc">|&gt;</span></span>
 <span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(customer_id) <span class="sc">|&gt;</span></span>
 <span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
@@ -3917,7 +3917,7 @@ $ total_tnx_count &lt;int&gt; 1, 4, 1, 2, 5, 2, 1, 8, 1, 1, 2, 28, 7, 3, 3, 1, 5
 <p>We start by modelling the P/NBD model using our synthetic datasets before we try to model real-life data.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>use_fit_start_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2010-01-01&quot;</span>)</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>use_fit_end_date   <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2022-01-01&quot;</span>)</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3927,7 +3927,7 @@ $ total_tnx_count &lt;int&gt; 1, 4, 1, 2, 5, 2, 1, 8, 1, 1, 2, 28, 7, 3, 3, 1, 5
 </div>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>customer_transactions_tbl <span class="ot">&lt;-</span> data_tbl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
@@ -3936,7 +3936,7 @@ $ total_tnx_count &lt;int&gt; 1, 4, 1, 2, 5, 2, 1, 8, 1, 1, 2, 28, 7, 3, 3, 1, 5
 <p>Having loaded the synthetic data we need to construct a number of datasets of derived values.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>customer_summarystats_tbl <span class="ot">&lt;-</span> customer_transactions_tbl <span class="sc">|&gt;</span></span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">drop_na</span>(customer_id) <span class="sc">|&gt;</span></span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">calculate_transaction_cbs_data</span>(<span class="at">last_date =</span> use_fit_end_date <span class="sc">|&gt;</span> <span class="fu">as.POSIXct</span>())</span>
@@ -3957,7 +3957,7 @@ $ T_cal          &lt;dbl&gt; 626.0496, 626.0061, 626.0175, 626.1119, 626.1024, 6
 <p>As before, we construct a number of subsets of the data for use later on with the modelling and create some data subsets.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>shuffle_tbl <span class="ot">&lt;-</span> customer_summarystats_tbl <span class="sc">|&gt;</span></span>
 <span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_sample</span>(<span class="at">prop =</span> <span class="dv">1</span>, <span class="at">replace =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -3970,7 +3970,7 @@ $ T_cal          &lt;dbl&gt; 626.0496, 626.0061, 626.0175, 626.1119, 626.1024, 6
 <p>We then construct some fit data based on these values.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>fit_1000_data_tbl  <span class="ot">&lt;-</span> customer_summarystats_tbl <span class="sc">|&gt;</span> <span class="fu">filter</span>(customer_id <span class="sc">%in%</span> id_1000)</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>fit_1000_data_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
@@ -3985,7 +3985,7 @@ $ t_x            &lt;dbl&gt; 0.0000000, 10.4551784, 8.8501005, 0.0000000, 5.9899
 $ T_cal          &lt;dbl&gt; 625.9704, 625.8153, 624.8741, 624.7492, 624.7605, 623.8…</code></pre>
 </div>
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>fit_10000_data_tbl <span class="ot">&lt;-</span> customer_summarystats_tbl <span class="sc">|&gt;</span> <span class="fu">filter</span>(customer_id <span class="sc">%in%</span> id_10000)</span>
 <span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>fit_10000_data_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
@@ -4002,7 +4002,7 @@ $ T_cal          &lt;dbl&gt; 626.0496, 626.1119, 626.0765, 625.9704, 625.7317, 6
 </div>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a>customer_fit_stats_tbl <span class="ot">&lt;-</span> fit_1000_data_tbl</span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>customer_fit_stats_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
@@ -4017,7 +4017,7 @@ $ t_x            &lt;dbl&gt; 0.0000000, 10.4551784, 8.8501005, 0.0000000, 5.9899
 $ T_cal          &lt;dbl&gt; 625.9704, 625.8153, 624.8741, 624.7492, 624.7605, 623.8…</code></pre>
 </div>
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>customer_valid_stats_tbl <span class="ot">&lt;-</span> customer_transactions_tbl <span class="sc">|&gt;</span></span>
 <span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">semi_join</span>(customer_fit_stats_tbl, <span class="at">by =</span> <span class="st">&quot;customer_id&quot;</span>) <span class="sc">|&gt;</span></span>
 <span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
@@ -4047,7 +4047,7 @@ $ tnx_last_interval &lt;dbl&gt; 45.0006952, 5.2260556, 48.4780098, 51.2973479, 2
 </div>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>obs_fitdata_tbl <span class="ot">&lt;-</span> customer_fit_stats_tbl <span class="sc">|&gt;</span></span>
 <span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">tnx_count =</span> x)</span>
 <span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -4067,7 +4067,7 @@ $ tnx_last_interval &lt;dbl&gt; 45.0006952, 5.2260556, 48.4780098, 51.2973479, 2
 <p>Finally we output the various datasets we have constructed to disks.</p>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>id_1000  <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_id_1000.rds&quot;</span>)</span>
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>id_5000  <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_id_5000.rds&quot;</span>)</span>
 <span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>id_10000 <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_id_10000.rds&quot;</span>)</span>
@@ -4101,13 +4101,13 @@ $ tnx_last_interval &lt;dbl&gt; 45.0006952, 5.2260556, 48.4780098, 51.2973479, 2
 <h1 data-number="9"><span class="header-section-number">9</span> R Environment</h1>
 <div class="cell">
 <details>
-<summary>Code</summary>
+<summary>Show code</summary>
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>─ Session info ───────────────────────────────────────────────────────────────
  setting  value
- version  R version 4.3.1 (2023-06-16)
+ version  R version 4.3.0 (2023-04-21)
  os       Ubuntu 22.04.3 LTS
  system   x86_64, linux-gnu
  ui       X11
@@ -4115,7 +4115,7 @@ $ tnx_last_interval &lt;dbl&gt; 45.0006952, 5.2260556, 48.4780098, 51.2973479, 2
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-10-10
+ date     2023-10-24
  pandoc   3.1.1 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
@@ -4123,49 +4123,49 @@ $ tnx_last_interval &lt;dbl&gt; 45.0006952, 5.2260556, 48.4780098, 51.2973479, 2
  cachem         1.0.8   2023-05-01 [1] RSPM (R 4.3.0)
  cli            3.6.1   2023-03-23 [1] RSPM (R 4.3.0)
  colorspace     2.1-0   2023-01-23 [1] RSPM (R 4.3.0)
- conflicted   * 1.2.0   2023-02-01 [1] RSPM (R 4.3.1)
- cowplot      * 1.1.1   2020-12-30 [1] RSPM (R 4.3.1)
+ conflicted   * 1.2.0   2023-02-01 [1] RSPM (R 4.3.0)
+ cowplot      * 1.1.1   2020-12-30 [1] RSPM (R 4.3.0)
  data.table     1.14.8  2023-02-17 [1] RSPM (R 4.3.0)
- DataExplorer * 0.8.2   2020-12-15 [1] RSPM (R 4.3.1)
- digest         0.6.33  2023-07-07 [1] RSPM (R 4.3.0)
- dplyr        * 1.1.3   2023-09-03 [1] RSPM (R 4.3.0)
+ DataExplorer * 0.8.2   2020-12-15 [1] RSPM (R 4.3.0)
+ digest         0.6.31  2022-12-11 [1] RSPM (R 4.3.0)
+ dplyr        * 1.1.2   2023-04-20 [1] RSPM (R 4.3.0)
  evaluate       0.21    2023-05-05 [1] RSPM (R 4.3.0)
  fansi          1.0.4   2023-01-22 [1] RSPM (R 4.3.0)
  farver         2.1.1   2022-07-06 [1] RSPM (R 4.3.0)
  fastmap        1.1.1   2023-02-24 [1] RSPM (R 4.3.0)
  forcats      * 1.0.0   2023-01-29 [1] RSPM (R 4.3.0)
- fs           * 1.6.3   2023-07-20 [1] RSPM (R 4.3.1)
+ fs           * 1.6.2   2023-04-25 [1] RSPM (R 4.3.0)
  generics       0.1.3   2022-07-05 [1] RSPM (R 4.3.0)
- ggplot2      * 3.4.3   2023-08-14 [1] RSPM (R 4.3.0)
+ ggplot2      * 3.4.2   2023-04-03 [1] RSPM (R 4.3.0)
  glue         * 1.6.2   2022-02-24 [1] RSPM (R 4.3.0)
- gridExtra      2.3     2017-09-09 [1] RSPM (R 4.3.1)
- gtable         0.3.4   2023-08-21 [1] RSPM (R 4.3.0)
+ gridExtra      2.3     2017-09-09 [1] RSPM (R 4.3.0)
+ gtable         0.3.3   2023-03-21 [1] RSPM (R 4.3.0)
  hms            1.1.3   2023-03-21 [1] RSPM (R 4.3.0)
- htmltools      0.5.6   2023-08-10 [1] RSPM (R 4.3.0)
+ htmltools      0.5.5   2023-03-23 [1] RSPM (R 4.3.0)
  htmlwidgets    1.6.2   2023-03-17 [1] RSPM (R 4.3.0)
- igraph         1.5.1   2023-08-10 [1] RSPM (R 4.3.1)
- jsonlite       1.8.7   2023-06-29 [1] RSPM (R 4.3.0)
- knitr          1.44    2023-09-11 [1] RSPM (R 4.3.0)
- labeling       0.4.3   2023-08-29 [1] RSPM (R 4.3.0)
- lattice        0.21-8  2023-04-05 [2] CRAN (R 4.3.1)
+ igraph         1.4.3   2023-05-22 [1] RSPM (R 4.3.0)
+ jsonlite       1.8.5   2023-06-05 [1] RSPM (R 4.3.0)
+ knitr          1.43    2023-05-25 [1] RSPM (R 4.3.0)
+ labeling       0.4.2   2020-10-20 [1] RSPM (R 4.3.0)
+ lattice        0.21-8  2023-04-05 [2] CRAN (R 4.3.0)
  lifecycle      1.0.3   2022-10-07 [1] RSPM (R 4.3.0)
  lubridate    * 1.9.2   2023-02-10 [1] RSPM (R 4.3.0)
  magrittr     * 2.0.3   2022-03-30 [1] RSPM (R 4.3.0)
  memoise        2.0.1   2021-11-26 [1] RSPM (R 4.3.0)
  munsell        0.5.0   2018-06-12 [1] RSPM (R 4.3.0)
- networkD3      0.4     2017-03-18 [1] RSPM (R 4.3.1)
- parallelly     1.36.0  2023-05-26 [1] RSPM (R 4.3.1)
+ networkD3      0.4     2017-03-18 [1] RSPM (R 4.3.0)
+ parallelly     1.36.0  2023-05-26 [1] RSPM (R 4.3.0)
  pillar         1.9.0   2023-03-22 [1] RSPM (R 4.3.0)
  pkgconfig      2.0.3   2019-09-22 [1] RSPM (R 4.3.0)
- purrr        * 1.0.2   2023-08-10 [1] RSPM (R 4.3.0)
+ purrr        * 1.0.1   2023-01-10 [1] RSPM (R 4.3.0)
  R6             2.5.1   2021-08-19 [1] RSPM (R 4.3.0)
  readr        * 2.1.4   2023-02-10 [1] RSPM (R 4.3.0)
  rlang        * 1.1.1   2023-04-28 [1] RSPM (R 4.3.0)
- rmarkdown      2.25    2023-09-18 [1] RSPM (R 4.3.0)
- rstudioapi     0.15.0  2023-07-07 [1] RSPM (R 4.3.0)
+ rmarkdown      2.22    2023-06-01 [1] RSPM (R 4.3.0)
+ rstudioapi     0.14    2022-08-22 [1] RSPM (R 4.3.0)
  scales       * 1.2.1   2022-08-20 [1] RSPM (R 4.3.0)
- sessioninfo    1.2.2   2021-12-06 [1] RSPM (R 4.3.1)
- snakecase    * 0.11.1  2023-08-27 [1] RSPM (R 4.3.1)
+ sessioninfo    1.2.2   2021-12-06 [1] RSPM (R 4.3.0)
+ snakecase    * 0.11.0  2019-05-25 [1] RSPM (R 4.3.0)
  stringi        1.7.12  2023-01-11 [1] RSPM (R 4.3.0)
  stringr      * 1.5.0   2022-12-02 [1] RSPM (R 4.3.0)
  tibble       * 3.2.1   2023-03-20 [1] RSPM (R 4.3.0)
@@ -4175,11 +4175,11 @@ $ tnx_last_interval &lt;dbl&gt; 45.0006952, 5.2260556, 48.4780098, 51.2973479, 2
  timechange     0.2.0   2023-01-11 [1] RSPM (R 4.3.0)
  tzdb           0.4.0   2023-05-12 [1] RSPM (R 4.3.0)
  utf8           1.2.3   2023-01-31 [1] RSPM (R 4.3.0)
- vctrs        * 0.6.3   2023-06-14 [1] RSPM (R 4.3.0)
+ vctrs        * 0.6.2   2023-04-19 [1] RSPM (R 4.3.0)
  withr          2.5.0   2022-03-03 [1] RSPM (R 4.3.0)
- xfun           0.40    2023-08-09 [1] RSPM (R 4.3.0)
+ xfun           0.39    2023-04-20 [1] RSPM (R 4.3.0)
  yaml           2.3.7   2023-01-23 [1] RSPM (R 4.3.0)
- zoo            1.8-12  2023-04-13 [1] RSPM (R 4.3.1)
+ zoo            1.8-12  2023-04-13 [1] RSPM (R 4.3.0)
 
  [1] /usr/local/lib/R/site-library
  [2] /usr/local/lib/R/library

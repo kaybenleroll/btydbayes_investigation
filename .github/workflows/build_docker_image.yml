@@ -27,4 +27,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: kaybenleroll/btydbayes_investigation:latest
+          tags: kaybenleroll/btydbayes-investigation:latest
