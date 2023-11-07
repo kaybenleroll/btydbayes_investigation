@@ -854,7 +854,11 @@ use_valid_end_date   <- as.Date("1998-07-01")
 ```{r setup_customer_transactions}
 #| echo: true
 
-customer_transactions_tbl <- data_tbl
+customer_transactions_tbl <- data_tbl |>
+  mutate(
+    customer_id = customer_id |> as_factor()
+    )
+
 customer_transactions_tbl |> glimpse()
 ```
 
@@ -863,7 +867,7 @@ Having loaded the synthetic data we need to construct a number of datasets of
 derived values.
 
 ```{r construct_summary_stats_data}
-#| echo: TRUE
+#| echo: true
 
 customer_summarystats_tbl <- customer_transactions_tbl |>
   drop_na(customer_id) |>
@@ -883,7 +887,7 @@ code on the subset to reduce computation time. Once we are happy with a number
 of candidate models we can run the simulations on the full set.
 
 ```{r create_customer_subset}
-#| echo: TRUE
+#| echo: true
 
 cdnow_customer_subset_ids <- customer_summarystats_tbl |>
   filter(first_tnx_date <= as.Date("1997-12-31")) |>
@@ -903,7 +907,7 @@ the modelling and create some data subsets.
 
 
 ```{r select_fit_dataset}
-#| echo: TRUE
+#| echo: true
 
 customer_fit_stats_tbl <- customer_summarystats_tbl
 customer_fit_stats_tbl |> glimpse()
@@ -931,10 +935,12 @@ customer_valid_stats_tbl |> glimpse()
 
 
 ```{r construct_fit_valid_datasets}
-#| echo: TRUE
+#| echo: true
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
   rename(tnx_count = x)
+
+obs_fitdata_tbl |> glimpse()
   
 
 ### We need to add all the zero count customers into the valid data
@@ -943,12 +949,14 @@ obs_validdata_tbl <- customer_fit_stats_tbl |>
   transmute(customer_id, tnx_count = 0) |>
   bind_rows(customer_valid_stats_tbl) |>
   arrange(customer_id)
+
+obs_fitdata_tbl |> glimpse()
 ```
 
 We then write this data to disk.
 
 ```{r write_fit_valid_data_to_disk}
-#! echo: TRUE
+#! echo: true
 
 cdnow_customer_subset_ids |>
   write_rds("data/cdnow_customer_subset_ids.rds")
@@ -975,7 +983,7 @@ list(
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
 #| echo: true

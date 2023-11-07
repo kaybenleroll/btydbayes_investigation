@@ -845,8 +845,15 @@ use_valid_end_date   <- as.Date("2023-01-01")
 ```
 
 
-```{r}
-customer_transactions_tbl <- data_tbl
+```{r setup_customer_transactions}
+#| echo: true
+
+customer_transactions_tbl <- data_tbl |>
+  mutate(
+    customer_id = customer_id |> as_factor()
+    )
+
+customer_transactions_tbl |> glimpse()
 ```
 
 
@@ -856,7 +863,7 @@ Having loaded the synthetic data we need to construct a number of datasets of
 derived values.
 
 ```{r construct_summary_stats_data}
-#| echo: TRUE
+#| echo: true
 
 customer_summarystats_tbl <- customer_transactions_tbl |>
   drop_na(customer_id) |>
@@ -870,7 +877,7 @@ the modelling and create some data subsets.
 
 
 ```{r construct_data_subset_id}
-#| echo: TRUE
+#| echo: true
 
 shuffle_tbl <- customer_summarystats_tbl |>
   slice_sample(prop = 1, replace = FALSE)
@@ -884,7 +891,7 @@ id_10000 <- shuffle_tbl |> head(10000) |> pull(customer_id) |> sort()
 We then construct some fit data based on these values.
 
 ```{r construct_fit_subset_data}
-#| echo: TRUE
+#| echo: true
 
 fit_1000_data_tbl  <- customer_summarystats_tbl |> filter(customer_id %in% id_1000)
 fit_1000_data_tbl |> glimpse()
@@ -896,6 +903,8 @@ fit_10000_data_tbl |> glimpse()
 
 
 ```{r select_fit_dataset}
+#| echo: true
+
 customer_fit_stats_tbl <- fit_1000_data_tbl
 customer_fit_stats_tbl |> glimpse()
 
@@ -922,7 +931,7 @@ customer_valid_stats_tbl |> glimpse()
 
 
 ```{r construct_fit_valid_datasets}
-#| echo: TRUE
+#| echo: true
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
   rename(tnx_count = x)
@@ -943,7 +952,7 @@ Finally we output the various datasets we have constructed to disks.
 
 
 ```{r write_to_disk}
-#| echo: TRUE
+#| echo: true
 
 id_1000  |> write_rds("data/shortsynth_id_1000.rds")
 id_5000  |> write_rds("data/shortsynth_id_5000.rds")
@@ -977,7 +986,7 @@ list(
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
 #| echo: true

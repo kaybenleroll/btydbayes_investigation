@@ -128,7 +128,7 @@ https://github.com/DublinLearningGroup/dataexpks
 This workbook performs the basic data exploration of the dataset.
 
 ```{r set_exploration_params}
-#| echo: TRUE
+#| echo: true
 
 dataexp_level_exclusion_threshold <- 100
 
@@ -142,7 +142,7 @@ dataexp_hist_bins_count <- 50
 First we load the dataset as well as some support datasets.
 
 ```{r load_dataset}
-#| echo: TRUE
+#| echo: true
 
 syslog(
   glue("Setting up data"),
@@ -161,7 +161,7 @@ rawdata_tbl |> glimpse()
 Some of the dates provided in the dataset are in an irregular format.
 
 ```{r clean_names}
-#| echo: TRUE
+#| echo: true
 
 data_tbl <- rawdata_tbl %>% set_colnames(names(.) |> to_snake_case()) #
 
@@ -182,7 +182,7 @@ We now create derived features useful for modelling. These values are
 new variables calculated from existing variables in the data.
 
 ```{r construct_derived_values}
-#| echo: TRUE
+#| echo: true
 
 data_tbl <- data_tbl |>
   rename(invoice_id = invoice) |>
@@ -230,7 +230,7 @@ meta-data on this dataset. This gives us a quick view of the categorical and
 numeric values in the dataset, as well as the proportions of missing values.
 
 ```{r plot_dataexp_introduce}
-#| echo: TRUE
+#| echo: true
 
 data_tbl |>
   plot_intro(
@@ -247,7 +247,7 @@ in the dataset. In some cases, missing data is coded by a special
 character rather than as a blank, so we first correct for this.
 
 ```{r replace_missing_character}
-#| echo: TRUE
+#| echo: true
 
 ### _TEMPLATE_
 ### ADD CODE TO CORRECT FOR DATA ENCODING HERE
@@ -259,7 +259,7 @@ number of different ways.
 ### Univariate Missing Data
 
 ```{r plot_univariate_missing_data}
-#| echo: TRUE
+#| echo: true
 
 data_tbl |>
   plot_missing(
@@ -273,7 +273,7 @@ We now want to repeat this plot but only for those columns that have some
 missing values.
 
 ```{r plot_univariate_missing_only_data}
-#| echo: TRUE
+#| echo: true
 
 data_tbl |>
   plot_missing(
@@ -294,7 +294,7 @@ for this we create a count of all the times given combinations of variables
 have missing values, producing a heat map for these combination counts.
 
 ```{r missing_data_matrix}
-#| echo: TRUE
+#| echo: true
 
 dataexp_missing_group_count <- 20
 
@@ -356,7 +356,7 @@ With the raw data loaded up we now remove obvious unique or near-unique
 variables that are not amenable to basic exploration and plotting.
 
 ```{r find_highlevelcount_categorical_variables}
-#| echo: TRUE
+#| echo: true
 
 coltype_lst <- create_coltype_list(data_tbl)
 
@@ -387,7 +387,7 @@ automatically exclude unique variables from the exploration, as the level
 count will match the row count.
 
 ```{r remove_id_variables}
-#| echo: TRUE
+#| echo: true
 
 unique_vars <- catvar_valuecount_tbl |>
   filter(level_count == row_count) |>
@@ -404,7 +404,7 @@ may also wish to exclude categoricals with high level counts also, so
 we create a vector of those variable names.
 
 ```{r collect_highcount_variables}
-#| echo: TRUE
+#| echo: true
 
 highcount_vars <- catvar_valuecount_tbl |>
   filter(level_count >= dataexp_level_exclusion_threshold,
@@ -418,7 +418,7 @@ We now can continue doing some basic exploration of the data. We may
 also choose to remove some extra columns from the dataset.
 
 ```{r drop_variables}
-#| echo: TRUE
+#| echo: true
 
 ### You may want to comment out these next few lines to customise which
 ### categoricals are kept in the exploration.
@@ -446,7 +446,7 @@ Now that we have loaded the data we can prepare it for some basic data
 exploration.
 
 ```{r create_log_univariate_data_exploration}
-#| echo: TRUE
+#| echo: true
 
 syslog(
   glue("Performing univariate data exploration"),
@@ -464,7 +464,7 @@ and numerical plots getting histograms.
 We first look at the barplots of categorical variables.
 
 ```{r plot_dataexp_bar}
-#| echo: TRUE
+#| echo: true
 #| message: TRUE
 
 plot_bar(
@@ -480,7 +480,7 @@ plot_bar(
 We then have a quick look at histograms of the numeric variables.
 
 ```{r plot_dataexp_hist}
-#| echo: TRUE
+#| echo: true
 #| message: TRUE
 
 plot_histogram(
@@ -498,7 +498,7 @@ produce a sequence of plots for each variable.
 
 
 ```{r separate_exploration_cols}
-#| echo: TRUE
+#| echo: true
 
 coltype_lst <- create_coltype_list(explore_data_tbl)
 
@@ -512,7 +512,7 @@ Logical variables only take two values: TRUE or FALSE. It is useful to see
 missing data as well though, so we also plot the count of those.
 
 ```{r create_univariate_logical_plots}
-#| echo: TRUE
+#| echo: true
 #| warning: FALSE
 
 logical_vars <- coltype_lst$split$logical |> sort()
@@ -544,7 +544,7 @@ Numeric variables are usually continuous in nature, though we also have
 integer data.
 
 ```{r create_univariate_numeric_plots}
-#| echo: TRUE
+#| echo: true
 #| warning: FALSE
 
 numeric_vars <- coltype_lst$split$continuous |> sort()
@@ -619,7 +619,7 @@ Categorical variables only have values from a limited, and usually fixed,
 number of possible values
 
 ```{r create_univariate_categorical_plots}
-#| echo: TRUE
+#| echo: true
 #| warning: FALSE
 
 categorical_vars <- coltype_lst$split$discrete |> sort()
@@ -673,7 +673,7 @@ Date/Time variables represent calendar or time-based data should as time of the
 day, a date, or a timestamp.
 
 ```{r create_univariate_datetime_plots}
-#| echo: TRUE
+#| echo: true
 #| warning: FALSE
 
 datetime_vars <- coltype_lst$split$datetime |> sort()
@@ -714,7 +714,7 @@ for (plot_varname in datetime_vars) {
 We now move on to looking at bivariate plots of the data set.
 
 ```{r create_log_bivariate_facet_plots}
-#| echo: TRUE
+#| echo: true
 
 syslog(
   glue("Performing bivariate facet plots"),
@@ -726,7 +726,7 @@ A natural way to explore relationships in data is to create univariate
 visualisations facetted by a categorical value.
 
 ```{r bivariate_facet_data}
-#| echo: TRUE
+#| echo: true
 
 facet_varname <- "invoice_month"
 
@@ -740,7 +740,7 @@ For logical variables we facet on barplots of the levels, comparing TRUE,
 FALSE and missing data.
 
 ```{r create_bivariate_logical_plots}
-#| echo: TRUE
+#| echo: true
 
 logical_vars <- logical_vars[!logical_vars %in% facet_varname] |> sort()
 
@@ -770,7 +770,7 @@ for (plot_varname in logical_vars) {
 For numeric variables, we facet on histograms of the data.
 
 ```{r create_bivariate_numeric_plots}
-#| echo: TRUE
+#| echo: true
 
 for (plot_varname in numeric_vars) {
   cat("--\n")
@@ -798,7 +798,7 @@ We treat categorical variables like logical variables, faceting the barplots
 of the different levels of the data.
 
 ```{r create_bivariate_categorical_plots}
-#| echo: TRUE
+#| echo: true
 
 categorical_vars <- categorical_vars[!categorical_vars %in% facet_varname] |> sort()
 
@@ -832,7 +832,7 @@ for (plot_varname in categorical_vars) {
 Like the univariate plots, we facet on histograms of the years in the dates.
 
 ```{r create_bivariate_datetime_plots}
-#| echo: TRUE
+#| echo: true
 
 for (plot_varname in datetime_vars) {
   cat("--\n")
@@ -861,7 +861,7 @@ rm(plot_var, plot_tbl)
 
 
 ```{r}
-#| echo: TRUE
+#| echo: true
 
 #knitr::knit_exit()
 ```
@@ -872,7 +872,7 @@ rm(plot_var, plot_tbl)
 In this section we perform various data explorations.
 
 ```{r create_log_custom_explorations}
-#| echo: TRUE
+#| echo: true
 
 syslog(
   glue("Performing custom data exploration"),
@@ -886,7 +886,7 @@ We want to check the transaction data for consistency, so we create a table
 of all distinct 
 
 ```{r check_stock_codes}
-#| echo: TRUE
+#| echo: true
 
 stock_codes_lookup_tbl <- data_tbl |>
   select(stock_code_upr, description) |>
@@ -901,7 +901,7 @@ We now take a look at the first 50 rows of this table to get a sense of any
 possible duplication of `stock_code`.
 
 ```{r plot_stock_codes_distinct_50}
-#| echo: TRUE
+#| echo: true
 
 stock_codes_lookup_tbl |> datatable()
 ```
@@ -913,7 +913,7 @@ As another check on the data, we want to look at how many different objects
 are included in 
 
 ```{r plot_histogram_distinct_items}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- data_tbl |>
   filter(quantity > 0) |>
@@ -941,7 +941,7 @@ We first aggregate the data at the invoice level, and inspect how those amounts
 are distributed.
 
 ```{r explore_invoice_amounts}
-#| echo: TRUE
+#| echo: true
 
 invoice_data_tbl <- data_tbl |>
   group_by(invoice_id) |>
@@ -977,7 +977,7 @@ median being a few hundred pounds.
 
 
 ```{r explore_customer_amounts}
-#| echo: TRUE
+#| echo: true
 
 customer_data_tbl <- data_tbl |>
   group_by(customer_id) |>
@@ -998,7 +998,7 @@ ggplot(customer_data_tbl) +
 
 
 ```{r customer_spend_hill_plot}
-#| echo: TRUE
+#| echo: true
 
 customer_data_tbl |> pull(customer_spend) |> hill()
 ```
@@ -1010,7 +1010,7 @@ We now want to have a quick look at some high level summary statistics on the
 stock codes, so we look at quantities and total value.
 
 ```{r stock_code_summary_data}
-#| echo: TRUE
+#| echo: true
 
 stock_code_summary_tbl <- data_tbl |>
   group_by(stock_code_upr) |>
@@ -1036,7 +1036,7 @@ those codes that are 4 characters or less and inspect those.
 
 
 ```{r check_short_stock_codes}
-#| echo: TRUE
+#| echo: true
 
 short_stock_codes_tbl <- data_tbl |>
   semi_join(stock_code_summary_tbl |> filter(sc_nchar < 5), by = "stock_code_upr")
@@ -1051,7 +1051,7 @@ We want to look at the range of different prices assigned to the same
 `stock_code` value.
 
 ```{r plot_stock_price_counts}
-#| echo: TRUE
+#| echo: true
 
 stock_price_counts_tbl <- data_tbl |>
   group_by(stock_code) |>
@@ -1105,7 +1105,7 @@ derived columns based on that date: things like day of week, calendar month and
 so on.
 
 ```{r append_calendar_columns}
-#| echo: TRUE
+#| echo: true
 
 append_calendar_columns <- function(data_tbl, date_col) {
   updated_data_tbl <- data_tbl |>
@@ -1138,7 +1138,7 @@ data_tbl |>
 ### Create Univariate Time-Series of Amounts
 
 ```{r construct_timeseries_data}
-#| echo: TRUE
+#| echo: true
 
 ts_data_tbl <- data_tbl |>
   mutate(
@@ -1204,7 +1204,7 @@ To avoid dealing with multiple files for the time series, we combine them into
 a single object.
 
 ```{r combine_ts_tbl}
-#| echo: TRUE
+#| echo: true
 
 ts_data_tbl <- list(
     daily   = ts_daily_tbl,
@@ -1224,7 +1224,7 @@ We have aggregated our data across time periods, but it is also worth looking
 at both transaction-level and invoice-level amount over time.
 
 ```{r lineitem_calendar_boxplot}
-#| echo: TRUE
+#| echo: true
 
 ggplot(data_tbl) +
   geom_boxplot(aes(x = invoice_woy, y = stock_value, group = invoice_woy)) +
@@ -1238,7 +1238,7 @@ ggplot(data_tbl) +
 
 
 ```{r invoice_calendar_boxplot}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- data_tbl |>
   group_by(invoice_woy, invoice_id) |>
@@ -1264,7 +1264,7 @@ We now look at individual invoice amounts, and look at how they are distributed
 on a daily basis.
 
 ```{r plot_daily_amount_distributions}
-#| echo: TRUE
+#| echo: true
 
 daily_distribution_tbl <- data_tbl |>
   group_by(invoice_date, invoice_id) |>
@@ -1281,7 +1281,7 @@ We now produce a boxplot for each day so we have a sense of how the
 distribution of transaction amounts changes and evolves over time.
 
 ```{r plot_daily_distribution_transactions}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- daily_distribution_tbl |>
   filter(total_spend > 0) |>
@@ -1313,7 +1313,7 @@ It does not look there is much of a change over time or any particular patterns
 that stand out, so we also want to look at the refunds.
 
 ```{r plot_daily_distribution_refunds}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- daily_distribution_tbl |>
   filter(total_spend < 0) |>
@@ -1363,7 +1363,7 @@ can also ignore those.
 
 
 ```{r create_matching_returns_data}
-#| echo: TRUE
+#| echo: true
 #| cache: TRUE
 
 filter_returns_transactions <- function(use_stock, use_customer,  use_dttm,
@@ -1445,7 +1445,7 @@ We can then use this data to get an idea of how often items are returned, and
 how much time tends to pass between the purchase and the return.
 
 ```{r construct_returns_lookups}
-#| echo: TRUE
+#| echo: true
 
 returns_lookup_tbl <- returns_data_tbl |>
   select(return_row_id = row_id, return_dttm = invoice_dttm, match_data) |>
@@ -1472,7 +1472,7 @@ We now want to look at the distribution of times between the purchase and the
 item being returned.
 
 ```{r plot_return_times_histogram}
-#| echo: TRUE
+#| echo: true
 
 orig_data_tbl <- data_tbl |>
   select(orig_row_id   = row_id, purchase_dttm = invoice_dttm)
@@ -1521,7 +1521,7 @@ bad debt management, discounts, gift cards and so on, so we remove those from
 this.
 
 ```{r remove_extraneous_stock_code_entries}
-#| echo: TRUE
+#| echo: true
 
 screen_stock_code <- c(
   "B", "C2", "C3", "D", "M", "S", "CRUK", "POST", "DOT", "BANK CHARGES",
@@ -1547,7 +1547,7 @@ clean_gift_tbl |> glimpse()
 ## Create Exclusion Indicator
 
 ```{r combine_exclusions}
-#| echo: TRUE
+#| echo: true
 
 exclusions_tbl <- list(
     clean_stock_code_tbl,
@@ -1570,7 +1570,7 @@ Finally, we want to construct a lookup table that provides some free-text
 fields for each `stock_code` value.
 
 ```{r dedupe_stock_descs}
-#| echo: TRUE
+#| echo: true
 
 dedupe_stock_descs <- function(stock_desc) {
   dedupe_descs <- stock_desc |>
@@ -1594,7 +1594,7 @@ possible.
 
 
 ```{r construct_stock_code_table}
-#| echo: TRUE
+#| echo: true
 
 stock_description_tbl <- cleaned_data_tbl |>
   filter(
@@ -1623,7 +1623,7 @@ stock_description_tbl |> glimpse()
 We also look at this output using DT
 
 ```{r view_stock_description}
-#| echo: TRUE
+#| echo: true
 
 stock_description_tbl |> datatable()
 ```
@@ -1639,7 +1639,7 @@ We model the purchase data first, then combine this to create an individual
 customer/invoice pairing with the total amount spent as an additional column.
 
 ```{r prepare_purchase_data}
-#| echo: TRUE
+#| echo: true
 
 tnx_purchase_tbl <- cleaned_data_tbl |>
   filter(
@@ -1660,7 +1660,7 @@ differences between the times. This is calculated internally by the various
 BTYD routines so we keep just the per-invoice spend.
 
 ```{r calculate_customer_daily_spend}
-#| echo: TRUE
+#| echo: true
 
 daily_spend_invoice_tbl <- tnx_purchase_tbl |>
   drop_na(customer_id) |>
@@ -1693,7 +1693,7 @@ purchase. Another important quantity is the time between transactions for a
 customer, we we will visualise these.
 
 ```{r construct_customer_cohort_data}
-#| echo: TRUE
+#| echo: true
 
 customer_cohort_tbl <- daily_spend_tbl |>
   group_by(customer_id) |>
@@ -1718,7 +1718,7 @@ Now that we have a first date for each customer, we look at the total number
 of customers joining at each date.
 
 ```{r plot_customer_first_dates}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- customer_cohort_tbl |>
   count(first_tnx_date, name = "n_customer")
@@ -1735,7 +1735,7 @@ ggplot(plot_tbl) +
 We know look at how time differences between purchases are distributed.
 
 ```{r plot_transaction_time_diffs}
-#| echo: TRUE
+#| echo: true
 
 customer_tnx_diffs_tbl <- daily_spend_tbl |>
   group_by(customer_id) |>
@@ -1766,7 +1766,7 @@ We also want to look at a number of customers and make some line plots of their
 transactions.
 
 ```{r visualise_customer_transactions}
-#| echo: TRUE
+#| echo: true
 
 keep_customers_tbl <- customer_cohort_tbl |>
   filter(total_tnx_count > 2) |>
@@ -1813,7 +1813,7 @@ on various first-transaction cohorts in the data.
 
 
 ```{r plot_distribution_first_transaction}
-#| echo: TRUE
+#| echo: true
 
 ggplot(customer_cohort_tbl) +
   geom_histogram(aes(x = first_tnx_date), bins = 50) +
@@ -1827,7 +1827,7 @@ ggplot(customer_cohort_tbl) +
 We also want to get a sense of the total count of customers in each cohort.
 
 ```{r construct_qtr_cohort_column_plot}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- customer_cohort_tbl |>
   count(cohort_qtr, name = "customer_count") |>
@@ -1846,7 +1846,7 @@ ggplot(plot_tbl) +
 We also want to see the monthly cohorts:
 
 ```{r construct_ym_cohort_column_plot}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- customer_cohort_tbl |>
   count(cohort_ym, name = "customer_count") |>
@@ -1870,7 +1870,7 @@ For the cohort analysis, we start with a boxplot of the time difference between
 transactions by cohort.
 
 ```{r plot_cohort_differences_boxplot}
-#| echo: TRUE
+#| echo: true
 
 plot_tbl <- customer_cohort_tbl |>
   inner_join(customer_tnx_diffs_tbl, by = "customer_id") |>
@@ -1889,7 +1889,7 @@ ggplot(plot_tbl) +
 We also construct a density plot of the time differences for these cohorts.
 
 ```{r investigate_cohort_transaction_times}
-#| echo: TRUE
+#| echo: true
 
 ggplot(plot_tbl, aes(x = time_diff, colour = cohort_qtr)) +
   geom_line(stat = "density") +
@@ -1905,7 +1905,7 @@ ggplot(plot_tbl, aes(x = time_diff, colour = cohort_qtr)) +
 And we also look at a facetted-histogram
 
 ```{r investigate_cohort_timediffs_facets}
-#| echo: TRUE
+#| echo: true
 
 ggplot(plot_tbl) +
   geom_histogram(aes(x = time_diff), bins = 50) +
@@ -1927,7 +1927,7 @@ customers in each cohort.
 
 
 ```{r estimate_cohort_dropout_rates}
-#| echo: TRUE
+#| echo: true
 
 cohort_dropout_est_tbl <- customer_cohort_tbl |>
   select(
@@ -1965,7 +1965,7 @@ cohort_dropout_est_tbl |> glimpse()
 ```
 
 ```{r cohort_dropout_params_dt}
-#| echo: TRUE
+#| echo: true
 
 cohort_dropout_est_tbl |> datatable()
 ```
@@ -1977,6 +1977,8 @@ We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
 ```{r set_start_end_dates}
+#| echo: true
+
 use_fit_start_date <- as.Date("2009-12-01")
 use_fit_end_date   <- as.Date("2010-12-01")
 
@@ -1988,7 +1990,7 @@ use_valid_end_date   <- as.Date("2012-12-10")
 
 
 ```{r setup_online_retail_transaction_data}
-#| echo: TRUE
+#| echo: true
 
 customer_cohortdata_tbl <- customer_cohort_tbl
 customer_cohortdata_tbl |> glimpse()
@@ -1996,7 +1998,9 @@ customer_cohortdata_tbl |> glimpse()
 customer_transactions_tbl <- daily_spend_invoice_tbl |>
   transmute(
     tnx_timestamp = invoice_dttm,
-    customer_id, invoice_id, tnx_amount = invoice_spend
+    customer_id   = customer_id |> as_factor(),
+    invoice_id,
+    tnx_amount    = invoice_spend
     )
 
 customer_transactions_tbl |> glimpse()
@@ -2010,7 +2014,7 @@ Having loaded the synthetic data we need to construct a number of datasets of
 derived values.
 
 ```{r construct_summary_stats_data}
-#| echo: TRUE
+#| echo: true
 
 customer_summarystats_tbl <- customer_transactions_tbl |>
   drop_na(customer_id) |>
@@ -2050,7 +2054,7 @@ customer_valid_stats_tbl |> glimpse()
 
 
 ```{r construct_fit_valid_datasets}
-#| echo: TRUE
+#| echo: true
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
   rename(tnx_count = x)
@@ -2069,7 +2073,7 @@ Finally we want to construct a cleaned transaction dataset consisting only
 of purchases from individual customers.
 
 ```{r construct_customer_transaction_data}
-#| echo: TRUE
+#| echo: true
 
 daily_spend_invoice_tbl <- tnx_purchase_tbl |>
   drop_na(customer_id) |>
@@ -2095,7 +2099,7 @@ code on the subset to reduce computation time. Once we are happy with a number
 of candidate models we can run the simulations on the full set.
 
 ```{r create_customer_subset}
-#| echo: TRUE
+#| echo: true
 
 onlineretail_customer_subset_ids <- customer_summarystats_tbl |>
   filter(first_tnx_date <= as.Date("2010-12-01")) |>
@@ -2116,7 +2120,7 @@ Finally we output the various datasets we have constructed to disks.
 
 
 ```{r write_to_disk}
-#| echo: TRUE
+#| echo: true
 
 customer_summarystats_tbl |> write_rds("data/onlineretail_customer_summarystats_tbl.rds")
 
@@ -2147,10 +2151,10 @@ list(
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
-#| echo: TRUE
+#| echo: true
 #| message: TRUE
 
 sessioninfo::session_info()
