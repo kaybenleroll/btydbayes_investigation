@@ -211,7 +211,7 @@ cdnow_tbl |> write_rds("data/rawdata_cdnow_tbl.rds")
 ```
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
 #| echo: true

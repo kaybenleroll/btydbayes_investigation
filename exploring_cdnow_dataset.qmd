@@ -856,7 +856,7 @@ use_valid_end_date   <- as.Date("1998-07-01")
 
 customer_transactions_tbl <- data_tbl |>
   mutate(
-    customer_id = customer_id |> as_factor()
+    customer_id = fct_reorder(customer_id, tnx_timestamp, min)
     )
 
 customer_transactions_tbl |> glimpse()
@@ -891,7 +891,7 @@ of candidate models we can run the simulations on the full set.
 
 cdnow_customer_subset_ids <- customer_summarystats_tbl |>
   filter(first_tnx_date <= as.Date("1997-12-31")) |>
-  slice_sample(n = 2000, replace = FALSE) |>
+  slice_sample(n = 1000, replace = FALSE) |>
   arrange(customer_id) |>
   pull(customer_id)
 

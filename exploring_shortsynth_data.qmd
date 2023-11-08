@@ -850,7 +850,7 @@ use_valid_end_date   <- as.Date("2023-01-01")
 
 customer_transactions_tbl <- data_tbl |>
   mutate(
-    customer_id = customer_id |> as_factor()
+    customer_id = fct_reorder(customer_id, tnx_timestamp, min)
     )
 
 customer_transactions_tbl |> glimpse()
@@ -884,20 +884,6 @@ shuffle_tbl <- customer_summarystats_tbl |>
 
 id_50    <- shuffle_tbl |> head(50)    |> pull(customer_id) |> sort() 
 id_1000  <- shuffle_tbl |> head(1000)  |> pull(customer_id) |> sort()
-id_5000  <- shuffle_tbl |> head(5000)  |> pull(customer_id) |> sort()
-id_10000 <- shuffle_tbl |> head(10000) |> pull(customer_id) |> sort()
-```
-
-We then construct some fit data based on these values.
-
-```{r construct_fit_subset_data}
-#| echo: true
-
-fit_1000_data_tbl  <- customer_summarystats_tbl |> filter(customer_id %in% id_1000)
-fit_1000_data_tbl |> glimpse()
-
-fit_10000_data_tbl <- customer_summarystats_tbl |> filter(customer_id %in% id_10000)
-fit_10000_data_tbl |> glimpse()
 ```
 
 
@@ -905,7 +891,7 @@ fit_10000_data_tbl |> glimpse()
 ```{r select_fit_dataset}
 #| echo: true
 
-customer_fit_stats_tbl <- fit_1000_data_tbl
+customer_fit_stats_tbl <- customer_summarystats_tbl
 customer_fit_stats_tbl |> glimpse()
 
 
@@ -955,11 +941,6 @@ Finally we output the various datasets we have constructed to disks.
 #| echo: true
 
 id_1000  |> write_rds("data/shortsynth_id_1000.rds")
-id_5000  |> write_rds("data/shortsynth_id_5000.rds")
-id_10000 |> write_rds("data/shortsynth_id_10000.rds")
-
-fit_1000_data_tbl  |> write_rds("data/shortsynth_fit_1000_data_tbl.rds")
-fit_10000_data_tbl |> write_rds("data/shortsynth_fit_10000_data_tbl.rds")
 
 customer_summarystats_tbl |> write_rds("data/shortsynth_customer_summarystats_tbl.rds")
 

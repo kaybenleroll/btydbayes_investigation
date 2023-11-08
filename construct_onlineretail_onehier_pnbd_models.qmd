@@ -1077,7 +1077,7 @@ model_assess_tbl |> write_rds("data/assess_data_pnbd_onlineretail_onehier_tbl.rd
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
 #| echo: TRUE

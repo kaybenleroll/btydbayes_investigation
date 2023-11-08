@@ -1099,7 +1099,7 @@ model_assess_tbl |> write_rds("data/assess_data_pnbd_long_onehier_tbl.rds")
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
 #| echo: TRUE
