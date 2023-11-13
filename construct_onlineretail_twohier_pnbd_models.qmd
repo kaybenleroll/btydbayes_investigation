@@ -329,7 +329,7 @@ simdata_tbl <- pnbd_onlineretail_twohiermean_assess_data_lst |>
   read_rds()
 
 insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_fitdata_tbl,
+  obsdata_tbl = customer_fit_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 
@@ -355,7 +355,7 @@ simdata_tbl <- pnbd_onlineretail_twohiermean_assess_data_lst |>
   read_rds()
 
 outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_validdata_tbl,
+  obsdata_tbl = customer_valid_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 
@@ -533,7 +533,7 @@ simdata_tbl <- pnbd_onlineretail_twohierlambda_assess_data_lst |>
   read_rds()
 
 insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_fitdata_tbl,
+  obsdata_tbl = customer_fit_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 
@@ -559,7 +559,7 @@ simdata_tbl <- pnbd_onlineretail_twohierlambda_assess_data_lst |>
   read_rds()
 
 outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_validdata_tbl,
+  obsdata_tbl = customer_valid_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 

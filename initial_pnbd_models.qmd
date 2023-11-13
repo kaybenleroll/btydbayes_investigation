@@ -192,15 +192,6 @@ $$
 We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
-```{r set_start_end_dates}
-use_fit_start_date <- as.Date("2020-01-01")
-use_fit_end_date   <- as.Date("2022-01-01")
-
-use_valid_start_date <- as.Date("2022-01-01")
-use_valid_end_date   <- as.Date("2023-01-01")
-```
-
-
 
 ## Load Short Time-frame Synthetic Data
 
@@ -219,11 +210,17 @@ customer_simparams_tbl    |> glimpse()
 customer_transactions_tbl <- read_rds("data/synthdata_shortframe_transactions_tbl.rds")
 customer_transactions_tbl |> glimpse()
 
-customer_fit_stats_tbl    <- read_rds("data/shortsynth_fit_1000_data_tbl.rds")
+customer_fit_stats_tbl    <- read_rds("data/shortsynth_customer_fit_stats_tbl.rds")
 customer_fit_stats_tbl    |> glimpse()
 
 customer_valid_stats_tbl  <- read_rds("data/shortsynth_obs_validdata_tbl.rds")
 customer_valid_stats_tbl  |> glimpse()
+
+obs_fitdata_tbl           <- read_rds("data/shortsynth_obs_fitdata_tbl.rds")
+obs_fitdata_tbl           |> glimpse()
+
+obs_validdata_tbl         <- read_rds("data/shortsynth_obs_validdata_tbl.rds")
+obs_validdata_tbl         |> glimpse()
 ```
 
 
@@ -249,6 +246,60 @@ ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
     ) +
   theme(axis.text.y = element_text(size = 10))
 ```
+
+
+## Load Derived Data
+
+```{r load_derived_data}
+#| echo: TRUE
+
+obs_fitdata_tbl   <- read_rds("data/shortsynth_obs_fitdata_tbl.rds")
+obs_validdata_tbl <- read_rds("data/shortsynth_obs_validdata_tbl.rds")
+
+customer_fit_stats_tbl <- obs_fitdata_tbl |>
+  rename(x = tnx_count)
+```
+
+
+## Load Subset Data
+
+We also want to construct our data subsets for the purposes of speeding up our
+valuations.
+
+```{r construct_customer_subset_data}
+#| echo: TRUE
+
+customer_subset_id <- read_rds("data/shortsynth_customer_subset_ids.rds")
+customer_subset_id |> glimpse()
+
+customer_fit_subset_tbl <- obs_fitdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_fit_subset_tbl |> glimpse()
+
+
+customer_valid_subset_tbl <- obs_validdata_tbl |>
+  filter(customer_id %in% customer_subset_id)
+
+customer_valid_subset_tbl |> glimpse()
+```
+
+
+We now use these datasets to set the start and end dates for our various
+validation methods.
+
+
+```{r set_start_end_dates}
+dates_lst <- read_rds("data/shortsynth_simulation_dates.rds")
+
+use_fit_start_date <- dates_lst$use_fit_start_date
+use_fit_end_date   <- dates_lst$use_fit_end_date
+
+use_valid_start_date <- dates_lst$use_valid_start_date
+use_valid_end_date   <- dates_lst$use_valid_end_date
+```
+
+
 
 
 ## Derive the Log-likelihood Function
@@ -392,7 +443,7 @@ calculate the summary statistics for the validation period.
 
 We start with the Stan model.
 
-```{r display_pnbd_init_short_fixed1_model_stancode}
+```{r display_pnbd_init_model_stancode}
 #| echo: FALSE
 
 read_lines("stan_code/pnbd_fixed.stan") |> cat(sep = "\n")
@@ -429,10 +480,10 @@ We then use this compiled model with our data to produce a fit of the data.
 
 
 
-```{r fit_pnbd_init_short_fixed1_stanmodel}
+```{r fit_pnbd_init_stanmodel}
 #| echo: TRUE
 
-stan_modelname <- "pnbd_init_short_fixed1"
+stan_modelname <- "pnbd_init"
 stanfit_prefix <- str_c("fit_", stan_modelname)
 stanfit_seed   <- stanfit_seed + 1
 
@@ -450,7 +501,7 @@ stan_data_lst <- customer_fit_stats_tbl |>
     )
 
 if(!file_exists(stanfit_object_file)) {
-  pnbd_init_short_fixed1_stanfit <- pnbd_fixed_stanmodel$sample(
+  pnbd_init_stanfit <- pnbd_fixed_stanmodel$sample(
     data            =                stan_data_lst,
     chains          =                            4,
     iter_warmup     =                          500,
@@ -461,22 +512,22 @@ if(!file_exists(stanfit_object_file)) {
     output_basename =               stanfit_prefix,
     )
   
-  pnbd_init_short_fixed1_stanfit$save_object(stanfit_object_file, compress = "gzip")
+  pnbd_init_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
-  pnbd_init_short_fixed1_stanfit <- read_rds(stanfit_object_file)
+  pnbd_init_stanfit <- read_rds(stanfit_object_file)
 }
 
-pnbd_init_short_fixed1_stanfit$summary()
+pnbd_init_stanfit$summary()
 ```
 
 
 We have some basic HMC-based validity statistics we can check.
 
-```{r calculate_pnbd_init_short_fixed1_hmc_diagnostics}
+```{r calculate_pnbd_init_hmc_diagnostics}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_stanfit$cmdstan_diagnose()
+pnbd_init_stanfit$cmdstan_diagnose()
 ```
 
 
@@ -494,7 +545,7 @@ parameter_subset <- c(
   "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
   )
 
-pnbd_init_short_fixed1_stanfit$draws(inc_warmup = TRUE) |>
+pnbd_init_stanfit$draws(inc_warmup = TRUE) |>
   mcmc_trace(
     pars     = parameter_subset,
     n_warmup = 500
@@ -509,7 +560,7 @@ the warmup.
 ```{r plot_lambda_traceplots_nowarmup}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_stanfit$draws(inc_warmup = FALSE) |>
+pnbd_init_stanfit$draws(inc_warmup = FALSE) |>
   mcmc_trace(pars = parameter_subset) +
   expand_limits(y = 0) +
   labs(
@@ -523,10 +574,10 @@ pnbd_init_short_fixed1_stanfit$draws(inc_warmup = FALSE) |>
 A common MCMC diagnostic is $\hat{R}$ - which is a measure of the 'similarity'
 of the chains.
 
-```{r plot_pnbd_init_short_fixed1_parameter_rhat}
+```{r plot_pnbd_init_parameter_rhat}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_stanfit |>
+pnbd_init_stanfit |>
   rhat(pars = c("lambda", "mu")) |>
   mcmc_rhat() +
     ggtitle("Plot of Parameter R-hat Values")
@@ -537,10 +588,10 @@ an estimate of the size of the sample from a statistical information point of
 view.
 
 
-```{r plot_pnbd_init_short_fixed1_parameter_neffratio}
+```{r plot_pnbd_init_parameter_neffratio}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_stanfit |>
+pnbd_init_stanfit |>
   neff_ratio(pars = c("lambda", "mu")) |>
   mcmc_neff() +
     ggtitle("Plot of Parameter Effective Sample Sizes")
@@ -549,10 +600,10 @@ pnbd_init_short_fixed1_stanfit |>
 Finally, we also want to look at autocorrelation in the chains for each
 parameter.
 
-```{r plot_pnbd_init_short_fixed1_parameter_acf}
+```{r plot_pnbd_init_parameter_acf}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_stanfit$draws() |>
+pnbd_init_stanfit$draws() |>
   mcmc_acf(pars = parameter_subset) +
     ggtitle("Autocorrelation Plot of Sample Values")
 ```
@@ -573,18 +624,18 @@ distribution of $q$-values for both $\lambda$ and $\mu$ across the customer
 base.
 
 
-```{r construct_pnbd_init_short_fixed1_validation_qvalues}
+```{r construct_pnbd_init_validation_qvalues}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_valid_lst <- create_pnbd_posterior_validation_data(
-  stanfit       = pnbd_init_short_fixed1_stanfit,
+pnbd_init_valid_lst <- create_pnbd_posterior_validation_data(
+  stanfit       = pnbd_init_stanfit,
   data_tbl      = customer_fit_stats_tbl,
   simparams_tbl = customer_simparams_tbl
   )
 
-pnbd_init_short_fixed1_valid_lst$lambda_qval_plot |> plot()
+pnbd_init_valid_lst$lambda_qval_plot |> plot()
 
-pnbd_init_short_fixed1_valid_lst$mu_qval_plot |> plot()
+pnbd_init_valid_lst$mu_qval_plot |> plot()
 ```
 
 These plots looks like the model is recovering the parameters well, but cannot
@@ -599,27 +650,27 @@ data we fit. This procedure is similar to what we did before but now we focus
 on in sample data rather than using validation data.
 
 
-```{r calculate_pnbd_init_short_fixed1_simstats}
+```{r calculate_pnbd_init_simstats}
 #| echo: TRUE
 
-pnbd_stanfit <- pnbd_init_short_fixed1_stanfit |>
+pnbd_stanfit <- pnbd_init_stanfit |>
   recover_types(customer_fit_stats_tbl)
 
-pnbd_init_short_fixed1_simstats_tbl <- construct_pnbd_posterior_statistics(
+pnbd_init_simstats_tbl <- construct_pnbd_posterior_statistics(
   stanfit         = pnbd_stanfit,
-  fitdata_tbl     = customer_fit_stats_tbl
+  fitdata_tbl     = customer_fit_subset_tbl
   )
 
-pnbd_init_short_fixed1_simstats_tbl |> glimpse()
+pnbd_init_simstats_tbl |> glimpse()
 ```
 
 We now want to write out the simulation stats to disk.
 
-```{r write_fit_pnbd_init_short_fixed1_simstats}
+```{r write_fit_pnbd_init_simstats}
 #! echo: TRUE
 
-pnbd_init_short_fixed1_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed1_assess_model_simstats_tbl.rds", compress = "gz")
+pnbd_init_simstats_tbl |>
+  write_rds("data/pnbd_init_assess_model_simstats_tbl.rds", compress = "gz")
 ```
 
 
@@ -627,17 +678,17 @@ We then use these posterior statistics as inputs to our simulations to help
 us assess the in-sample quality of fit.
 
 
-```{r setup_simulation_pnbd_init_short_fixed1_fitdata_transactions}
+```{r setup_simulation_pnbd_init_fitdata_transactions}
 #| echo: TRUE
 
-fit_label <- "pnbd_init_short_fixed1"
+fit_label <- "pnbd_init"
 
 precompute_dir <- glue("precompute/{fit_label}")
 
 ensure_exists_precompute_directory(precompute_dir)
 
 
-pnbd_init_short_fixed1_fitsims_index_tbl <- pnbd_init_short_fixed1_simstats_tbl |>
+pnbd_init_fitsims_index_tbl <- pnbd_init_simstats_tbl |>
   mutate(
     start_dttm = first_tnx_date   |> as.POSIXct(),
     end_dttm   = use_fit_end_date |> as.POSIXct(),
@@ -655,13 +706,13 @@ pnbd_init_short_fixed1_fitsims_index_tbl <- pnbd_init_short_fixed1_simstats_tbl 
     )
 
 
-pnbd_init_short_fixed1_fitsims_index_tbl |> glimpse()
+pnbd_init_fitsims_index_tbl |> glimpse()
 ```
 
 We now use this setup to generate our simulations.
 
 
-```{r generate_simulation_pnbd_init_short_fixed1_fitdata_transactions}
+```{r generate_simulation_pnbd_init_fitdata_transactions}
 #| echo: TRUE
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
@@ -669,12 +720,12 @@ precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   enframe(name = NULL, value = "sim_file")
 
 
-runsims_tbl <- pnbd_init_short_fixed1_fitsims_index_tbl |>
+runsims_tbl <- pnbd_init_fitsims_index_tbl |>
   anti_join(precomputed_tbl, by = "sim_file")
 
 
 if(nrow(runsims_tbl) > 0) {
-  pnbd_init_short_fixed1_fitsims_index_tbl <- runsims_tbl |>
+  pnbd_init_fitsims_index_tbl <- runsims_tbl |>
     mutate(
       chunk_data = future_map2_int(
         cust_params, sim_file,
@@ -698,7 +749,7 @@ if(nrow(runsims_tbl) > 0) {
 }
 
 
-pnbd_init_short_fixed1_fitsims_index_tbl |> glimpse()
+pnbd_init_fitsims_index_tbl |> glimpse()
 ```
 
 We now want to load up the summary statistics for each of our customers for
@@ -713,21 +764,21 @@ retrieve_sim_stats <- ~ .x |>
   select(draw_id, sim_data, sim_tnx_count, sim_tnx_last)
 ```
 
-```{r retrieve_pnbd_init_short_fixed1_fit_simstats}
+```{r retrieve_pnbd_init_fit_simstats}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_fit_simstats_tbl <- pnbd_init_short_fixed1_fitsims_index_tbl |>
+pnbd_init_fit_simstats_tbl <- pnbd_init_fitsims_index_tbl |>
   mutate(
     sim_data = map(
       sim_file, retrieve_sim_stats,
 
-      .progress = "pnbd_init_short_fixed1_fit"
+      .progress = "pnbd_init_fit"
       )
     ) |>
   select(customer_id, sim_data) |>
   unnest(sim_data)
 
-pnbd_init_short_fixed1_fit_simstats_tbl |> glimpse()
+pnbd_init_fit_simstats_tbl |> glimpse()
 ```
 
 
@@ -740,14 +791,14 @@ We start by checking the high level summary statistics, such as customers with
 more than one transaction both in the observed data and the simulation data,
 total transaction count observed 
 
-```{r compare_pnbd_init_short_fixed1_fit_multitransaction_customer_counts}
+```{r compare_pnbd_init_fit_multitransaction_customer_counts}
 #| echo: TRUE
 
 obs_customer_count <- customer_fit_stats_tbl |>
   filter(x > 0) |>
   nrow()
 
-sim_data_tbl <- pnbd_init_short_fixed1_fit_simstats_tbl |>
+sim_data_tbl <- pnbd_init_fit_simstats_tbl |>
   filter(sim_tnx_count > 0) |>
   count(draw_id, name = "sim_customer_count")
 
@@ -771,14 +822,14 @@ first is captured by this simulation.
 
 We now check the count of all transactions.
 
-```{r compare_pnbd_init_short_fixed1_fit_total_transaction_count}
+```{r compare_pnbd_init_fit_total_transaction_count}
 #| echo: TRUE
 
 obs_total_count <- customer_fit_stats_tbl |>
   pull(x) |>
   sum()
 
-sim_data_tbl <- pnbd_init_short_fixed1_fit_simstats_tbl |>
+sim_data_tbl <- pnbd_init_fit_simstats_tbl |>
   count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
 
 
@@ -801,7 +852,7 @@ data.
 
 We now look at the quantiles for the transaction counts across each customer.
 
-```{r compare_pnbd_init_short_fixed1_fit_transaction_quantiles}
+```{r compare_pnbd_init_fit_transaction_quantiles}
 #| echo: TRUE
 
 obs_quantiles_tbl <- customer_fit_stats_tbl |>
@@ -810,7 +861,7 @@ obs_quantiles_tbl <- customer_fit_stats_tbl |>
     prob_value = quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
     )
     
-sim_data_tbl <- pnbd_init_short_fixed1_fit_simstats_tbl |>
+sim_data_tbl <- pnbd_init_fit_simstats_tbl |>
   group_by(draw_id) |>
   summarise(
     p10 = quantile(sim_tnx_count, 0.10),
@@ -844,11 +895,11 @@ ggplot(sim_data_tbl) +
 
 We write this data to disk
 
-```{r write_pnbd_init_short_fixed1_fit_simstats_tbl}
+```{r write_pnbd_init_fit_simstats_tbl}
 #| echo: true
 
-pnbd_init_short_fixed1_fit_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed1_assess_fit_simstats_tbl.rds", compress = "gz")
+pnbd_init_fit_simstats_tbl |>
+  write_rds("data/pnbd_init_assess_fit_simstats_tbl.rds", compress = "gz")
 ```
 
 
@@ -858,7 +909,7 @@ pnbd_init_short_fixed1_fit_simstats_tbl |>
 We now repeat this exercise, but for the validation period of 2022.
 
 
-```{r setup_simulation_pnbd_init_short_fixed1_validdata_transactions}
+```{r setup_simulation_pnbd_init_validdata_transactions}
 #| echo: TRUE
 
 precompute_dir <- glue("precompute/{fit_label}")
@@ -869,7 +920,7 @@ use_start <- use_valid_start_date |> as.POSIXct()
 use_final <- use_valid_end_date   |> as.POSIXct()
 
 
-pnbd_init_short_fixed1_validsims_index_tbl <- pnbd_init_short_fixed1_simstats_tbl |>
+pnbd_init_validsims_index_tbl <- pnbd_init_simstats_tbl |>
   mutate(
     start_dttm = use_start,
     end_dttm   = use_final,
@@ -885,14 +936,14 @@ pnbd_init_short_fixed1_validsims_index_tbl <- pnbd_init_short_fixed1_simstats_tb
       )
     )
 
-pnbd_init_short_fixed1_validsims_index_tbl |> glimpse()
+pnbd_init_validsims_index_tbl |> glimpse()
 ```
 
 We now can run these simulations to check how well our model captures
 transactions out of the fitted data.
 
 
-```{r generate_pnbd_init_short_fixed1_validdata_transactions}
+```{r generate_pnbd_init_validdata_transactions}
 #| echo: TRUE
 
 precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
@@ -900,12 +951,12 @@ precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
   enframe(name = NULL, value = "sim_file")
 
 
-runsims_tbl <- pnbd_init_short_fixed1_validsims_index_tbl |>
+runsims_tbl <- pnbd_init_validsims_index_tbl |>
   anti_join(precomputed_tbl, by = "sim_file")
 
 
 if(nrow(runsims_tbl) > 0) {
-  pnbd_init_short_fixed1_validsims_index_tbl <- runsims_tbl |>
+  pnbd_init_validsims_index_tbl <- runsims_tbl |>
     mutate(
       chunk_data = future_map2_int(
         cust_params, sim_file,
@@ -928,28 +979,28 @@ if(nrow(runsims_tbl) > 0) {
       )
 }
 
-pnbd_init_short_fixed1_validsims_index_tbl |> glimpse()
+pnbd_init_validsims_index_tbl |> glimpse()
 ```
 
 Now that we have generated our simulations we want to load the data from the
 files and construct a dataset for use as part of the validation.
 
 
-```{r retrieve_pnbd_init_short_fixed1_valid_simstats}
+```{r retrieve_pnbd_init_valid_simstats}
 #| echo: TRUE
 
-pnbd_init_short_fixed1_valid_simstats_tbl <- pnbd_init_short_fixed1_validsims_index_tbl |>
+pnbd_init_valid_simstats_tbl <- pnbd_init_validsims_index_tbl |>
   mutate(
     sim_data = map(
       sim_file, retrieve_sim_stats,
 
-      .progress = "pnbd_init_short_fixed1_valid"
+      .progress = "pnbd_init_valid"
       )
     ) |>
   select(customer_id, sim_data) |>
   unnest(sim_data)
 
-pnbd_init_short_fixed1_valid_simstats_tbl |> glimpse()
+pnbd_init_valid_simstats_tbl |> glimpse()
 ```
 
 
@@ -959,14 +1010,14 @@ We start by checking the high level summary statistics, such as customers with
 more than one transaction both in the observed data and the simulation data,
 total transaction count observed 
 
-```{r compare_pnbd_init_short_fixed1_valid_multitransaction_customer_counts}
+```{r compare_pnbd_init_valid_multitransaction_customer_counts}
 #| echo: TRUE
 
 obs_customer_count <- customer_valid_stats_tbl |>
   filter(tnx_count > 0) |>
   nrow()
 
-sim_data_tbl <- pnbd_init_short_fixed1_valid_simstats_tbl |>
+sim_data_tbl <- pnbd_init_valid_simstats_tbl |>
   filter(sim_tnx_count > 0) |>
   count(draw_id, name = "sim_customer_count")
 
@@ -987,14 +1038,14 @@ ggplot(sim_data_tbl) +
 
 We now check the count of all transactions.
 
-```{r compare_pnbd_init_short_fixed1_valid_total_transaction_count}
+```{r compare_pnbd_init_valid_total_transaction_count}
 #| echo: TRUE
 
 obs_total_count <- customer_valid_stats_tbl |>
   pull(tnx_count) |>
   sum()
 
-sim_data_tbl <- pnbd_init_short_fixed1_valid_simstats_tbl |>
+sim_data_tbl <- pnbd_init_valid_simstats_tbl |>
   count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
 
 
@@ -1015,7 +1066,7 @@ ggplot(sim_data_tbl) +
 
 We now look at the quantiles for the transaction counts across each customer.
 
-```{r compare_pnbd_init_short_fixed1_valid_transaction_quantiles}
+```{r compare_pnbd_init_valid_transaction_quantiles}
 #| echo: TRUE
 
 obs_quantiles_tbl <- customer_valid_stats_tbl |>
@@ -1024,7 +1075,7 @@ obs_quantiles_tbl <- customer_valid_stats_tbl |>
     prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
     )
     
-sim_data_tbl <- pnbd_init_short_fixed1_valid_simstats_tbl |>
+sim_data_tbl <- pnbd_init_valid_simstats_tbl |>
   filter(sim_tnx_count > 0) |>
   group_by(draw_id) |>
   summarise(
@@ -1059,1344 +1110,14 @@ ggplot(sim_data_tbl) +
 
 We write this data to disk
 
-```{r write_pnbd_init_short_fixed1_valid_simstats_tbl}
+```{r write_pnbd_init_valid_simstats_tbl}
 #| echo: true
 
-pnbd_init_short_fixed1_valid_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed1_assess_valid_simstats_tbl.rds", compress = "gz")
-```
-
-```{r delete_pnbd_init_short_fixed1_data}
-#| echo: TRUE
-
-rm(pnbd_init_short_fixed1_fit_simstats_tbl)
-rm(pnbd_init_short_fixed1_valid_simstats_tbl)
+pnbd_init_valid_simstats_tbl |>
+  write_rds("data/pnbd_init_assess_valid_simstats_tbl.rds", compress = "gz")
 ```
 
 
-## Final Assessment
-
-All of this looks good, and our model appears to do a good job of recreating
-the data both in and out of sample, but this is not surprising since we mostly
-used the same input parameters.
-
-For real life work, we will not have this benefit, so it is worth seeing how
-sensitive this process is to the prior parameters.
-
-
-# Fit Alternate Prior Model.
-
-```{r create_log_initial_pnbd_model_fixed2}
-#| echo: TRUE
-
-syslog(
-  glue("Creating the second P/NBD model (lower CoV)"),
-  level = "INFO"
-  )
-```
-
-
-
-We want to try an alternate prior model with a smaller co-efficient of variation
-to see what impact it has on our procedures.
-
-
-```{r fit_pnbd_fixed2_stanmodel}
-#| echo: TRUE
-
-stan_modelname <- "pnbd_init_short_fixed2"
-stanfit_prefix <- str_c("fit_", stan_modelname) 
-stanfit_seed   <- stanfit_seed + 1
-
-stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
-
-
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
-  compose_data(
-    lambda_mn = 0.25,
-    lambda_cv = 0.50,
-    
-    mu_mn     = 0.10,
-    mu_cv     = 0.50,
-    )
-
-if(!file_exists(stanfit_object_file)) {
-  pnbd_init_short_fixed2_stanfit <- pnbd_fixed_stanmodel$sample(
-    data            =                stan_data_lst,
-    chains          =                            4,
-    iter_warmup     =                          500,
-    iter_sampling   =                          500,
-    seed            =                 stanfit_seed,
-    save_warmup     =                         TRUE,
-    output_dir      =                stan_modeldir,
-    output_basename =               stanfit_prefix,
-    )
-  
-  pnbd_init_short_fixed2_stanfit$save_object(stanfit_object_file, compress = "gzip")
-
-} else {
-  pnbd_init_short_fixed2_stanfit <- read_rds(stanfit_object_file)
-}
-
-pnbd_init_short_fixed2_stanfit$summary()
-```
-
-
-We have some basic HMC-based validity statistics we can check.
-
-```{r calculate_pnbd_init_short_fixed2_hmc_diagnostics}
-#| echo: TRUE
-
-pnbd_init_short_fixed2_stanfit$cmdstan_diagnose()
-```
-
-
-
-## Visual Diagnostics of the Sample Validity
-
-Now that we have a sample from the posterior distribution we need to create a
-few different visualisations of the diagnostics.
-
-```{r plot_pnbd_init_short_fixed2_lambda_traceplots}
-#| echo: TRUE
-
-parameter_subset <- c(
-  "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
-  "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
-  )
-
-pnbd_init_short_fixed2_stanfit$draws(inc_warmup = FALSE) |>
-  mcmc_trace(pars = parameter_subset) +
-  expand_limits(y = 0) +
-  labs(
-    x = "Iteration",
-    y = "Value",
-    title = "Traceplot of Sample of Lambda and Mu Values"
-    ) +
-  theme(axis.text.x = element_text(size = 10))
-```
-
-
-We want to check the $N_{eff}$ statistics also.
-
-
-```{r plot_pnbd_init_short_fixed2_parameter_neffratio}
-#| echo: TRUE
-
-pnbd_init_short_fixed2_stanfit |>
-  neff_ratio(pars = c("lambda", "mu")) |>
-  mcmc_neff() +
-    ggtitle("Plot of Parameter Effective Sample Sizes")
-```
-
-
-## Assess Model Fit Using Simulation
-
-We now want to check our in-sample data.
-
-```{r calculate_pnbd_init_short_fixed2_posterior_simstats}
-#| echo: TRUE
-
-pnbd_stanfit <- pnbd_init_short_fixed2_stanfit |>
-  recover_types(customer_fit_stats_tbl)
-
-pnbd_init_short_fixed2_simstats_tbl <- construct_pnbd_posterior_statistics(
-  stanfit         = pnbd_stanfit,
-  fitdata_tbl     = customer_fit_stats_tbl
-  )
-
-pnbd_init_short_fixed2_simstats_tbl |> glimpse()
-```
-
-
-We write out this data to disk.
-
-```{r write_fit_pnbd_init_short_fixed2_simstats}
-#! echo: TRUE
-
-pnbd_init_short_fixed2_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed2_assess_model_simstats_tbl.rds", compress = "gz")
-```
-
-
-We now want to generate the transactions for the in-sample data.
-
-```{r setup_simulation_pnbd_init_short_fixed2_fitdata_transactions}
-#| echo: TRUE
-
-fit_label <- "pnbd_init_short_fixed2"
-
-precompute_dir <- glue("precompute/{fit_label}")
-
-ensure_exists_precompute_directory(precompute_dir)
-
-
-pnbd_init_short_fixed2_fitsims_index_tbl <- pnbd_init_short_fixed2_simstats_tbl |>
-  mutate(
-    start_dttm = first_tnx_date   |> as.POSIXct(),
-    end_dttm   = use_fit_end_date |> as.POSIXct(),
-    lambda     = post_lambda,
-    mu         = post_mu,
-    p_alive    = 1,      ### In-sample validation, so customer begins active
-    tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
-    tnx_cv     = 1       ### 
-    ) |>
-  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
-  mutate(
-    sim_file = glue(
-      "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
-      )
-    )
-
-
-pnbd_init_short_fixed2_fitsims_index_tbl |> glimpse()
-```
-
-We now use this setup to generate our simulations.
-
-
-```{r generate_simulation_pnbd_init_short_fixed2_fitdata_transactions}
-#| echo: TRUE
-
-precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-  as.character() |>
-  enframe(name = NULL, value = "sim_file")
-
-
-runsims_tbl <- pnbd_init_short_fixed2_fitsims_index_tbl |>
-  anti_join(precomputed_tbl, by = "sim_file")
-
-
-if(nrow(runsims_tbl) > 0) {
-  pnbd_init_short_fixed2_fitsims_index_tbl <- runsims_tbl |>
-    mutate(
-      chunk_data = future_map2_int(
-        cust_params, sim_file,
-        run_simulations_chunk,
-
-        sim_func = generate_pnbd_validation_transactions,
-
-        .options = furrr_options(
-          globals  = c(
-            "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
-            "generate_pnbd_validation_transactions"
-            ),
-          packages   = c("tidyverse", "fs"),
-          scheduling = Inf,
-          seed       = 422
-          ),
-
-        .progress = TRUE
-        )
-      )
-}
-
-
-pnbd_init_short_fixed2_fitsims_index_tbl |> glimpse()
-```
-
-We now want to load up the summary statistics for each of our customers for
-later analysis.
-
-
-```{r retrieve_pnbd_init_short_fixed2_fit_simstats}
-#| echo: TRUE
-
-pnbd_init_short_fixed2_fit_simstats_tbl <- pnbd_init_short_fixed2_fitsims_index_tbl |>
-  mutate(
-    sim_data = map(
-      sim_file, retrieve_sim_stats,
-
-      .progress = "pnbd_init_short_fixed2_fit"
-      )
-    ) |>
-  select(customer_id, sim_data) |>
-  unnest(sim_data)
-
-pnbd_init_short_fixed2_fit_simstats_tbl |> glimpse()
-```
-
-We now use this data to check how well our model fits the data.
-
-
-### Compare Counts of Multitransaction Customers
-
-We start by checking the high level summary statistics, such as customers with
-more than one transaction both in the observed data and the simulation data,
-total transaction count observed 
-
-```{r compare_pnbd_init_short_fixed2_fit_multitransaction_customer_counts}
-#| echo: TRUE
-
-obs_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
-  nrow()
-
-sim_data_tbl <- pnbd_init_short_fixed2_fit_simstats_tbl |>
-  filter(sim_tnx_count > 0) |>
-  count(draw_id, name = "sim_customer_count")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_customer_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
-  labs(
-    x = "Count of Multi-transaction Customers",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Customer Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-The observed count of customers at least one additional transaction after the
-first is captured by this simulation.
-
-
-### Total Transaction Count
-
-We now check the count of all transactions.
-
-```{r compare_pnbd_init_short_fixed2_fit_total_transaction_count}
-#| echo: TRUE
-
-obs_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
-  sum()
-
-sim_data_tbl <- pnbd_init_short_fixed2_fit_simstats_tbl |>
-  count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
-
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_total_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_total_count), colour = "red") +
-  labs(
-    x = "Count of Total Transactions",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Total Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-As before, these all look good. Our model is doing a good job capturing the
-data.
-
-### Transaction Count Quantiles
-
-We now look at the quantiles for the transaction counts across each customer.
-
-```{r compare_pnbd_init_short_fixed2_fit_transaction_quantiles}
-#| echo: TRUE
-
-obs_quantiles_tbl <- customer_fit_stats_tbl |>
-  reframe(
-    prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
-    prob_value = quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
-    )
-    
-sim_data_tbl <- pnbd_init_short_fixed2_fit_simstats_tbl |>
-  group_by(draw_id) |>
-  summarise(
-    p10 = quantile(sim_tnx_count, 0.10),
-    p25 = quantile(sim_tnx_count, 0.25),
-    p50 = quantile(sim_tnx_count, 0.50),
-    p75 = quantile(sim_tnx_count, 0.75),
-    p90 = quantile(sim_tnx_count, 0.90),
-    p99 = quantile(sim_tnx_count, 0.99)
-    ) |> 
-  pivot_longer(
-    cols = !draw_id,
-    names_to  = "prob_label",
-    values_to = "sim_prob_values"
-    ) |>
-  inner_join(obs_quantiles_tbl, by = "prob_label")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
-  geom_vline(aes(xintercept = prob_value), colour = "red") +
-  facet_wrap(vars(prob_label), nrow = 2, scales = "free") +
-  labs(
-    x = "Quantile of Counts",
-    y = "Frequency",
-    title = "Comparison Plots of Transaction Count Quantiles"
-    )
-```
-
-
-### Write to Disk
-
-We write this data to disk
-
-```{r write_pnbd_init_short_fixed2_fit_simstats_tbl}
-#| echo: true
-
-pnbd_init_short_fixed2_fit_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed2_assess_fit_simstats_tbl.rds", compress = "gz")
-```
-
-
-
-
-## Assess Out-of-Sample Data
-
-We now repeat this exercise, but for the validation period of 2022.
-
-
-```{r setup_simulation_pnbd_init_short_fixed2_validdata_transactions}
-#| echo: TRUE
-
-precompute_dir <- glue("precompute/{fit_label}")
-
-ensure_exists_precompute_directory(precompute_dir)
-
-use_start <- use_valid_start_date |> as.POSIXct()
-use_final <- use_valid_end_date   |> as.POSIXct()
-
-
-pnbd_init_short_fixed2_validsims_index_tbl <- pnbd_init_short_fixed2_simstats_tbl |>
-  mutate(
-    start_dttm = use_start,
-    end_dttm   = use_final,
-    lambda     = post_lambda,
-    mu         = post_mu,
-    tnx_mu     = 1,      ### We are not simulating tnx size
-    tnx_cv     = 1       ### 
-    ) |>
-  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
-  mutate(
-    sim_file = glue(
-      "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
-      )
-    )
-
-pnbd_init_short_fixed2_validsims_index_tbl |> glimpse()
-```
-
-We now can run these simulations to check how well our model captures
-transactions out of the fitted data.
-
-
-```{r generate_pnbd_init_short_fixed2_validdata_transactions}
-#| echo: TRUE
-
-precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-  as.character() |>
-  enframe(name = NULL, value = "sim_file")
-
-
-runsims_tbl <- pnbd_init_short_fixed2_validsims_index_tbl |>
-  anti_join(precomputed_tbl, by = "sim_file")
-
-
-if(nrow(runsims_tbl) > 0) {
-  pnbd_init_short_fixed2_validsims_index_tbl <- runsims_tbl |>
-    mutate(
-      chunk_data = future_map2_int(
-        cust_params, sim_file,
-        run_simulations_chunk,
-
-        sim_func = generate_pnbd_validation_transactions,
-
-        .options = furrr_options(
-          globals  = c(
-            "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
-            "generate_pnbd_validation_transactions"
-            ),
-          packages   = c("tidyverse", "fs"),
-          scheduling = Inf,
-          seed       = 422
-          ),
-
-        .progress = TRUE
-        )
-      )
-}
-
-pnbd_init_short_fixed2_validsims_index_tbl |> glimpse()
-```
-
-Now that we have generated our simulations we want to load the data from the
-files and construct a dataset for use as part of the validation.
-
-
-```{r retrieve_pnbd_init_short_fixed2_valid_simstats}
-#| echo: TRUE
-
-pnbd_init_short_fixed2_valid_simstats_tbl <- pnbd_init_short_fixed2_validsims_index_tbl |>
-  mutate(
-    sim_data = map(
-      sim_file, retrieve_sim_stats,
-
-      .progress = "pnbd_init_short_fixed2_valid"
-      )
-    ) |>
-  select(customer_id, sim_data) |>
-  unnest(sim_data)
-
-pnbd_init_short_fixed2_valid_simstats_tbl |> glimpse()
-```
-
-
-### Compare Counts of Multitransaction Customers
-
-We start by checking the high level summary statistics, such as customers with
-more than one transaction both in the observed data and the simulation data,
-total transaction count observed 
-
-```{r compare_pnbd_init_short_fixed2_valid_multitransaction_customer_counts}
-#| echo: TRUE
-
-obs_customer_count <- customer_valid_stats_tbl |>
-  filter(tnx_count > 0) |>
-  nrow()
-
-sim_data_tbl <- pnbd_init_short_fixed2_valid_simstats_tbl |>
-  filter(sim_tnx_count > 0) |>
-  count(draw_id, name = "sim_customer_count")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_customer_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
-  labs(
-    x = "Count of Multi-transaction Customers",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Customer Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-
-### Total Transaction Count
-
-We now check the count of all transactions.
-
-```{r compare_pnbd_init_short_fixed2_valid_total_transaction_count}
-#| echo: TRUE
-
-obs_total_count <- customer_valid_stats_tbl |>
-  pull(tnx_count) |>
-  sum()
-
-sim_data_tbl <- pnbd_init_short_fixed2_valid_simstats_tbl |>
-  count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
-
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_total_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_total_count), colour = "red") +
-  labs(
-    x = "Count of Total Transactions",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Total Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-
-### Transaction Count Quantiles
-
-We now look at the quantiles for the transaction counts across each customer.
-
-```{r compare_pnbd_init_short_fixed2_valid_transaction_quantiles}
-#| echo: TRUE
-
-obs_quantiles_tbl <- customer_valid_stats_tbl |>
-  reframe(
-    prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
-    prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
-    )
-    
-sim_data_tbl <- pnbd_init_short_fixed2_valid_simstats_tbl |>
-  filter(sim_tnx_count > 0) |>
-  group_by(draw_id) |>
-  summarise(
-    p10 = quantile(sim_tnx_count, 0.10),
-    p25 = quantile(sim_tnx_count, 0.25),
-    p50 = quantile(sim_tnx_count, 0.50),
-    p75 = quantile(sim_tnx_count, 0.75),
-    p90 = quantile(sim_tnx_count, 0.90),
-    p99 = quantile(sim_tnx_count, 0.99)
-    ) |> 
-  pivot_longer(
-    cols = !draw_id,
-    names_to  = "prob_label",
-    values_to = "sim_prob_values"
-    ) |>
-  inner_join(obs_quantiles_tbl, by = "prob_label")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
-  geom_vline(aes(xintercept = prob_value), colour = "red") +
-  facet_wrap(vars(prob_label), nrow = 2, scales = "free") +
-  labs(
-    x = "Quantile of Counts",
-    y = "Frequency",
-    title = "Comparison Plots of Transaction Count Quantiles"
-    )
-
-```
-
-
-### Write to Disk
-
-We write this data to disk
-
-```{r write_pnbd_init_short_fixed2_valid_simstats_tbl}
-#| echo: true
-
-pnbd_init_short_fixed2_valid_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed2_assess_valid_simstats_tbl.rds", compress = "gz")
-```
-
-
-```{r delete_pnbd_init_short_fixed2_data}
-#| echo: TRUE
-
-rm(pnbd_init_short_fixed2_fit_simstats_tbl)
-rm(pnbd_init_short_fixed2_valid_simstats_tbl)
-```
-
-
-## Final Assessment
-
-This model appears to be struggling to properly account for the transaction
-frequency, as the distribution of transaction counts has a bias to the low side.
-
-This may be do to the compressed nature of the Gamma priors due to the smaller
-value of the co-efficient of variation. One final model might be to try wider
-priors to see how they work.
-
-
-
-
-# Fit Higher-CV Prior Model.
-
-```{r create_log_initial_pnbd_model_fixed3}
-#| echo: TRUE
-
-syslog(
-  glue("Creating the third P/NBD model (higher CoV)"),
-  level = "INFO"
-  )
-```
-
-
-
-We want to try an alternate prior model with a larger co-efficient of variation
-to see what impact it has on our procedures.
-
-
-```{r fit_pnbd_fixed3_stanmodel}
-#| echo: TRUE
-
-stan_modelname <- "pnbd_init_short_fixed3"
-stanfit_prefix <- str_c("fit_", stan_modelname)
-stanfit_seed   <- stanfit_seed + 1
-
-stanfit_object_file <- glue("data/{stanfit_prefix}_stanfit.rds")
-
-
-stan_data_lst <- customer_fit_stats_tbl |>
-  select(customer_id, x, t_x, T_cal) |>
-  compose_data(
-    lambda_mn = 0.25,
-    lambda_cv = 2.00,
-    
-    mu_mn     = 0.10,
-    mu_cv     = 2.00,
-    )
-
-if(!file_exists(stanfit_object_file)) {
-  pnbd_init_short_fixed3_stanfit <- pnbd_fixed_stanmodel$sample(
-    data            =                stan_data_lst,
-    chains          =                            4,
-    iter_warmup     =                          500,
-    iter_sampling   =                          500,
-    seed            =                 stanfit_seed,
-    save_warmup     =                         TRUE,
-    output_dir      =                stan_modeldir,
-    output_basename =               stanfit_prefix,
-    )
-  
-  pnbd_init_short_fixed3_stanfit$save_object(stanfit_object_file, compress = "gzip")
-
-} else {
-  pnbd_init_short_fixed3_stanfit <- read_rds(stanfit_object_file)
-}
-
-pnbd_init_short_fixed3_stanfit$summary()
-```
-
-
-We have some basic HMC-based validity statistics we can check.
-
-```{r calculate_pnbd_init_short_fixed3_hmc_diagnostics}
-#| echo: TRUE
-
-pnbd_init_short_fixed3_stanfit$cmdstan_diagnose()
-```
-
-
-## Visual Diagnostics of the Sample Validity
-
-Now that we have a sample from the posterior distribution we need to create a
-few different visualisations of the diagnostics.
-
-```{r plot_pnbd_init_short_fixed3_lambda_traceplots}
-#| echo: TRUE
-
-parameter_subset <- c(
-  "lambda[1]", "lambda[2]", "lambda[3]", "lambda[4]",
-  "mu[1]",     "mu[2]",     "mu[3]",     "mu[4]"
-  )
-
-pnbd_init_short_fixed3_stanfit$draws(inc_warmup = FALSE) |>
-  mcmc_trace(pars = parameter_subset) +
-  expand_limits(y = 0) +
-  labs(
-    x = "Iteration",
-    y = "Value",
-    title = "Traceplot of Sample of Lambda and Mu Values"
-    ) +
-  theme(axis.text.x = element_text(size = 10))
-```
-
-
-We want to check the $N_{eff}$ statistics also.
-
-
-```{r plot_pnbd_init_short_fixed3_parameter_neffratio}
-#| echo: TRUE
-
-pnbd_init_short_fixed3_stanfit |>
-  neff_ratio(pars = c("lambda", "mu")) |>
-  mcmc_neff() +
-    ggtitle("Plot of Parameter Effective Sample Sizes")
-```
-
-
-## Assess Model Fit Using Simulation
-
-We now want to check our in-sample data.
-
-```{r calculate_pnbd_init_short_fixed3_posterior_simstats}
-#| echo: TRUE
-
-pnbd_stanfit <- pnbd_init_short_fixed3_stanfit |>
-  recover_types(customer_fit_stats_tbl)
-
-pnbd_init_short_fixed3_simstats_tbl <- construct_pnbd_posterior_statistics(
-  stanfit         = pnbd_stanfit,
-  fitdata_tbl     = customer_fit_stats_tbl
-  )
-
-pnbd_init_short_fixed3_simstats_tbl |> glimpse()
-```
-
-
-We write out this data to disk.
-
-```{r write_fit_pnbd_init_short_fixed3_simstats}
-#! echo: TRUE
-
-pnbd_init_short_fixed3_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed3_assess_model_simstats_tbl.rds", compress = "gz")
-```
-
-
-We now want to generate the transactions for the in-sample data.
-
-
-```{r setup_simulation_pnbd_init_short_fixed3_fitdata_transactions}
-#| echo: TRUE
-
-fit_label <- "pnbd_init_short_fixed3"
-
-precompute_dir <- glue("precompute/{fit_label}")
-
-ensure_exists_precompute_directory(precompute_dir)
-
-
-pnbd_init_short_fixed3_fitsims_index_tbl <- pnbd_init_short_fixed3_simstats_tbl |>
-  mutate(
-    start_dttm = first_tnx_date   |> as.POSIXct(),
-    end_dttm   = use_fit_end_date |> as.POSIXct(),
-    lambda     = post_lambda,
-    mu         = post_mu,
-    p_alive    = 1,      ### In-sample validation, so customer begins active
-    tnx_mu     = 100,    ### We are not simulating tnx size, so put in defaults
-    tnx_cv     = 1       ### 
-    ) |>
-  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
-  mutate(
-    sim_file = glue(
-      "{precompute_dir}/sims_fit_{fit_label}_{customer_id}.rds"
-      )
-    )
-
-
-pnbd_init_short_fixed3_fitsims_index_tbl |> glimpse()
-```
-
-We now use this setup to generate our simulations.
-
-
-```{r generate_simulation_pnbd_init_short_fixed3_fitdata_transactions}
-#| echo: TRUE
-
-precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-  as.character() |>
-  enframe(name = NULL, value = "sim_file")
-
-
-runsims_tbl <- pnbd_init_short_fixed3_fitsims_index_tbl |>
-  anti_join(precomputed_tbl, by = "sim_file")
-
-
-if(nrow(runsims_tbl) > 0) {
-  pnbd_init_short_fixed3_fitsims_index_tbl <- runsims_tbl |>
-    mutate(
-      chunk_data = future_map2_int(
-        cust_params, sim_file,
-        run_simulations_chunk,
-
-        sim_func = generate_pnbd_validation_transactions,
-
-        .options = furrr_options(
-          globals  = c(
-            "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
-            "generate_pnbd_validation_transactions"
-            ),
-          packages   = c("tidyverse", "fs"),
-          scheduling = Inf,
-          seed       = 423
-          ),
-
-        .progress = TRUE
-        )
-      )
-}
-
-
-pnbd_init_short_fixed3_fitsims_index_tbl |> glimpse()
-```
-
-We now want to load up the summary statistics for each of our customers for
-later analysis.
-
-
-```{r retrieve_pnbd_init_short_fixed3_fit_simstats}
-#| echo: TRUE
-
-pnbd_init_short_fixed3_fit_simstats_tbl <- pnbd_init_short_fixed3_fitsims_index_tbl |>
-  mutate(
-    sim_data = map(
-      sim_file, retrieve_sim_stats,
-
-      .progress = "pnbd_init_short_fixed3_fit"
-      )
-    ) |>
-  select(customer_id, sim_data) |>
-  unnest(sim_data)
-
-pnbd_init_short_fixed3_fit_simstats_tbl |> glimpse()
-```
-
-We now use this data to check how well our model fits the data.
-
-
-### Compare Counts of Multitransaction Customers
-
-We start by checking the high level summary statistics, such as customers with
-more than one transaction both in the observed data and the simulation data,
-total transaction count observed 
-
-```{r compare_pnbd_init_short_fixed3_fit_multitransaction_customer_counts}
-#| echo: TRUE
-
-obs_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
-  nrow()
-
-sim_data_tbl <- pnbd_init_short_fixed3_fit_simstats_tbl |>
-  filter(sim_tnx_count > 0) |>
-  count(draw_id, name = "sim_customer_count")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_customer_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
-  labs(
-    x = "Count of Multi-transaction Customers",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Customer Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-The observed count of customers at least one additional transaction after the
-first is captured by this simulation.
-
-
-### Total Transaction Count
-
-We now check the count of all transactions.
-
-```{r compare_pnbd_init_short_fixed3_fit_total_transaction_count}
-#| echo: TRUE
-
-obs_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
-  sum()
-
-sim_data_tbl <- pnbd_init_short_fixed3_fit_simstats_tbl |>
-  count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
-
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_total_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_total_count), colour = "red") +
-  labs(
-    x = "Count of Total Transactions",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Total Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-As before, these all look good. Our model is doing a good job capturing the
-data.
-
-### Transaction Count Quantiles
-
-We now look at the quantiles for the transaction counts across each customer.
-
-```{r compare_pnbd_init_short_fixed3_fit_transaction_quantiles}
-#| echo: TRUE
-
-obs_quantiles_tbl <- customer_fit_stats_tbl |>
-  reframe(
-    prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
-    prob_value = quantile(x, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
-    )
-    
-sim_data_tbl <- pnbd_init_short_fixed3_fit_simstats_tbl |>
-  group_by(draw_id) |>
-  summarise(
-    p10 = quantile(sim_tnx_count, 0.10),
-    p25 = quantile(sim_tnx_count, 0.25),
-    p50 = quantile(sim_tnx_count, 0.50),
-    p75 = quantile(sim_tnx_count, 0.75),
-    p90 = quantile(sim_tnx_count, 0.90),
-    p99 = quantile(sim_tnx_count, 0.99)
-    ) |> 
-  pivot_longer(
-    cols = !draw_id,
-    names_to  = "prob_label",
-    values_to = "sim_prob_values"
-    ) |>
-  inner_join(obs_quantiles_tbl, by = "prob_label")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
-  geom_vline(aes(xintercept = prob_value), colour = "red") +
-  facet_wrap(vars(prob_label), nrow = 2, scales = "free") +
-  labs(
-    x = "Quantile of Counts",
-    y = "Frequency",
-    title = "Comparison Plots of Transaction Count Quantiles"
-    )
-
-```
-
-
-### Write to Disk
-
-We write this data to disk
-
-```{r write_pnbd_init_short_fixed3_fit_simstats_tbl}
-#| echo: true
-
-pnbd_init_short_fixed3_fit_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed3_assess_fit_simstats_tbl.rds", compress = "gz")
-```
-
-
-
-## Assess Out-of-Sample Data
-
-We now repeat this exercise, but for the validation period of 2022.
-
-
-```{r setup_simulation_pnbd_init_short_fixed3_validdata_transactions}
-#| echo: TRUE
-
-precompute_dir <- glue("precompute/{fit_label}")
-
-ensure_exists_precompute_directory(precompute_dir)
-
-use_start <- use_valid_start_date |> as.POSIXct()
-use_final <- use_valid_end_date   |> as.POSIXct()
-
-
-pnbd_init_short_fixed3_validsims_index_tbl <- pnbd_init_short_fixed3_simstats_tbl |>
-  mutate(
-    start_dttm = use_start,
-    end_dttm   = use_final,
-    lambda     = post_lambda,
-    mu         = post_mu,
-    tnx_mu     = 1,      ### We are not simulating tnx size
-    tnx_cv     = 1       ### 
-    ) |>
-  group_nest(customer_id, .key = "cust_params", keep = TRUE) |>
-  mutate(
-    sim_file = glue(
-      "{precompute_dir}/sims_valid_{fit_label}_{customer_id}.rds"
-      )
-    )
-
-pnbd_init_short_fixed3_validsims_index_tbl |> glimpse()
-```
-
-We now can run these simulations to check how well our model captures
-transactions out of the fitted data.
-
-
-```{r generate_pnbd_init_short_fixed3_validdata_transactions}
-#| echo: TRUE
-
-precomputed_tbl <- dir_ls(glue("{precompute_dir}")) |>
-  as.character() |>
-  enframe(name = NULL, value = "sim_file")
-
-
-runsims_tbl <- pnbd_init_short_fixed3_validsims_index_tbl |>
-  anti_join(precomputed_tbl, by = "sim_file")
-
-
-if(nrow(runsims_tbl) > 0) {
-  pnbd_init_short_fixed3_validsims_index_tbl <- runsims_tbl |>
-    mutate(
-      chunk_data = future_map2_int(
-        cust_params, sim_file,
-        run_simulations_chunk,
-
-        sim_func = generate_pnbd_validation_transactions,
-
-        .options = furrr_options(
-          globals  = c(
-            "calculate_event_times", "rgamma_mucv", "gamma_mucv2shaperate",
-            "generate_pnbd_validation_transactions"
-            ),
-          packages   = c("tidyverse", "fs"),
-          scheduling = Inf,
-          seed       = 423
-          ),
-
-        .progress = TRUE
-        )
-      )
-}
-
-pnbd_init_short_fixed3_validsims_index_tbl |> glimpse()
-```
-
-Now that we have generated our simulations we want to load the data from the
-files and construct a dataset for use as part of the validation.
-
-
-```{r retrieve_pnbd_init_short_fixed3_valid_simstats}
-#| echo: TRUE
-
-pnbd_init_short_fixed3_valid_simstats_tbl <- pnbd_init_short_fixed3_validsims_index_tbl |>
-  mutate(
-    sim_data = map(
-      sim_file, retrieve_sim_stats,
-
-      .progress = "pnbd_init_short_fixed3_valid"
-      )
-    ) |>
-  select(customer_id, sim_data) |>
-  unnest(sim_data)
-
-pnbd_init_short_fixed3_valid_simstats_tbl |> glimpse()
-```
-
-
-### Compare Counts of Multitransaction Customers
-
-We start by checking the high level summary statistics, such as customers with
-more than one transaction both in the observed data and the simulation data,
-total transaction count observed 
-
-```{r compare_pnbd_init_short_fixed3_valid_multitransaction_customer_counts}
-#| echo: TRUE
-
-obs_customer_count <- customer_valid_stats_tbl |>
-  filter(tnx_count > 0) |>
-  nrow()
-
-sim_data_tbl <- pnbd_init_short_fixed3_valid_simstats_tbl |>
-  filter(sim_tnx_count > 0) |>
-  count(draw_id, name = "sim_customer_count")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_customer_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
-  labs(
-    x = "Count of Multi-transaction Customers",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Customer Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-
-### Total Transaction Count
-
-We now check the count of all transactions.
-
-```{r compare_pnbd_init_short_fixed3_valid_total_transaction_count}
-#| echo: TRUE
-
-obs_total_count <- customer_valid_stats_tbl |>
-  pull(tnx_count) |>
-  sum()
-
-sim_data_tbl <- pnbd_init_short_fixed3_valid_simstats_tbl |>
-  count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
-
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_total_count), bins = 50) +
-  geom_vline(aes(xintercept = obs_total_count), colour = "red") +
-  labs(
-    x = "Count of Total Transactions",
-    y = "Frequency",
-    title = "Comparison Plot of Simulated vs Observed Total Counts",
-    subtitle = "(observed value in red)"
-    )
-
-```
-
-
-### Transaction Count Quantiles
-
-We now look at the quantiles for the transaction counts across each customer.
-
-```{r compare_pnbd_init_short_fixed3_valid_transaction_quantiles}
-#| echo: TRUE
-
-obs_quantiles_tbl <- customer_valid_stats_tbl |>
-  reframe(
-    prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
-    prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
-    )
-    
-sim_data_tbl <- pnbd_init_short_fixed3_valid_simstats_tbl |>
-  filter(sim_tnx_count > 0) |>
-  group_by(draw_id) |>
-  summarise(
-    p10 = quantile(sim_tnx_count, 0.10),
-    p25 = quantile(sim_tnx_count, 0.25),
-    p50 = quantile(sim_tnx_count, 0.50),
-    p75 = quantile(sim_tnx_count, 0.75),
-    p90 = quantile(sim_tnx_count, 0.90),
-    p99 = quantile(sim_tnx_count, 0.99)
-    ) |> 
-  pivot_longer(
-    cols = !draw_id,
-    names_to  = "prob_label",
-    values_to = "sim_prob_values"
-    ) |>
-  inner_join(obs_quantiles_tbl, by = "prob_label")
-
-ggplot(sim_data_tbl) +
-  geom_histogram(aes(x = sim_prob_values), binwidth = 1) +
-  geom_vline(aes(xintercept = prob_value), colour = "red") +
-  facet_wrap(vars(prob_label), nrow = 2, scales = "free") +
-  labs(
-    x = "Quantile of Counts",
-    y = "Frequency",
-    title = "Comparison Plots of Transaction Count Quantiles"
-    )
-
-```
-
-
-### Write to Disk
-
-We write this data to disk
-
-```{r write_pnbd_init_short_fixed3_valid_simstats_tbl}
-#| echo: true
-
-pnbd_init_short_fixed3_fit_simstats_tbl |>
-  write_rds("data/pnbd_init_short_fixed3_assess_valid_simstats_tbl.rds", compress = "gz")
-```
-
-
-```{r delete_pnbd_init_short_fixed3_data}
-#| echo: TRUE
-
-rm(pnbd_init_short_fixed3_fit_simstats_tbl)
-rm(pnbd_init_short_fixed3_valid_simstats_tbl)
-```
-
-
-## Final Assessment
-
-The behaviour of this model is a little curious - in-sample the model
-under-estimates the count of repeat customers but out-of-sample it is fine.
-
-At the same time, the model over-estimates the total transaction count for
-both in-sample and out of sample.
-
-Similarly, the higher quantiles of transaction count is over-estimated.
-
-This suggests that the model tends towards higher transaction frequency, but
-lower lifetime values. This should be useful when fitting on real data.
-
-
-# Compare Model Outputs
-
-We have looked at each of the models individually, but it is also worth looking
-at each of the models as a group.
-
-```{r calculate_simulation_statistics}
-#| echo: TRUE
-
-calculate_simulation_statistics <- function(file_rds) {
-  simdata_tbl <- read_rds(file_rds)
-  
-  multicount_cust_tbl <- simdata_tbl |>
-    filter(sim_tnx_count > 0) |>
-    count(draw_id, name = "multicust_count")
-  
-  totaltnx_data_tbl <- simdata_tbl |>
-    count(draw_id, wt = sim_tnx_count, name = "simtnx_count")
-  
-  simstats_tbl <- multicount_cust_tbl |>
-    inner_join(totaltnx_data_tbl, by = "draw_id")
-  
-  return(simstats_tbl)
-}
-```
-
-
-
-```{r load_model_assessment_data}
-#| echo: TRUE
-
-obs_fit_customer_count <- customer_fit_stats_tbl |>
-  filter(x > 0) |>
-  nrow()
-
-obs_valid_customer_count <- customer_valid_stats_tbl |>
-  filter(tnx_count > 0) |>
-  nrow()
-
-obs_fit_total_count <- customer_fit_stats_tbl |>
-  pull(x) |>
-  sum()
-
-obs_valid_total_count <- customer_valid_stats_tbl |>
-  pull(tnx_count) |>
-  sum()
-
-obs_stats_tbl <- tribble(
-  ~assess_type, ~name,               ~obs_value,
-  "fit",        "multicust_count",   obs_fit_customer_count,
-  "fit",        "simtnx_count",      obs_fit_total_count,
-  "valid",      "multicust_count",   obs_valid_customer_count,
-  "valid",      "simtnx_count",      obs_valid_total_count
-  )
-
-
-
-
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_init_short_fixed.*_assess_") |>
-  enframe(name = NULL, value = "file_path") |>
-  filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
-  mutate(
-    model_label = str_replace(file_path, "data/pnbd_init_short_(fixed.*?)_assess_.*", "\\1"),
-    assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
-    
-    sim_data = map(file_path, calculate_simulation_statistics)
-    )
-
-model_assess_tbl |> glimpse()
-```
-
-We now take this data and calculate summary statistics based on it.
-
-```{r calculate_model_assessment_summary_stats}
-#| echo: TRUE
-
-model_assess_summstat_tbl <- model_assess_tbl |>
-  select(model_label, assess_type, sim_data) |>
-  unnest(sim_data) |>
-  pivot_longer(
-    cols = !c(model_label, assess_type, draw_id)
-    ) |>
-  group_by(model_label, assess_type, name) |>
-  summarise(
-    .groups = "drop",
-    
-    mean_val = mean(value),
-    p10 = quantile(value, 0.10),
-    p25 = quantile(value, 0.25),
-    p50 = quantile(value, 0.50),
-    p75 = quantile(value, 0.75),
-    p90 = quantile(value, 0.90)
-    )
-
-model_assess_summstat_tbl |> glimpse()
-```
-
-
-```{r construct_model_comparison_plot}
-#! echo: TRUE
-
-ggplot(model_assess_summstat_tbl) +
-  geom_errorbar(
-    aes(x = model_label, ymin = p10, ymax = p90), width = 0
-    ) +
-  geom_errorbar(
-    aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3
-    ) +
-  geom_hline(
-    aes(yintercept = obs_value),
-    data = obs_stats_tbl, colour = "red"
-    ) +
-  scale_y_continuous(labels = label_comma()) +
-  expand_limits(y = 0) +
-  facet_wrap(
-    vars(assess_type, name), scale = "free_y"
-    ) +
-  labs(
-    x = "Model",
-    y = "Count",
-    title = "Comparison Plot for the Different Models"
-    )
-```
-
-
-## Write Assessment Data to Disk
-
-We now want to save the assessment data to disk.
-
-```{r write_model_assessment_data}
-#| echo: TRUE
-
-model_assess_tbl |> write_rds("data/assess_data_pnbd_init_short_fixed_tbl.rds")
-```
 
 
 # R Environment

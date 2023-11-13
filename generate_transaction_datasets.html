@@ -3033,7 +3033,7 @@ vertical-align: -.125em;
   <ul class="collapse">
   <li><a href="#write-data-to-disk-1" id="toc-write-data-to-disk-1" class="nav-link" data-scroll-target="#write-data-to-disk-1"><span class="header-section-number">2.1</span> Write Data to Disk</a></li>
   </ul></li>
-  <li><a href="#r-environment" id="toc-r-environment" class="nav-link" data-scroll-target="#r-environment"><span class="header-section-number">3</span> R Environment</a></li>
+  <li><a href="#r-environment" id="toc-r-environment" class="nav-link" data-scroll-target="#r-environment">R Environment</a></li>
   </ul>
 </nav>
 </div>
@@ -3070,7 +3070,7 @@ vertical-align: -.125em;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>n_customers <span class="ot">&lt;-</span> <span class="dv">50000</span></span>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>n_customers <span class="ot">&lt;-</span> <span class="dv">5000</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>first_tnx_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2020-01-01&quot;</span>)</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>final_tnx_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="st">&quot;2023-01-01&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -3093,7 +3093,7 @@ vertical-align: -.125em;
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 50,000
+<pre><code>Rows: 5,000
 Columns: 4
 $ customer_id    &lt;chr&gt; &quot;SFC202001_0001&quot;, &quot;SFC202001_0002&quot;, &quot;SFC202001_0003&quot;, &quot;…
 $ cohort_qtr     &lt;chr&gt; &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, &quot;2020 Q1&quot;, …
@@ -3129,12 +3129,12 @@ $ first_tnx_date &lt;date&gt; 2020-01-01, 2020-01-01, 2020-01-01, 2020-01-01, 20
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 296,756
+<pre><code>Rows: 29,454
 Columns: 4
-$ customer_id   &lt;chr&gt; &quot;SFC202001_0021&quot;, &quot;SFC202001_0007&quot;, &quot;SFC202001_0008&quot;, &quot;S…
-$ tnx_timestamp &lt;dttm&gt; 2020-01-01 00:34:40, 2020-01-01 02:41:45, 2020-01-01 04…
+$ customer_id   &lt;chr&gt; &quot;SFC202001_0002&quot;, &quot;SFC202001_0001&quot;, &quot;SFC202001_0004&quot;, &quot;S…
+$ tnx_timestamp &lt;dttm&gt; 2020-01-01 00:40:17, 2020-01-01 02:15:58, 2020-01-01 18…
 $ invoice_id    &lt;chr&gt; &quot;T20200101-0001&quot;, &quot;T20200101-0002&quot;, &quot;T20200101-0003&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 20.60, 1.83, 0.07, 30.03, 112.09, 45.85, 71.83, 166.33, …</code></pre>
+$ tnx_amount    &lt;dbl&gt; 51.73, 139.05, 11.72, 88.30, 1.16, 0.95, 127.85, 35.07, …</code></pre>
 </div>
 </div>
 <section id="write-data-to-disk" class="level2" data-number="1.1">
@@ -3169,12 +3169,12 @@ $ tnx_amount    &lt;dbl&gt; 20.60, 1.83, 0.07, 30.03, 112.09, 45.85, 71.83, 166.
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_cohort_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 50,000
+<pre><code>Rows: 5,000
 Columns: 4
 $ customer_id    &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0002&quot;, &quot;LFC201001_0003&quot;, &quot;…
 $ cohort_qtr     &lt;chr&gt; &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, …
 $ cohort_ym      &lt;chr&gt; &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, …
-$ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-01, 2010-01-01, 2010-01-01, 2010-0…</code></pre>
+$ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-03, 2010-01-04, 2010-01-05, 2010-0…</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -3205,12 +3205,12 @@ $ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-01, 2010-01-01, 2010-01-01, 20
 <span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 460,621
+<pre><code>Rows: 42,244
 Columns: 4
-$ customer_id   &lt;chr&gt; &quot;LFC201001_0008&quot;, &quot;LFC201001_0004&quot;, &quot;LFC201001_0005&quot;, &quot;L…
-$ tnx_timestamp &lt;dttm&gt; 2010-01-01 04:27:56, 2010-01-01 05:11:45, 2010-01-01 06…
-$ invoice_id    &lt;chr&gt; &quot;T20100101-0001&quot;, &quot;T20100101-0002&quot;, &quot;T20100101-0003&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 429.3…</code></pre>
+$ customer_id   &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0002&quot;, &quot;LFC201001_0003&quot;, &quot;L…
+$ tnx_timestamp &lt;dttm&gt; 2010-01-01 16:16:30, 2010-01-03 16:32:54, 2010-01-04 22…
+$ invoice_id    &lt;chr&gt; &quot;T20100101-0001&quot;, &quot;T20100103-0001&quot;, &quot;T20100104-0001&quot;, &quot;T…
+$ tnx_amount    &lt;dbl&gt; 160.87, 1.30, 96.11, 813.07, 85.58, 35.07, 12.23, 70.48,…</code></pre>
 </div>
 </div>
 <section id="write-data-to-disk-1" class="level2" data-number="2.1">
@@ -3226,8 +3226,8 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
 </div>
 </section>
 </section>
-<section id="r-environment" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> R Environment</h1>
+<section id="r-environment" class="level1 unnumbered">
+<h1 class="unnumbered">R Environment</h1>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -3245,7 +3245,7 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-10-10
+ date     2023-11-08
  pandoc   3.1.1 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -3253,62 +3253,62 @@ $ tnx_amount    &lt;dbl&gt; 17.07, 27.40, 45.36, 367.20, 29.83, 225.63, 20.67, 4
  cachem                 1.0.8   2023-05-01 [1] RSPM (R 4.3.0)
  cli                    3.6.1   2023-03-23 [1] RSPM (R 4.3.0)
  colorspace             2.1-0   2023-01-23 [1] RSPM (R 4.3.0)
- conflicted           * 1.2.0   2023-02-01 [1] RSPM (R 4.3.1)
- curl                   5.0.2   2023-08-14 [1] RSPM (R 4.3.0)
+ conflicted           * 1.2.0   2023-02-01 [1] RSPM (R 4.3.0)
+ curl                   5.1.0   2023-10-02 [1] RSPM (R 4.3.0)
  digest                 0.6.33  2023-07-07 [1] RSPM (R 4.3.0)
  dplyr                * 1.1.3   2023-09-03 [1] RSPM (R 4.3.0)
- evaluate               0.21    2023-05-05 [1] RSPM (R 4.3.0)
- fansi                  1.0.4   2023-01-22 [1] RSPM (R 4.3.0)
+ evaluate               0.22    2023-09-29 [1] RSPM (R 4.3.0)
+ fansi                  1.0.5   2023-10-08 [1] RSPM (R 4.3.0)
  fastmap                1.1.1   2023-02-24 [1] RSPM (R 4.3.0)
  forcats              * 1.0.0   2023-01-29 [1] RSPM (R 4.3.0)
  generics               0.1.3   2022-07-05 [1] RSPM (R 4.3.0)
- ggplot2              * 3.4.3   2023-08-14 [1] RSPM (R 4.3.0)
+ ggplot2              * 3.4.4   2023-10-12 [1] RSPM (R 4.3.0)
  glue                 * 1.6.2   2022-02-24 [1] RSPM (R 4.3.0)
  gtable                 0.3.4   2023-08-21 [1] RSPM (R 4.3.0)
  hms                    1.1.3   2023-03-21 [1] RSPM (R 4.3.0)
- htmltools              0.5.6   2023-08-10 [1] RSPM (R 4.3.0)
+ htmltools              0.5.6.1 2023-10-06 [1] RSPM (R 4.3.0)
  htmlwidgets            1.6.2   2023-03-17 [1] RSPM (R 4.3.0)
  httr                   1.4.7   2023-08-15 [1] RSPM (R 4.3.0)
  jsonlite               1.8.7   2023-06-29 [1] RSPM (R 4.3.0)
  knitr                  1.44    2023-09-11 [1] RSPM (R 4.3.0)
  lattice                0.21-8  2023-04-05 [2] CRAN (R 4.3.1)
  lifecycle              1.0.3   2022-10-07 [1] RSPM (R 4.3.0)
- lubridate            * 1.9.2   2023-02-10 [1] RSPM (R 4.3.0)
+ lubridate            * 1.9.3   2023-09-27 [1] RSPM (R 4.3.0)
  magrittr             * 2.0.3   2022-03-30 [1] RSPM (R 4.3.0)
  memoise                2.0.1   2021-11-26 [1] RSPM (R 4.3.0)
  munsell                0.5.0   2018-06-12 [1] RSPM (R 4.3.0)
- parallelly             1.36.0  2023-05-26 [1] RSPM (R 4.3.1)
- PerformanceAnalytics * 2.0.4   2020-02-06 [1] RSPM (R 4.3.1)
+ parallelly             1.36.0  2023-05-26 [1] RSPM (R 4.3.0)
+ PerformanceAnalytics * 2.0.4   2020-02-06 [1] RSPM (R 4.3.0)
  pillar                 1.9.0   2023-03-22 [1] RSPM (R 4.3.0)
  pkgconfig              2.0.3   2019-09-22 [1] RSPM (R 4.3.0)
  purrr                * 1.0.2   2023-08-10 [1] RSPM (R 4.3.0)
- quadprog               1.5-8   2019-11-20 [1] RSPM (R 4.3.1)
- Quandl                 2.11.0  2021-08-11 [1] RSPM (R 4.3.1)
- quantmod             * 0.4.25  2023-08-22 [1] RSPM (R 4.3.1)
+ quadprog               1.5-8   2019-11-20 [1] RSPM (R 4.3.0)
+ Quandl                 2.11.0  2021-08-11 [1] RSPM (R 4.3.0)
+ quantmod             * 0.4.25  2023-08-22 [1] RSPM (R 4.3.0)
  R6                     2.5.1   2021-08-19 [1] RSPM (R 4.3.0)
  readr                * 2.1.4   2023-02-10 [1] RSPM (R 4.3.0)
  rlang                * 1.1.1   2023-04-28 [1] RSPM (R 4.3.0)
  rmarkdown              2.25    2023-09-18 [1] RSPM (R 4.3.0)
  rstudioapi             0.15.0  2023-07-07 [1] RSPM (R 4.3.0)
  scales               * 1.2.1   2022-08-20 [1] RSPM (R 4.3.0)
- sessioninfo            1.2.2   2021-12-06 [1] RSPM (R 4.3.1)
+ sessioninfo            1.2.2   2021-12-06 [1] RSPM (R 4.3.0)
  stringi              * 1.7.12  2023-01-11 [1] RSPM (R 4.3.0)
  stringr              * 1.5.0   2022-12-02 [1] RSPM (R 4.3.0)
  tibble               * 3.2.1   2023-03-20 [1] RSPM (R 4.3.0)
- tidyquant            * 1.0.7   2023-03-31 [1] RSPM (R 4.3.1)
+ tidyquant            * 1.0.7   2023-03-31 [1] RSPM (R 4.3.0)
  tidyr                * 1.3.0   2023-01-24 [1] RSPM (R 4.3.0)
  tidyselect             1.2.0   2022-10-10 [1] RSPM (R 4.3.0)
  tidyverse            * 2.0.0   2023-02-22 [1] RSPM (R 4.3.0)
  timechange             0.2.0   2023-01-11 [1] RSPM (R 4.3.0)
- TTR                  * 0.24.3  2021-12-12 [1] RSPM (R 4.3.1)
+ TTR                  * 0.24.3  2021-12-12 [1] RSPM (R 4.3.0)
  tzdb                   0.4.0   2023-05-12 [1] RSPM (R 4.3.0)
- utf8                   1.2.3   2023-01-31 [1] RSPM (R 4.3.0)
- vctrs                  0.6.3   2023-06-14 [1] RSPM (R 4.3.0)
- withr                  2.5.0   2022-03-03 [1] RSPM (R 4.3.0)
+ utf8                   1.2.4   2023-10-22 [1] RSPM (R 4.3.0)
+ vctrs                  0.6.4   2023-10-12 [1] RSPM (R 4.3.0)
+ withr                  2.5.1   2023-09-26 [1] RSPM (R 4.3.0)
  xfun                   0.40    2023-08-09 [1] RSPM (R 4.3.0)
- xts                  * 0.13.1  2023-04-16 [1] RSPM (R 4.3.1)
+ xts                  * 0.13.1  2023-04-16 [1] RSPM (R 4.3.0)
  yaml                   2.3.7   2023-01-23 [1] RSPM (R 4.3.0)
- zoo                  * 1.8-12  2023-04-13 [1] RSPM (R 4.3.1)
+ zoo                  * 1.8-12  2023-04-13 [1] RSPM (R 4.3.0)
 
  [1] /usr/local/lib/R/site-library
  [2] /usr/local/lib/R/library

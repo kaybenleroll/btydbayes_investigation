@@ -77,51 +77,63 @@ synthetic data with the longer timeframe.
 
 # Load and Construct Datasets
 
-We start by modelling the P/NBD model using our synthetic datasets before we
-try to model real-life data.
+
+## Load Long-Timeframe Synthetic Transaction Data
+
+We now want to load the CD-NOW transaction data.
 
 
-
-## Load Long Time-frame Synthetic Data
-
-We now want to load the long time-frame synthetic data.
-
-
-```{r load_longframe_synthetic_data}
+```{r load_long_transaction_data}
 #| echo: TRUE
 
-customer_cohortdata_tbl <- read_rds("data/synthdata_longframe_cohort_tbl.rds")
+customer_cohortdata_tbl <- read_rds("data/longsynth_customer_cohort_data_tbl.rds")
 customer_cohortdata_tbl |> glimpse()
 
-customer_simparams_tbl  <- read_rds("data/synthdata_longframe_simparams_tbl.rds")
-customer_simparams_tbl |> glimpse()
-
-customer_transactions_tbl <- read_rds("data/synthdata_longframe_transactions_tbl.rds")
+customer_transactions_tbl <- read_rds("data/longsynth_transaction_data_tbl.rds")
 customer_transactions_tbl |> glimpse()
+
+customer_subset_id <- read_rds("data/longsynth_customer_subset_ids.rds")
+customer_subset_id |> glimpse()
 ```
+
+
+We re-produce the visualisation of the transaction times we used in previous
+workbooks.
+
+```{r plot_customer_transaction_times}
+#| echo: TRUE
+
+plot_tbl <- customer_transactions_tbl |>
+  group_nest(customer_id, .key = "cust_data") |>
+  filter(map_int(cust_data, nrow) > 3) |>
+  slice_sample(n = 30) |>
+  unnest(cust_data)
+
+ggplot(plot_tbl, aes(x = tnx_timestamp, y = customer_id)) +
+  geom_line() +
+  geom_point() +
+  labs(
+      x = "Date",
+      y = "Customer ID",
+      title = "Visualisation of Customer Transaction Times"
+    ) +
+  theme(axis.text.y = element_text(size = 10))
+```
+
 
 
 
 
 ## Load Derived Data
 
-```{r load_modelling_data}
+```{r load_derived_data}
 #| echo: TRUE
-
-id_1000  <- read_rds("data/longsynth_id_1000.rds")
-id_5000  <- read_rds("data/longsynth_id_5000.rds")
-id_10000 <- read_rds("data/longsynth_id_10000.rds")
-
-fit_1000_data_tbl  <- read_rds("data/longsynth_fit_1000_data_tbl.rds")
-fit_10000_data_tbl <- read_rds("data/longsynth_fit_10000_data_tbl.rds")
-
-customer_fit_stats_tbl    <- fit_1000_data_tbl
-customer_summarystats_tbl <- read_rds("data/longsynth_customer_summarystats_tbl.rds")
 
 obs_fitdata_tbl   <- read_rds("data/longsynth_obs_fitdata_tbl.rds")
 obs_validdata_tbl <- read_rds("data/longsynth_obs_validdata_tbl.rds")
 
-customer_subset_id <- id_1000
+customer_fit_stats_tbl <- obs_fitdata_tbl |>
+  rename(x = tnx_count)
 ```
 
 
@@ -145,6 +157,7 @@ customer_valid_subset_tbl <- obs_validdata_tbl |>
 customer_valid_subset_tbl |> glimpse()
 ```
 
+
 We now use these datasets to set the start and end dates for our various
 validation methods.
 
@@ -160,8 +173,8 @@ use_valid_end_date   <- dates_lst$use_valid_end_date
 ```
 
 
-Finally, we need to set our directories where we save our Stan code and the
-model outputs.
+Before we start on that, we set a few parameters for the workbook to organise
+our Stan code.
 
 ```{r setup_workbook_parameters}
 #| echo: TRUE
@@ -335,7 +348,7 @@ simdata_tbl <- pnbd_long_twohiermean_assess_data_lst |>
   read_rds()
 
 insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_fitdata_tbl,
+  obsdata_tbl = customer_fit_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 
@@ -361,7 +374,7 @@ simdata_tbl <- pnbd_long_twohiermean_assess_data_lst |>
   read_rds()
 
 outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_validdata_tbl,
+  obsdata_tbl = customer_valid_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 
@@ -537,7 +550,7 @@ simdata_tbl <- pnbd_long_twohierlambda_assess_data_lst |>
   read_rds()
 
 insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_fitdata_tbl,
+  obsdata_tbl = customer_fit_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 
@@ -563,7 +576,7 @@ simdata_tbl <- pnbd_long_twohierlambda_assess_data_lst |>
   read_rds()
 
 outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = obs_validdata_tbl,
+  obsdata_tbl = customer_valid_subset_tbl,
   simdata_tbl = simdata_tbl
   )
 

@@ -940,12 +940,18 @@ Finally we output the various datasets we have constructed to disks.
 ```{r write_to_disk}
 #| echo: true
 
-id_1000  |> write_rds("data/shortsynth_id_1000.rds")
+id_1000  |> write_rds("data/shortsynth_customer_subset_ids.rds")
 
 customer_summarystats_tbl |> write_rds("data/shortsynth_customer_summarystats_tbl.rds")
 
 customer_cohort_data_tbl |>
   write_rds("data/shortsynth_customer_cohort_data_tbl.rds")
+
+customer_fit_stats_tbl |>
+  write_rds("data/shortsynth_customer_fit_stats_tbl.rds")
+
+customer_valid_stats_tbl |>
+  write_rds("data/shortsynth_customer_valid_stats_tbl.rds")
 
 data_tbl |>
   write_rds("data/shortsynth_transaction_data_tbl.rds")

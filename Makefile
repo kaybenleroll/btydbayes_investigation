@@ -50,11 +50,13 @@ exploring_online_retail_transactions.html: retrieve_retail_data.html
 exploring_cdnow_dataset.html: retrieve_retail_data.html
 
 initial_pnbd_models.html: exploring_shortsynth_data.html
-construct_longsynth_fixed_pnbd_models.html: exploring_longsynth_data.html
-construct_onlineretail_fixed_pnbd_models.html: exploring_online_retail_transactions.html
-construct_cdnow_fixed_pnbd_models.html: exploring_cdnow_dataset.html
 
-construct_shortsynth_onehier_pnbd_models.html: initial_pnbd_models.html
+construct_shortsynth_fixed_pnbd_models.html: exploring_shortsynth_data.html initial_pnbd_models.html
+construct_longsynth_fixed_pnbd_models.html: exploring_longsynth_data.html initial_pnbd_models.html
+construct_onlineretail_fixed_pnbd_models.html: exploring_online_retail_transactions.html initial_pnbd_models.html
+construct_cdnow_fixed_pnbd_models.html: exploring_cdnow_dataset.html initial_pnbd_models.html
+
+construct_shortsynth_onehier_pnbd_models.html: construct_shortsynth_fixed_pnbd_models.html
 construct_longsynth_onehier_pnbd_models.html: construct_longsynth_fixed_pnbd_models.html
 construct_onlineretail_onehier_pnbd_models.html: construct_onlineretail_fixed_pnbd_models.html
 construct_cdnow_onehier_pnbd_models.html: construct_cdnow_fixed_pnbd_models.html
@@ -64,6 +66,9 @@ construct_longsynth_twohier_pnbd_models.html: construct_longsynth_onehier_pnbd_m
 construct_onlineretail_twohier_pnbd_models.html: construct_onlineretail_onehier_pnbd_models.html
 construct_cdnow_twohier_pnbd_models.html: construct_cdnow_onehier_pnbd_models.html
 
+
+exploration: exploring_shortsynth_data.html exploring_longsynth_data.html \
+  exploring_online_retail_transactions.html exploring_cdnow_dataset.html
 
 mrproper: clean-cache clean-data clean-html clean-precompute clean-models
 	rm -fv data/*.xlsx
