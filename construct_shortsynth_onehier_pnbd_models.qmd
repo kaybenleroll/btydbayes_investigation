@@ -63,9 +63,8 @@ options(
 
 
 set.seed(42)
-stanfit_seed <- 4200
-
-open_syslog("construct_shortsynth_fixed_pnbd_models")
+stanfit_seed <- 4302
+n_sim        <- 2000
 
 theme_set(theme_cowplot())
 plan(multisession)
@@ -171,6 +170,63 @@ use_valid_start_date <- dates_lst$use_valid_start_date
 use_valid_end_date   <- dates_lst$use_valid_end_date
 ```
 
+We now split out the transaction data into fit and validation datasets.
+
+```{r create_customer_transaction_splits}
+#| echo: true
+
+customer_fit_transactions_tbl <- customer_transactions_tbl |>
+  filter(
+    customer_id %in% customer_subset_id,
+    tnx_timestamp >= use_fit_start_date,
+    tnx_timestamp <= use_fit_end_date
+    )
+  
+customer_fit_transactions_tbl |> glimpse()
+
+
+customer_valid_transactions_tbl <- customer_transactions_tbl |>
+  filter(
+    customer_id %in% customer_subset_id,
+    tnx_timestamp >= use_valid_start_date,
+    tnx_timestamp <= use_valid_end_date
+    )
+  
+customer_valid_transactions_tbl |> glimpse()
+```
+
+Finally, we want to extract the first transaction for each customer, so we
+can add this data to assess our models.
+
+```{r extract_customer_first_transaction}
+#| echo: true
+
+customer_initial_tnx_tbl <- customer_fit_transactions_tbl |>
+  slice_min(n = 1, order_by = tnx_timestamp, by = customer_id)
+
+customer_initial_tnx_tbl |> glimpse()
+```
+
+We now expand out these initial transactions so that we can append them to
+our simulations.
+
+```{r expand_initial_simulation_transactions}
+#| echo: true
+
+sim_init_tbl <- customer_initial_tnx_tbl |>
+  transmute(
+    customer_id,
+    draw_id       = list(1:n_sim),
+    tnx_timestamp,
+    tnx_amount
+    ) |>
+  unnest(draw_id)
+
+sim_init_tbl |> glimpse()
+```
+
+
+
 
 Before we start on that, we set a few parameters for the workbook to organise
 our Stan code.
@@ -250,10 +306,12 @@ if(!file_exists(stanfit_object_file)) {
   pnbd_short_onehierlambda1_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
+  message(glue("Found file {stanfit_object_file}. Loading..."))
+  
   pnbd_short_onehierlambda1_stanfit <- read_rds(stanfit_object_file)
 }
 
-pnbd_short_onehierlambda1_stanfit$summary()
+pnbd_short_onehierlambda1_stanfit$print()
 ```
 
 
@@ -307,6 +365,18 @@ pnbd_short_onehierlambda1_stanfit |>
 ```
 
 
+Finally, we want to check out the energy diagnostic, which is often indicative
+of problems with the posterior mixing.
+
+```{r plot_pnbd_short_onehierlambda1_energy}
+#| echo: true
+
+pnbd_short_onehierlambda1_stanfit |>
+  nuts_params() |>
+  mcmc_nuts_energy(binwidth = 50)
+```
+
+
 ## Assess the Model
 
 As we intend to run the same logic to assess each of our models, we have
@@ -327,7 +397,7 @@ pnbd_short_onehierlambda1_assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4210
+  sim_seed         = 5110
   )
 
 pnbd_short_onehierlambda1_assess_data_lst |> glimpse()
@@ -342,17 +412,22 @@ We first check the model against the in-sample data.
 #| echo: TRUE
 
 simdata_tbl <- pnbd_short_onehierlambda1_assess_data_lst |>
-  use_series(model_fit_simstats_filepath) |>
-  read_rds()
+  use_series(model_fit_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  bind_rows(sim_init_tbl) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_fit_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_fit_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-insample_plots_lst$multi_plot |> print()
-insample_plots_lst$total_plot |> print()
-insample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 This fit looks reasonable and appears to capture most of the aspects of the
@@ -368,17 +443,21 @@ We now repeat for the out-of-sample data.
 #| echo: TRUE
 
 simdata_tbl <- pnbd_short_onehierlambda1_assess_data_lst |>
-  use_series(model_valid_simstats_filepath) |>
-  read_rds()
+  use_series(model_valid_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_valid_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_valid_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-outsample_plots_lst$multi_plot |> print()
-outsample_plots_lst$total_plot |> print()
-outsample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 As for our short time frame data, overall our model is working well.
@@ -437,10 +516,12 @@ if(!file_exists(stanfit_object_file)) {
   pnbd_short_onehierlambda2_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
+  message(glue("Found file {stanfit_object_file}. Loading..."))
+  
   pnbd_short_onehierlambda2_stanfit <- read_rds(stanfit_object_file)
 }
 
-pnbd_short_onehierlambda2_stanfit$summary()
+pnbd_short_onehierlambda2_stanfit$print()
 ```
 
 
@@ -494,6 +575,18 @@ pnbd_short_onehierlambda2_stanfit |>
 ```
 
 
+Finally, we want to check out the energy diagnostic, which is often indicative
+of problems with the posterior mixing.
+
+```{r plot_pnbd_short_onehierlambda2_energy}
+#| echo: true
+
+pnbd_short_onehierlambda2_stanfit |>
+  nuts_params() |>
+  mcmc_nuts_energy(binwidth = 50)
+```
+
+
 ## Assess the Model
 
 As we intend to run the same logic to assess each of our models, we have
@@ -514,7 +607,7 @@ pnbd_short_onehierlambda2_assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4210
+  sim_seed         = 5120
   )
 
 pnbd_short_onehierlambda2_assess_data_lst |> glimpse()
@@ -529,17 +622,22 @@ We first check the model against the in-sample data.
 #| echo: TRUE
 
 simdata_tbl <- pnbd_short_onehierlambda2_assess_data_lst |>
-  use_series(model_fit_simstats_filepath) |>
-  read_rds()
+  use_series(model_fit_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  bind_rows(sim_init_tbl) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_fit_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_fit_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-insample_plots_lst$multi_plot |> print()
-insample_plots_lst$total_plot |> print()
-insample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 This fit looks reasonable and appears to capture most of the aspects of the
@@ -554,18 +652,22 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_short_onehierlambda2_valid_assessment}
 #| echo: TRUE
 
-simdata_tbl <- pnbd_short_onehierlambda1_assess_data_lst |>
-  use_series(model_valid_simstats_filepath) |>
-  read_rds()
+simdata_tbl <- pnbd_short_onehierlambda2_assess_data_lst |>
+  use_series(model_valid_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_valid_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_valid_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-outsample_plots_lst$multi_plot |> print()
-outsample_plots_lst$total_plot |> print()
-outsample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 As for our short time frame data, overall our model is working well.
@@ -636,10 +738,12 @@ if(!file_exists(stanfit_object_file)) {
   pnbd_short_onehiermu1_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
+  message(glue("Found file {stanfit_object_file}. Loading..."))
+  
   pnbd_short_onehiermu1_stanfit <- read_rds(stanfit_object_file)
 }
 
-pnbd_short_onehiermu1_stanfit$summary()
+pnbd_short_onehiermu1_stanfit$print()
 ```
 
 
@@ -693,6 +797,18 @@ pnbd_short_onehiermu1_stanfit |>
 ```
 
 
+Finally, we want to check out the energy diagnostic, which is often indicative
+of problems with the posterior mixing.
+
+```{r plot_pnbd_short_onehiermu1_energy}
+#| echo: true
+
+pnbd_short_onehiermu1_stanfit |>
+  nuts_params() |>
+  mcmc_nuts_energy(binwidth = 50)
+```
+
+
 ## Assess the Model
 
 As we intend to run the same logic to assess each of our models, we have
@@ -713,7 +829,7 @@ pnbd_short_onehiermu1_assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4210
+  sim_seed         = 5130
   )
 
 pnbd_short_onehiermu1_assess_data_lst |> glimpse()
@@ -728,17 +844,22 @@ We first check the model against the in-sample data.
 #| echo: TRUE
 
 simdata_tbl <- pnbd_short_onehiermu1_assess_data_lst |>
-  use_series(model_fit_simstats_filepath) |>
-  read_rds()
+  use_series(model_fit_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  bind_rows(sim_init_tbl) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_fit_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_fit_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-insample_plots_lst$multi_plot |> print()
-insample_plots_lst$total_plot |> print()
-insample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 This fit looks reasonable and appears to capture most of the aspects of the
@@ -753,18 +874,22 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_short_onehiermu1_valid_assessment}
 #| echo: TRUE
 
-simdata_tbl <- pnbd_short_onehierlambda1_assess_data_lst |>
-  use_series(model_valid_simstats_filepath) |>
-  read_rds()
+simdata_tbl <- pnbd_short_onehiermu1_assess_data_lst |>
+  use_series(model_valid_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_valid_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_valid_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-outsample_plots_lst$multi_plot |> print()
-outsample_plots_lst$total_plot |> print()
-outsample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 As for our short time frame data, overall our model is working well.
@@ -819,10 +944,12 @@ if(!file_exists(stanfit_object_file)) {
   pnbd_short_onehiermu2_stanfit$save_object(stanfit_object_file, compress = "gzip")
 
 } else {
+  message(glue("Found file {stanfit_object_file}. Loading..."))
+  
   pnbd_short_onehiermu2_stanfit <- read_rds(stanfit_object_file)
 }
 
-pnbd_short_onehiermu2_stanfit$summary()
+pnbd_short_onehiermu2_stanfit$print()
 ```
 
 
@@ -876,6 +1003,18 @@ pnbd_short_onehiermu2_stanfit |>
 ```
 
 
+Finally, we want to check out the energy diagnostic, which is often indicative
+of problems with the posterior mixing.
+
+```{r plot_pnbd_short_onehiermu2_energy}
+#| echo: true
+
+pnbd_short_onehiermu2_stanfit |>
+  nuts_params() |>
+  mcmc_nuts_energy(binwidth = 50)
+```
+
+
 ## Assess the Model
 
 As we intend to run the same logic to assess each of our models, we have
@@ -896,7 +1035,7 @@ pnbd_short_onehiermu2_assess_data_lst <- run_model_assessment(
   fit_end_dttm     = use_fit_end_date     |> as.POSIXct(),
   valid_start_dttm = use_valid_start_date |> as.POSIXct(),
   valid_end_dttm   = use_valid_end_date   |> as.POSIXct(),
-  sim_seed         = 4210
+  sim_seed         = 5140
   )
 
 pnbd_short_onehiermu2_assess_data_lst |> glimpse()
@@ -911,17 +1050,22 @@ We first check the model against the in-sample data.
 #| echo: TRUE
 
 simdata_tbl <- pnbd_short_onehiermu2_assess_data_lst |>
-  use_series(model_fit_simstats_filepath) |>
-  read_rds()
+  use_series(model_fit_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  bind_rows(sim_init_tbl) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-insample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_fit_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_fit_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-insample_plots_lst$multi_plot |> print()
-insample_plots_lst$total_plot |> print()
-insample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 This fit looks reasonable and appears to capture most of the aspects of the
@@ -936,18 +1080,22 @@ We now repeat for the out-of-sample data.
 ```{r run_pnbd_short_onehiermu2_valid_assessment}
 #| echo: TRUE
 
-simdata_tbl <- pnbd_short_onehiermu1_assess_data_lst |>
-  use_series(model_valid_simstats_filepath) |>
-  read_rds()
+simdata_tbl <- pnbd_short_onehiermu2_assess_data_lst |>
+  use_series(model_valid_index_filepath) |>
+  read_rds() |>
+  use_series(sim_file) |>
+  map_dfr(read_rds) |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data) |>
+  arrange(customer_id, draw_id, tnx_timestamp)
 
-outsample_plots_lst <- create_model_assessment_plots(
-  obsdata_tbl = customer_valid_subset_tbl,
+
+assess_plots_lst <- create_model_assessment_plots(
+  obsdata_tbl = customer_valid_transactions_tbl,
   simdata_tbl = simdata_tbl
   )
 
-outsample_plots_lst$multi_plot |> print()
-outsample_plots_lst$total_plot |> print()
-outsample_plots_lst$quant_plot |> print()
+assess_plots_lst |> map(print)
 ```
 
 As for our short time frame data, overall our model is working well.
@@ -960,24 +1108,26 @@ As for our short time frame data, overall our model is working well.
 We have looked at each of the models individually, but it is also worth looking
 at each of the models as a group.
 
-```{r calculate_simulation_statistics} 
-#| echo: TRUE
+We now want to combine both the `fit` and `valid` transaction sets to
+calculate the summary statistics for both.
 
-calculate_simulation_statistics <- function(file_rds) {
-  simdata_tbl <- read_rds(file_rds)
-  
-  multicount_cust_tbl <- simdata_tbl |>
-    filter(sim_tnx_count > 0) |>
-    count(draw_id, name = "multicust_count")
-  
-  totaltnx_data_tbl <- simdata_tbl |>
-    count(draw_id, wt = sim_tnx_count, name = "simtnx_count")
-  
-  simstats_tbl <- multicount_cust_tbl |>
-    inner_join(totaltnx_data_tbl, by = "draw_id")
-  
-  return(simstats_tbl)
-}
+```{r calculate_observed_statistics}
+#| echo: true
+
+obs_summstats_tbl <- list(
+    fit   = customer_fit_transactions_tbl,
+    valid = customer_valid_transactions_tbl
+    ) |>
+  bind_rows(.id = "assess_type") |>
+  group_by(assess_type) |>
+  calculate_transaction_summary_statistics() |>
+  pivot_longer(
+    cols      = !assess_type,
+    names_to  = "label",
+    values_to = "obs_value"
+    )
+
+obs_summstats_tbl |> glimpse()
 ```
 
 
@@ -985,103 +1135,56 @@ calculate_simulation_statistics <- function(file_rds) {
 ```{r load_model_assessment_data}
 #| echo: TRUE
 
-obs_fit_customer_count <- customer_fit_subset_tbl |>
-  filter(tnx_count > 0) |>
-  nrow()
-
-obs_valid_customer_count <- customer_valid_subset_tbl |>
-  filter(tnx_count > 0) |>
-  nrow()
-
-obs_fit_total_count <- customer_fit_subset_tbl |>
-  pull(tnx_count) |>
-  sum()
-
-obs_valid_total_count <- customer_valid_subset_tbl |>
-  pull(tnx_count) |>
-  sum()
-
-
-obs_stats_tbl <- tribble(
-  ~assess_type, ~name,               ~obs_value,
-  "fit",        "multicust_count",   obs_fit_customer_count,
-  "fit",        "simtnx_count",      obs_fit_total_count,
-  "valid",      "multicust_count",   obs_valid_customer_count,
-  "valid",      "simtnx_count",      obs_valid_total_count
-  )
-
-
-model_assess_tbl <- dir_ls("data", regexp = "pnbd_short_(one|fixed).*_assess_.*simstats") |>
+model_assess_transactions_tbl <- dir_ls("data", regexp = "pnbd_short_(fixed|one).*_assess_.*index") |>
   enframe(name = NULL, value = "file_path") |>
-  filter(str_detect(file_path, "_assess_model_", negate = TRUE)) |>
   mutate(
     model_label = str_replace(file_path, "data/pnbd_short_(.*?)_assess_.*", "\\1"),
     assess_type = if_else(str_detect(file_path, "_assess_fit_"), "fit", "valid"),
     
-    sim_data = map(
-      file_path, calculate_simulation_statistics,
+    assess_data = map(
+      file_path, construct_model_assessment_data,
       
-      .progress = "calculate_simulation_statistics"
+      .progress = "construct_assess_data"
       )
-    )
+    ) |>
+  select(model_label, assess_type, assess_data) |>
+  unnest(assess_data)
+
+model_assess_transactions_tbl |> glimpse()
+```
+
+We now want to calculate the transaction statistics on this full dataset, for
+each separate draw.
+
+```{r calculate_model_assessment_transaction_statistics}
+model_assess_tbl <- model_assess_transactions_tbl |>
+  group_by(model_label, assess_type, draw_id) |>
+  calculate_transaction_summary_statistics()
 
 model_assess_tbl |> glimpse()
 ```
 
-
-
-```{r construct_model_assessment_summary_stats}
-#| echo: TRUE
-
-model_assess_summstat_tbl <- model_assess_tbl |>
-  select(model_label, assess_type, sim_data) |>
-  unnest(sim_data) |>
-  pivot_longer(
-    cols = !c(model_label, assess_type, draw_id)
-    ) |>
-  group_by(model_label, assess_type, name) |>
-  summarise(
-    .groups = "drop",
-    
-    mean_val = mean(value),
-    p10 = quantile(value, 0.10),
-    p25 = quantile(value, 0.25),
-    p50 = quantile(value, 0.50),
-    p75 = quantile(value, 0.75),
-    p90 = quantile(value, 0.90)
-    )
-
-model_assess_summstat_tbl |> glimpse()
-```
+We now combine all this data to create a number of different comparison plots
+for the various summary statistics.
 
 
 ```{r construct_model_comparison_plot}
 #! echo: TRUE
 
-ggplot(model_assess_summstat_tbl) +
-  geom_errorbar(
-    aes(x = model_label, ymin = p10, ymax = p90), width = 0
-    ) +
-  geom_errorbar(
-    aes(x = model_label, ymin = p25, ymax = p75), width = 0, linewidth = 3
-    ) +
-  geom_hline(
-    aes(yintercept = obs_value),
-    data = obs_stats_tbl, colour = "red"
-    ) +
-  scale_y_continuous(labels = label_comma()) +
-  expand_limits(y = 0) +
-  facet_wrap(
-    vars(assess_type, name), scale = "free_y"
-    ) +
-  labs(
-    x = "Model",
-    y = "Count",
-    title = "Comparison Plot for the Different Models"
-    ) +
-  theme(
-    axis.text.x = element_text(angle = 20, vjust = 0.5, size = 8)
-    )
+create_multiple_model_assessment_plot(
+  obs_summstats_tbl, model_assess_tbl,
+  "total_count", "Total Transactions"
+  )
+
+create_multiple_model_assessment_plot(
+  obs_summstats_tbl, model_assess_tbl,
+  "mean_count", "Average Transactions per Customer"
+  )
+
+create_multiple_model_assessment_plot(
+  obs_summstats_tbl, model_assess_tbl,
+  "p99", "99th Percentile Count"
+  )
 ```
 
 

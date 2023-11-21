@@ -964,7 +964,7 @@ cdnow_customer_subset_ids |>
 customer_cohort_data_tbl |>
   write_rds("data/cdnow_customer_cohort_data_tbl.rds")
 
-data_tbl |>
+customer_transactions_tbl |>
   write_rds("data/cdnow_transaction_data_tbl.rds")
 
 obs_fitdata_tbl   |> write_rds("data/cdnow_obs_fitdata_tbl.rds")

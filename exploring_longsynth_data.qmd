@@ -954,7 +954,7 @@ customer_fit_stats_tbl |>
 customer_valid_stats_tbl |>
   write_rds("data/longsynth_customer_valid_stats_tbl.rds")
 
-data_tbl |>
+customer_transactions_tbl |>
   write_rds("data/longsynth_transaction_data_tbl.rds")
 
 obs_fitdata_tbl   |> write_rds("data/longsynth_obs_fitdata_tbl.rds")

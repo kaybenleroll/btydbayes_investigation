@@ -299,7 +299,30 @@ use_valid_start_date <- dates_lst$use_valid_start_date
 use_valid_end_date   <- dates_lst$use_valid_end_date
 ```
 
+We now want to split the transaction datasets into two parts.
 
+```{r split_transaction_data}
+#| echo: true
+
+customer_fit_transactions_tbl <- customer_transactions_tbl |>
+  filter(
+    customer_id %in% customer_subset_id,
+    tnx_timestamp >= use_fit_start_date,
+    tnx_timestamp <= use_fit_end_date
+    )
+  
+customer_fit_transactions_tbl |> glimpse()
+
+
+customer_valid_transactions_tbl <- customer_transactions_tbl |>
+  filter(
+    customer_id %in% customer_subset_id,
+    tnx_timestamp >= use_valid_start_date,
+    tnx_timestamp <= use_valid_end_date
+    )
+  
+customer_valid_transactions_tbl |> glimpse()
+```
 
 
 ## Derive the Log-likelihood Function
@@ -518,7 +541,7 @@ if(!file_exists(stanfit_object_file)) {
   pnbd_init_stanfit <- read_rds(stanfit_object_file)
 }
 
-pnbd_init_stanfit$summary()
+pnbd_init_stanfit$print()
 ```
 
 
@@ -891,6 +914,144 @@ ggplot(sim_data_tbl) +
 ```
 
 
+
+### Check Overall Day-of-Week Transaction Patterns
+
+We now want to check our assumption of each customer having a single rate of
+transaction frequency. This will manifest as a distribution of days of the week
+(and possibly months of the year), when contrasted with our simulations.
+
+We will do this both by individual year and overall dataset.
+
+```{r construct_fit_transaction_month_distributions}
+#| echo: true
+
+dow_props_fit_lst <- customer_fit_transactions_tbl |>
+  calculate_dow_proportions()
+
+tnx_fit_overall_dow_tbl   <- dow_props_fit_lst$overall
+tnx_fit_yearmonth_dow_tbl <- dow_props_fit_lst$yearmonth
+
+
+tnx_fit_overall_dow_tbl   |> glimpse()
+tnx_fit_yearmonth_dow_tbl |> glimpse()
+```
+
+We now need to do the same thing for our simulations and then construct a
+comparison plot.
+
+```{r construct_fit_overall_dow_comparisons}
+#| echo: true
+
+sim_fit_tnxdata_tbl <- pnbd_init_fit_simstats_tbl |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data)
+
+propdata_fit_tbl <- sim_fit_tnxdata_tbl |>
+  group_nest(draw_id) |>
+  mutate(
+    prop_data = map(
+      data, calculate_dow_proportions,
+      
+      .progress = "calculate_dow_propotions"
+      ),
+    overall_data   = map(prop_data, "overall"),
+    yearmonth_data = map(prop_data, "yearmonth")
+    )
+
+propdata_fit_tbl |> glimpse()
+```
+
+We now want to compare the simulation data against the observed proportions.
+
+```{r create_fit_overall_dow_proportion_plot}
+#| echo: true
+
+simplot_fit_tbl <- propdata_fit_tbl |>
+  select(draw_id, overall_data) |>
+  unnest(overall_data) |>
+  group_by(dow_label) |>
+  summarise(
+    .groups = "drop",
+
+    p10 = quantile(obs_prop, 0.10),
+    p25 = quantile(obs_prop, 0.25),
+    p50 = quantile(obs_prop, 0.50),
+    p75 = quantile(obs_prop, 0.75),
+    p90 = quantile(obs_prop, 0.90)
+    )
+
+ggplot(simplot_fit_tbl) +
+  geom_errorbar(
+    aes(x = dow_label, ymin = p10, ymax = p90),
+    width = 0, linewidth = 1
+    ) +
+  geom_errorbar(
+    aes(x = dow_label, ymin = p25, ymax = p75),
+    width = 0, linewidth = 3
+    ) +
+  geom_point(
+    aes(x = dow_label, y = obs_prop),
+    data = tnx_fit_overall_dow_tbl, colour = "red"
+    ) +
+  expand_limits(y = 0) +
+  labs(
+    x = "Day of Week",
+    y = "Proportion",
+    title = "Comparison Plot of the Day of Week Proportions"
+    )
+
+```
+
+
+### Check Monthly Day-of-Week Transaction Patterns
+
+We now want to compare the plots for each of the days of week.
+
+```{r create_fit_monthly_dow_proportion_plot}
+#| echo: true
+
+simplot_fit_tbl <- propdata_fit_tbl |>
+  select(draw_id, yearmonth_data) |>
+  unnest(yearmonth_data) |>
+  group_by(dow_label, yearmonth_date) |>
+  summarise(
+    .groups = "drop",
+
+    p10 = quantile(obs_prop, 0.10),
+    p25 = quantile(obs_prop, 0.25),
+    p50 = quantile(obs_prop, 0.50),
+    p75 = quantile(obs_prop, 0.75),
+    p90 = quantile(obs_prop, 0.90)
+    )
+
+ggplot(simplot_fit_tbl) +
+  geom_ribbon(
+    aes(x = yearmonth_date, ymin = p10, ymax = p90),
+    alpha = 0.5
+    ) +
+  geom_ribbon(
+    aes(x = yearmonth_date, ymin = p25, ymax = p75),
+    alpha = 1.0
+    ) +
+  geom_point(
+    aes(x = yearmonth_date, y = obs_prop),
+    data = tnx_fit_yearmonth_dow_tbl, colour = "red"
+    ) +
+  facet_wrap(vars(dow_label)) +
+  expand_limits(y = 0) +
+  labs(
+    x = "Day of Week",
+    y = "Proportion",
+    title = "Comparison Plot of the Day of Week Proportions by Month"
+    ) +
+  theme(axis.text.x = element_text(angle = 20, size = 8, vjust = 0.5))
+
+```
+
+
+
+
 ### Write to Disk
 
 We write this data to disk
@@ -1106,6 +1267,142 @@ ggplot(sim_data_tbl) +
 ```
 
 
+### Check Overall Day-of-Week Transaction Patterns
+
+We now want to check our assumption of each customer having a single rate of
+transaction frequency. This will manifest as a distribution of days of the week
+(and possibly months of the year), when contrasted with our simulations.
+
+We will do this both by individual year and overall dataset.
+
+```{r construct_valid_transaction_month_distributions}
+#| echo: true
+
+dow_props_valid_lst <- customer_valid_transactions_tbl |>
+  calculate_dow_proportions()
+
+tnx_valid_overall_dow_tbl   <- dow_props_valid_lst$overall
+tnx_valid_yearmonth_dow_tbl <- dow_props_valid_lst$yearmonth
+
+
+tnx_valid_overall_dow_tbl   |> glimpse()
+tnx_valid_yearmonth_dow_tbl |> glimpse()
+```
+
+We now need to do the same thing for our simulations and then construct a
+comparison plot.
+
+```{r construct_valid_overall_dow_comparisons}
+#| echo: true
+
+sim_valid_tnxdata_tbl <- pnbd_init_valid_simstats_tbl |>
+  select(customer_id, draw_id, sim_data) |>
+  unnest(sim_data)
+
+propdata_valid_tbl <- sim_valid_tnxdata_tbl |>
+  group_nest(draw_id) |>
+  mutate(
+    prop_data = map(
+      data, calculate_dow_proportions,
+      
+      .progress = "calculate_dow_propotions"
+      ),
+    overall_data   = map(prop_data, "overall"),
+    yearmonth_data = map(prop_data, "yearmonth")
+    )
+
+propdata_valid_tbl |> glimpse()
+```
+
+We now want to compare the simulation data against the observed proportions.
+
+```{r create_valid_overall_dow_proportion_plot}
+#| echo: true
+
+simplot_valid_tbl <- propdata_valid_tbl |>
+  select(draw_id, overall_data) |>
+  unnest(overall_data) |>
+  group_by(dow_label) |>
+  summarise(
+    .groups = "drop",
+
+    p10 = quantile(obs_prop, 0.10),
+    p25 = quantile(obs_prop, 0.25),
+    p50 = quantile(obs_prop, 0.50),
+    p75 = quantile(obs_prop, 0.75),
+    p90 = quantile(obs_prop, 0.90)
+    )
+
+ggplot(simplot_valid_tbl) +
+  geom_errorbar(
+    aes(x = dow_label, ymin = p10, ymax = p90),
+    width = 0, linewidth = 1
+    ) +
+  geom_errorbar(
+    aes(x = dow_label, ymin = p25, ymax = p75),
+    width = 0, linewidth = 3
+    ) +
+  geom_point(
+    aes(x = dow_label, y = obs_prop),
+    data = tnx_valid_overall_dow_tbl, colour = "red"
+    ) +
+  expand_limits(y = 0) +
+  labs(
+    x = "Day of Week",
+    y = "Proportion",
+    title = "Comparison Plot of the Day of Week Proportions"
+    )
+
+```
+
+
+### Check Monthly Day-of-Week Transaction Patterns
+
+We now want to compare the plots for each of the days of week.
+
+```{r create_valid_monthly_dow_proportion_plot}
+#| echo: true
+
+simplot_valid_tbl <- propdata_valid_tbl |>
+  select(draw_id, yearmonth_data) |>
+  unnest(yearmonth_data) |>
+  group_by(dow_label, yearmonth_date) |>
+  summarise(
+    .groups = "drop",
+
+    p10 = quantile(obs_prop, 0.10),
+    p25 = quantile(obs_prop, 0.25),
+    p50 = quantile(obs_prop, 0.50),
+    p75 = quantile(obs_prop, 0.75),
+    p90 = quantile(obs_prop, 0.90)
+    )
+
+ggplot(simplot_valid_tbl) +
+  geom_ribbon(
+    aes(x = yearmonth_date, ymin = p10, ymax = p90),
+    alpha = 0.5
+    ) +
+  geom_ribbon(
+    aes(x = yearmonth_date, ymin = p25, ymax = p75),
+    alpha = 1.0
+    ) +
+  geom_point(
+    aes(x = yearmonth_date, y = obs_prop),
+    data = tnx_valid_yearmonth_dow_tbl, colour = "red"
+    ) +
+  facet_wrap(vars(dow_label)) +
+  expand_limits(y = 0) +
+  labs(
+    x = "Day of Week",
+    y = "Proportion",
+    title = "Comparison Plot of the Day of Week Proportions by Month"
+    ) +
+  theme(axis.text.x = element_text(angle = 20, size = 8, vjust = 0.5))
+
+```
+
+
+
 ### Write Data to Disk
 
 We write this data to disk
@@ -1120,7 +1417,7 @@ pnbd_init_valid_simstats_tbl |>
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
 #| echo: TRUE
