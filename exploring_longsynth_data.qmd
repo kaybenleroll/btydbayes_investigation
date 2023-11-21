@@ -837,6 +837,8 @@ We start by modelling the P/NBD model using our synthetic datasets before we
 try to model real-life data.
 
 ```{r set_start_end_dates}
+#| echo: true
+
 use_fit_start_date <- as.Date("2010-01-01")
 use_fit_end_date   <- as.Date("2022-01-01")
 
@@ -845,8 +847,15 @@ use_valid_end_date   <- as.Date("2023-01-01")
 ```
 
 
-```{r}
-customer_transactions_tbl <- data_tbl
+```{r setup_customer_transactions}
+#| echo: true
+
+customer_transactions_tbl <- data_tbl |>
+  mutate(
+    customer_id = fct_reorder(customer_id, tnx_timestamp, min)
+    )
+
+customer_transactions_tbl |> glimpse()
 ```
 
 
@@ -856,7 +865,7 @@ Having loaded the synthetic data we need to construct a number of datasets of
 derived values.
 
 ```{r construct_summary_stats_data}
-#| echo: TRUE
+#| echo: true
 
 customer_summarystats_tbl <- customer_transactions_tbl |>
   drop_na(customer_id) |>
@@ -870,33 +879,20 @@ the modelling and create some data subsets.
 
 
 ```{r construct_data_subset_id}
-#| echo: TRUE
+#| echo: true
 
 shuffle_tbl <- customer_summarystats_tbl |>
   slice_sample(prop = 1, replace = FALSE)
 
 id_50    <- shuffle_tbl |> head(50)    |> pull(customer_id) |> sort() 
 id_1000  <- shuffle_tbl |> head(1000)  |> pull(customer_id) |> sort()
-id_5000  <- shuffle_tbl |> head(5000)  |> pull(customer_id) |> sort()
-id_10000 <- shuffle_tbl |> head(10000) |> pull(customer_id) |> sort()
 ```
 
-We then construct some fit data based on these values.
-
-```{r construct_fit_subset_data}
-#| echo: TRUE
-
-fit_1000_data_tbl  <- customer_summarystats_tbl |> filter(customer_id %in% id_1000)
-fit_1000_data_tbl |> glimpse()
-
-fit_10000_data_tbl <- customer_summarystats_tbl |> filter(customer_id %in% id_10000)
-fit_10000_data_tbl |> glimpse()
-```
 
 
 
 ```{r select_fit_dataset}
-customer_fit_stats_tbl <- fit_1000_data_tbl
+customer_fit_stats_tbl <- customer_summarystats_tbl
 customer_fit_stats_tbl |> glimpse()
 
 
@@ -922,7 +918,7 @@ customer_valid_stats_tbl |> glimpse()
 
 
 ```{r construct_fit_valid_datasets}
-#| echo: TRUE
+#| echo: true
 
 obs_fitdata_tbl <- customer_fit_stats_tbl |>
   rename(tnx_count = x)
@@ -943,21 +939,22 @@ Finally we output the various datasets we have constructed to disks.
 
 
 ```{r write_to_disk}
-#| echo: TRUE
+#| echo: true
 
-id_1000  |> write_rds("data/longsynth_id_1000.rds")
-id_5000  |> write_rds("data/longsynth_id_5000.rds")
-id_10000 |> write_rds("data/longsynth_id_10000.rds")
-
-fit_1000_data_tbl  |> write_rds("data/longsynth_fit_1000_data_tbl.rds")
-fit_10000_data_tbl |> write_rds("data/longsynth_fit_10000_data_tbl.rds")
+id_1000  |> write_rds("data/longsynth_customer_subset_ids.rds")
 
 customer_summarystats_tbl |> write_rds("data/longsynth_customer_summarystats_tbl.rds")
 
 customer_cohort_data_tbl |>
   write_rds("data/longsynth_customer_cohort_data_tbl.rds")
 
-data_tbl |>
+customer_fit_stats_tbl |>
+  write_rds("data/longsynth_customer_fit_stats_tbl.rds")
+
+customer_valid_stats_tbl |>
+  write_rds("data/longsynth_customer_valid_stats_tbl.rds")
+
+customer_transactions_tbl |>
   write_rds("data/longsynth_transaction_data_tbl.rds")
 
 obs_fitdata_tbl   |> write_rds("data/longsynth_obs_fitdata_tbl.rds")
@@ -977,7 +974,7 @@ list(
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info}
 #| echo: true

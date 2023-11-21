@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.353">
+<meta name="generator" content="quarto-1.3.433">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -3030,7 +3030,7 @@ vertical-align: -.125em;
   <li><a href="#parse-the-data" id="toc-parse-the-data" class="nav-link" data-scroll-target="#parse-the-data"><span class="header-section-number">1.1</span> Parse the Data</a></li>
   </ul></li>
   <li><a href="#retrieve-cdnow-dataset" id="toc-retrieve-cdnow-dataset" class="nav-link" data-scroll-target="#retrieve-cdnow-dataset"><span class="header-section-number">2</span> Retrieve CDNow Dataset</a></li>
-  <li><a href="#r-environment" id="toc-r-environment" class="nav-link" data-scroll-target="#r-environment"><span class="header-section-number">3</span> R Environment</a></li>
+  <li><a href="#r-environment" id="toc-r-environment" class="nav-link" data-scroll-target="#r-environment">R Environment</a></li>
   </ul>
 </nav>
 </div>
@@ -3069,7 +3069,7 @@ vertical-align: -.125em;
 <p>We now want to retrieve the Online Retail II dataset used for this project, which is available at the UCI Machine Learning Repository.</p>
 <div class="cell">
 <details>
-<summary>Show code</summary>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>data_url <span class="ot">&lt;-</span> <span class="st">&quot;https://archive.ics.uci.edu/ml/machine-learning-databases/00502/online_retail_II.xlsx&quot;</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>xlsx_datafile     <span class="ot">&lt;-</span> <span class="st">&quot;data/online_retail_II.xlsx&quot;</span></span>
@@ -3091,7 +3091,7 @@ vertical-align: -.125em;
 <h2 data-number="1.1" class="anchored" data-anchor-id="parse-the-data"><span class="header-section-number">1.1</span> Parse the Data</h2>
 <div class="cell">
 <details>
-<summary>Show code</summary>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>retrieve_datafile <span class="ot">&lt;-</span> <span class="st">&quot;data/retail_data_tbl.rds&quot;</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>create_excel_datetime <span class="ot">&lt;-</span> <span class="cf">function</span>(x)</span>
@@ -3139,7 +3139,7 @@ $ Country       &lt;chr&gt; &quot;United Kingdom&quot;, &quot;United Kingdom&quo
 <p>Finally, we output this data to the disk.</p>
 <div class="cell">
 <details>
-<summary>Show code</summary>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>retail_data_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_online_retail_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
@@ -3149,7 +3149,7 @@ $ Country       &lt;chr&gt; &quot;United Kingdom&quot;, &quot;United Kingdom&quo
 <h1 data-number="2"><span class="header-section-number">2</span> Retrieve CDNow Dataset</h1>
 <div class="cell">
 <details>
-<summary>Show code</summary>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data_url <span class="ot">&lt;-</span> <span class="st">&quot;https://www.brucehardie.com/datasets/CDNOW_master.zip&quot;</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>zip_datafile     <span class="ot">&lt;-</span> <span class="st">&quot;data/cdnow_master.zip&quot;</span></span>
@@ -3169,7 +3169,7 @@ $ Country       &lt;chr&gt; &quot;United Kingdom&quot;, &quot;United Kingdom&quo
 <p>Now that we have downloaded the Zip file, we want to extract the data and parse it.</p>
 <div class="cell">
 <details>
-<summary>Show code</summary>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">zipfile =</span> zip_datafile,</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">exdir =</span> <span class="st">&quot;data&quot;</span></span>
@@ -3209,22 +3209,22 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
 <p>As before, we now write that data out to disk</p>
 <div class="cell">
 <details>
-<summary>Show code</summary>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>cdnow_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/rawdata_cdnow_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
-<section id="r-environment" class="level1" data-number="3">
-<h1 data-number="3"><span class="header-section-number">3</span> R Environment</h1>
+<section id="r-environment" class="level1 unnumbered">
+<h1 class="unnumbered">R Environment</h1>
 <div class="cell">
 <details>
-<summary>Show code</summary>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>─ Session info ───────────────────────────────────────────────────────────────
  setting  value
- version  R version 4.3.0 (2023-04-21)
+ version  R version 4.3.1 (2023-06-16)
  os       Ubuntu 22.04.3 LTS
  system   x86_64, linux-gnu
  ui       X11
@@ -3232,7 +3232,7 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-10-09
+ date     2023-11-14
  pandoc   3.1.1 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────
@@ -3246,37 +3246,37 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
  conflicted  * 1.2.0   2023-02-01 [1] RSPM (R 4.3.0)
  cowplot     * 1.1.1   2020-12-30 [1] RSPM (R 4.3.0)
  crayon        1.5.2   2022-09-29 [1] RSPM (R 4.3.0)
- curl        * 5.0.1   2023-06-07 [1] RSPM (R 4.3.0)
- digest        0.6.31  2022-12-11 [1] RSPM (R 4.3.0)
- dplyr       * 1.1.2   2023-04-20 [1] RSPM (R 4.3.0)
- evaluate      0.21    2023-05-05 [1] RSPM (R 4.3.0)
- fansi         1.0.4   2023-01-22 [1] RSPM (R 4.3.0)
+ curl        * 5.1.0   2023-10-02 [1] RSPM (R 4.3.0)
+ digest        0.6.33  2023-07-07 [1] RSPM (R 4.3.0)
+ dplyr       * 1.1.3   2023-09-03 [1] RSPM (R 4.3.0)
+ evaluate      0.22    2023-09-29 [1] RSPM (R 4.3.0)
+ fansi         1.0.5   2023-10-08 [1] RSPM (R 4.3.0)
  fastmap       1.1.1   2023-02-24 [1] RSPM (R 4.3.0)
  forcats     * 1.0.0   2023-01-29 [1] RSPM (R 4.3.0)
- fs          * 1.6.2   2023-04-25 [1] RSPM (R 4.3.0)
+ fs          * 1.6.3   2023-07-20 [1] RSPM (R 4.3.0)
  generics      0.1.3   2022-07-05 [1] RSPM (R 4.3.0)
- ggplot2     * 3.4.2   2023-04-03 [1] RSPM (R 4.3.0)
+ ggplot2     * 3.4.4   2023-10-12 [1] RSPM (R 4.3.0)
  glue        * 1.6.2   2022-02-24 [1] RSPM (R 4.3.0)
- gtable        0.3.3   2023-03-21 [1] RSPM (R 4.3.0)
+ gtable        0.3.4   2023-08-21 [1] RSPM (R 4.3.0)
  hms           1.1.3   2023-03-21 [1] RSPM (R 4.3.0)
- htmltools     0.5.5   2023-03-23 [1] RSPM (R 4.3.0)
+ htmltools     0.5.6.1 2023-10-06 [1] RSPM (R 4.3.0)
  htmlwidgets   1.6.2   2023-03-17 [1] RSPM (R 4.3.0)
- jsonlite      1.8.5   2023-06-05 [1] RSPM (R 4.3.0)
- knitr         1.43    2023-05-25 [1] RSPM (R 4.3.0)
+ jsonlite      1.8.7   2023-06-29 [1] RSPM (R 4.3.0)
+ knitr         1.44    2023-09-11 [1] RSPM (R 4.3.0)
  lifecycle     1.0.3   2022-10-07 [1] RSPM (R 4.3.0)
- lubridate   * 1.9.2   2023-02-10 [1] RSPM (R 4.3.0)
+ lubridate   * 1.9.3   2023-09-27 [1] RSPM (R 4.3.0)
  magrittr    * 2.0.3   2022-03-30 [1] RSPM (R 4.3.0)
  memoise       2.0.1   2021-11-26 [1] RSPM (R 4.3.0)
  munsell       0.5.0   2018-06-12 [1] RSPM (R 4.3.0)
  pillar        1.9.0   2023-03-22 [1] RSPM (R 4.3.0)
  pkgconfig     2.0.3   2019-09-22 [1] RSPM (R 4.3.0)
- purrr       * 1.0.1   2023-01-10 [1] RSPM (R 4.3.0)
+ purrr       * 1.0.2   2023-08-10 [1] RSPM (R 4.3.0)
  R6            2.5.1   2021-08-19 [1] RSPM (R 4.3.0)
  readr       * 2.1.4   2023-02-10 [1] RSPM (R 4.3.0)
- readxl      * 1.4.2   2023-02-09 [1] RSPM (R 4.3.0)
+ readxl      * 1.4.3   2023-07-06 [1] RSPM (R 4.3.0)
  rlang         1.1.1   2023-04-28 [1] RSPM (R 4.3.0)
- rmarkdown     2.22    2023-06-01 [1] RSPM (R 4.3.0)
- rstudioapi    0.14    2022-08-22 [1] RSPM (R 4.3.0)
+ rmarkdown     2.25    2023-09-18 [1] RSPM (R 4.3.0)
+ rstudioapi    0.15.0  2023-07-07 [1] RSPM (R 4.3.0)
  scales      * 1.2.1   2022-08-20 [1] RSPM (R 4.3.0)
  sessioninfo   1.2.2   2021-12-06 [1] RSPM (R 4.3.0)
  stringi       1.7.12  2023-01-11 [1] RSPM (R 4.3.0)
@@ -3287,11 +3287,11 @@ $ total_spend &lt;dbl&gt; 11.77, 12.00, 77.00, 20.76, 20.76, 19.54, 57.45, 20.96
  tidyverse   * 2.0.0   2023-02-22 [1] RSPM (R 4.3.0)
  timechange    0.2.0   2023-01-11 [1] RSPM (R 4.3.0)
  tzdb          0.4.0   2023-05-12 [1] RSPM (R 4.3.0)
- utf8          1.2.3   2023-01-31 [1] RSPM (R 4.3.0)
- vctrs         0.6.2   2023-04-19 [1] RSPM (R 4.3.0)
- vroom         1.6.3   2023-04-28 [1] RSPM (R 4.3.0)
- withr         2.5.0   2022-03-03 [1] RSPM (R 4.3.0)
- xfun          0.39    2023-04-20 [1] RSPM (R 4.3.0)
+ utf8          1.2.4   2023-10-22 [1] RSPM (R 4.3.0)
+ vctrs         0.6.4   2023-10-12 [1] RSPM (R 4.3.0)
+ vroom         1.6.4   2023-10-02 [1] RSPM (R 4.3.0)
+ withr         2.5.1   2023-09-26 [1] RSPM (R 4.3.0)
+ xfun          0.40    2023-08-09 [1] RSPM (R 4.3.0)
  yaml          2.3.7   2023-01-23 [1] RSPM (R 4.3.0)
 
  [1] /usr/local/lib/R/site-library

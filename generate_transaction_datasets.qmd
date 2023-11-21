@@ -68,7 +68,7 @@ dataset.
 ```{r set_n_customers}
 #| echo: true
 
-n_customers <- 50000
+n_customers <- 5000
 
 first_tnx_date <- as.Date("2020-01-01")
 final_tnx_date <- as.Date("2023-01-01")
@@ -212,7 +212,7 @@ synthdata_longframe_transactions_tbl |> write_rds("data/synthdata_longframe_tran
 
 
 
-# R Environment
+# R Environment {.unnumbered}
 
 ```{r show_session_info, echo=TRUE, message=TRUE}
 options(width = 120L)

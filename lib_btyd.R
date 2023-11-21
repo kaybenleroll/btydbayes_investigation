@@ -629,37 +629,16 @@ run_model_assessment <- function(
 
 create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
 
-  ##
-  ## First we check the counts of customer with more than 1 transaction
-  ##
-  obs_customer_count <- obsdata_tbl |>
-    filter(tnx_count > 0) |>
-    nrow()
-
-  plotdata_tbl <- simdata_tbl |>
-    filter(sim_tnx_count > 0) |>
-    count(draw_id, name = "sim_customer_count")
-
-  multi_customer_count_plot <- ggplot(plotdata_tbl) +
-    geom_histogram(aes(x = sim_customer_count), bins = 50) +
-    geom_vline(aes(xintercept = obs_customer_count), colour = "red") +
-    labs(
-      x = "Count of Multi-transaction Customers",
-      y = "Frequency",
-      title = "Comparison Plot of Simulated vs Observed Customer Counts",
-      subtitle = "(observed value in red)"
-      )
 
 
   ##
   ## Check the total count of transactions
   ##
   obs_total_count <- obsdata_tbl |>
-    pull(tnx_count) |>
-    sum()
+    nrow()
 
   plotdata_tbl <- simdata_tbl |>
-    count(draw_id, wt = sim_tnx_count, name = "sim_total_count")
+    count(draw_id, name = "sim_total_count")
 
 
   total_tnxcount_plot <- ggplot(plotdata_tbl) +
@@ -678,14 +657,14 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
   ###
 
   obs_quantiles_tbl <- obsdata_tbl |>
-    filter(tnx_count > 0) |>
+    count(customer_id, name = "tnx_count") |>
     reframe(
       prob_label = c("p10", "p25", "p50", "p75", "p90", "p99"),
       prob_value = quantile(tnx_count, probs = c(0.10, 0.25, 0.50, 0.75, 0.90, 0.99))
       )
 
   plotdata_tbl <- simdata_tbl |>
-    filter(sim_tnx_count > 0) |>
+    count(customer_id, draw_id, name = "sim_tnx_count") |>
     group_by(draw_id) |>
     summarise(
       p10 = quantile(sim_tnx_count, 0.10),
@@ -714,14 +693,26 @@ create_model_assessment_plots <- function(obsdata_tbl, simdata_tbl) {
 
 
   ###
+  ### Construct overall day of week proportions
+  ###
+
+
+
+
+  ###
   ### Return these plots
   ###
 
   assess_plots_lst <- list(
-    multi_plot = multi_customer_count_plot,
     total_plot = total_tnxcount_plot,
     quant_plot = customer_tnxquant_plot
     )
+
+  # assess_plots_lst <- list(
+  #   multi_plot = multi_customer_count_plot,
+  #   total_plot = total_tnxcount_plot,
+  #   quant_plot = customer_tnxquant_plot
+  #   )
 
   return(assess_plots_lst)
 }
@@ -735,3 +726,119 @@ write_assessment_logentry <- function(log_str, prefix_label) {
     write_lines(file = "model_assessment.log", append = TRUE)
 }
 
+
+calculate_dow_proportions <- function(data_tbl) {
+
+  tnx_overall_dow_tbl <- data_tbl |>
+    count(
+      dow_label = format(tnx_timestamp, "%w-%a"),
+
+      name = "obs_count"
+      ) |>
+    mutate(
+      obs_prop = obs_count / sum(obs_count)
+      )
+
+
+  tnx_yearmonth_dow_tbl <- data_tbl |>
+    mutate(
+      yearmonth_date = format(tnx_timestamp, "%Y-%m-01") |> as.Date(),
+      dow            = format(tnx_timestamp, "%w-%a")
+      ) |>
+    group_by(yearmonth_date) |>
+    count(
+      dow_label = format(tnx_timestamp, "%w-%a"),
+
+      name = "obs_count"
+      ) |>
+    mutate(
+      obs_prop = obs_count / sum(obs_count)
+      ) |>
+    ungroup()
+
+  prop_lst <- list(
+    overall   = tnx_overall_dow_tbl,
+    yearmonth = tnx_yearmonth_dow_tbl
+    )
+
+  return(prop_lst)
+}
+
+
+calculate_transaction_summary_statistics <- function(tnxdata_tbl) {
+
+  customer_summdata_tbl <- tnxdata_tbl |>
+    count(customer_id, name = "tnx_count") |>
+    summarise(
+      .groups = "drop",
+
+      p10 = quantile(tnx_count, 0.10),
+      p25 = quantile(tnx_count, 0.25),
+      p50 = quantile(tnx_count, 0.50),
+      p75 = quantile(tnx_count, 0.75),
+      p90 = quantile(tnx_count, 0.90),
+      p99 = quantile(tnx_count, 0.99),
+
+      total_count = sum(tnx_count),
+      mean_count  = mean(tnx_count)
+      )
+
+  return(customer_summdata_tbl)
+}
+
+
+construct_model_assessment_data <- function(file_path) {
+   model_simdata_tbl <- read_rds(file_path) |>
+    pull(sim_file) |>
+    map_dfr(read_rds) |>
+    select(customer_id, draw_id, sim_data) |>
+    unnest(sim_data)
+
+  return(model_simdata_tbl)
+}
+
+
+create_multiple_model_assessment_plot <- function(obsdata_tbl, modelsims_tbl,
+    param_name, param_label) {
+
+  plotdata_obs_tbl <- obsdata_tbl |>
+    filter(label == param_name)
+
+  plotdata_sim_tbl <- modelsims_tbl |>
+    group_by(model_label, assess_type) |>
+    summarise(
+      .groups = "drop",
+
+      summ_p10 = quantile(.data[[param_name]], 0.10),
+      summ_p25 = quantile(.data[[param_name]], 0.25),
+      summ_p75 = quantile(.data[[param_name]], 0.75),
+      summ_p90 = quantile(.data[[param_name]], 0.90)
+    )
+
+
+  comparison_plot <- ggplot(plotdata_sim_tbl) +
+    geom_errorbar(
+      aes(x = model_label, ymin = summ_p10, ymax = summ_p90),
+      width = 0, linewidth = 1
+      ) +
+    geom_errorbar(
+      aes(x = model_label, ymin = summ_p25, ymax = summ_p75),
+      width = 0, linewidth = 3
+      ) +
+    geom_hline(
+      aes(yintercept = obs_value),
+      data = plotdata_obs_tbl, colour = "red"
+      ) +
+    facet_wrap(vars(assess_type), nrow = 2, scales = "free_y") +
+    expand_limits(y = 0) +
+    labs(
+      x = "Model",
+      y = "Total Transaction Count",
+      title = glue("Assessment of Models Comparing {param_label}")
+      ) +
+    theme(
+      axis.text.x = element_text(angle = 20, vjust = 0.5, size = 8)
+      )
+
+  return(comparison_plot)
+}
