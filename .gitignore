@@ -10,9 +10,10 @@
 .Rhistory
 .RData
 
+temp*
+
 *.log
 
-temp*.R
 
 precompute_*.bz2
 

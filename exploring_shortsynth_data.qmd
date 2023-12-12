@@ -135,7 +135,7 @@ First we load the dataset.
 #| echo: true
 
 ### Data is loaded into dataset rawdata_tbl here
-rawdata_tbl <- read_rds("data/synthdata_shortframe_transactions_tbl.rds")
+rawdata_tbl <- read_rds("data/rawsynthdata_shortframe_transactions_tbl.rds")
 
 glimpse(rawdata_tbl)
 ```

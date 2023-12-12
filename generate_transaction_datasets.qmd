@@ -111,9 +111,9 @@ pnbd_params_lst <- list(
   lambda_mn   =   0.25,
   lambda_cv   =   1.00,
 
-  amt_hiermn  = 100.00,
-  amt_hiercv  =   1.00,
-  amt_custcv  =   1.00
+  amt_hiermn  = 200.00,
+  amt_hiercv  =   0.30,
+  amt_custcv  =   0.50
   )
 
 synthdata_shortframe_simparams_tbl <- synthdata_shortframe_cohort_tbl |>
@@ -136,9 +136,9 @@ We now write this data to disk.
 ```{r write_synth_shortframe_data_disk}
 #| echo: true
 
-synthdata_shortframe_cohort_tbl       |> write_rds("data/synthdata_shortframe_cohort_tbl.rds")
-synthdata_shortframe_simparams_tbl    |> write_rds("data/synthdata_shortframe_simparams_tbl.rds")
-synthdata_shortframe_transactions_tbl |> write_rds("data/synthdata_shortframe_transactions_tbl.rds")
+synthdata_shortframe_cohort_tbl       |> write_rds("data/rawsynthdata_shortframe_cohort_tbl.rds")
+synthdata_shortframe_simparams_tbl    |> write_rds("data/rawsynthdata_shortframe_simparams_tbl.rds")
+synthdata_shortframe_transactions_tbl |> write_rds("data/rawsynthdata_shortframe_transactions_tbl.rds")
 ```
 
 
@@ -177,9 +177,9 @@ pnbd_params_lst <- list(
   lambda_mn   =   0.25,
   lambda_cv   =   1.00,
 
-  amt_hiermn  = 100.00,
-  amt_hiercv  =   1.00,
-  amt_custcv  =   1.00
+  amt_hiermn  = 200.00,
+  amt_hiercv  =   0.30,
+  amt_custcv  =   0.50
   )
 
 
@@ -203,9 +203,9 @@ We now write this data to disk.
 ```{r write_longframe_synth_data_disk}
 #| echo: true
 
-synthdata_longframe_cohort_tbl       |> write_rds("data/synthdata_longframe_cohort_tbl.rds")
-synthdata_longframe_simparams_tbl    |> write_rds("data/synthdata_longframe_simparams_tbl.rds")
-synthdata_longframe_transactions_tbl |> write_rds("data/synthdata_longframe_transactions_tbl.rds")
+synthdata_longframe_cohort_tbl       |> write_rds("data/rawsynthdata_longframe_cohort_tbl.rds")
+synthdata_longframe_simparams_tbl    |> write_rds("data/rawsynthdata_longframe_simparams_tbl.rds")
+synthdata_longframe_transactions_tbl |> write_rds("data/rawsynthdata_longframe_transactions_tbl.rds")
 ```
 
 

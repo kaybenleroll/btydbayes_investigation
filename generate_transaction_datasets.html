@@ -3112,9 +3112,9 @@ $ first_tnx_date &lt;date&gt; 2020-01-01, 2020-01-01, 2020-01-01, 2020-01-01, 20
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_mn   =</span>   <span class="fl">0.25</span>,</span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_cv   =</span>   <span class="fl">1.00</span>,</span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiermn  =</span> <span class="fl">100.00</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiercv  =</span>   <span class="fl">1.00</span>,</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_custcv  =</span>   <span class="fl">1.00</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiermn  =</span> <span class="fl">200.00</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiercv  =</span>   <span class="fl">0.30</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_custcv  =</span>   <span class="fl">0.50</span></span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_simparams_tbl <span class="ot">&lt;-</span> synthdata_shortframe_cohort_tbl <span class="sc">|&gt;</span></span>
@@ -3129,12 +3129,12 @@ $ first_tnx_date &lt;date&gt; 2020-01-01, 2020-01-01, 2020-01-01, 2020-01-01, 20
 <span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>synthdata_shortframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 29,454
+<pre><code>Rows: 29,504
 Columns: 4
-$ customer_id   &lt;chr&gt; &quot;SFC202001_0002&quot;, &quot;SFC202001_0001&quot;, &quot;SFC202001_0004&quot;, &quot;S…
-$ tnx_timestamp &lt;dttm&gt; 2020-01-01 00:40:17, 2020-01-01 02:15:58, 2020-01-01 18…
+$ customer_id   &lt;chr&gt; &quot;SFC202001_0002&quot;, &quot;SFC202001_0004&quot;, &quot;SFC202001_0001&quot;, &quot;S…
+$ tnx_timestamp &lt;dttm&gt; 2020-01-01 08:00:48, 2020-01-01 14:02:22, 2020-01-01 15…
 $ invoice_id    &lt;chr&gt; &quot;T20200101-0001&quot;, &quot;T20200101-0002&quot;, &quot;T20200101-0003&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 51.73, 139.05, 11.72, 88.30, 1.16, 0.95, 127.85, 35.07, …</code></pre>
+$ tnx_amount    &lt;dbl&gt; 120.46, 208.45, 386.80, 111.52, 133.66, 133.52, 26.19, 1…</code></pre>
 </div>
 </div>
 <section id="write-data-to-disk" class="level2" data-number="1.1">
@@ -3174,7 +3174,7 @@ Columns: 4
 $ customer_id    &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0002&quot;, &quot;LFC201001_0003&quot;, &quot;…
 $ cohort_qtr     &lt;chr&gt; &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, &quot;2010 Q1&quot;, …
 $ cohort_ym      &lt;chr&gt; &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, &quot;2010 01&quot;, …
-$ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-03, 2010-01-04, 2010-01-05, 2010-0…</code></pre>
+$ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-03, 2010-01-03, 2010-01-05, 2010-0…</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -3187,9 +3187,9 @@ $ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-03, 2010-01-04, 2010-01-05, 20
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_mn   =</span>   <span class="fl">0.25</span>,</span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">lambda_cv   =</span>   <span class="fl">1.00</span>,</span>
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiermn  =</span> <span class="fl">100.00</span>,</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiercv  =</span>   <span class="fl">1.00</span>,</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_custcv  =</span>   <span class="fl">1.00</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiermn  =</span> <span class="fl">200.00</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_hiercv  =</span>   <span class="fl">0.30</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">amt_custcv  =</span>   <span class="fl">0.50</span></span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  )</span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
@@ -3205,12 +3205,12 @@ $ first_tnx_date &lt;date&gt; 2010-01-01, 2010-01-03, 2010-01-04, 2010-01-05, 20
 <span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>synthdata_longframe_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>Rows: 42,244
+<pre><code>Rows: 43,153
 Columns: 4
-$ customer_id   &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0002&quot;, &quot;LFC201001_0003&quot;, &quot;L…
-$ tnx_timestamp &lt;dttm&gt; 2010-01-01 16:16:30, 2010-01-03 16:32:54, 2010-01-04 22…
-$ invoice_id    &lt;chr&gt; &quot;T20100101-0001&quot;, &quot;T20100103-0001&quot;, &quot;T20100104-0001&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 160.87, 1.30, 96.11, 813.07, 85.58, 35.07, 12.23, 70.48,…</code></pre>
+$ customer_id   &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0003&quot;, &quot;LFC201001_0002&quot;, &quot;L…
+$ tnx_timestamp &lt;dttm&gt; 2010-01-01 04:21:16, 2010-01-03 09:17:44, 2010-01-03 11…
+$ invoice_id    &lt;chr&gt; &quot;T20100101-0001&quot;, &quot;T20100103-0001&quot;, &quot;T20100103-0002&quot;, &quot;T…
+$ tnx_amount    &lt;dbl&gt; 82.97, 174.89, 126.14, 121.05, 99.23, 238.19, 54.69, 116…</code></pre>
 </div>
 </div>
 <section id="write-data-to-disk-1" class="level2" data-number="2.1">
@@ -3245,7 +3245,7 @@ $ tnx_amount    &lt;dbl&gt; 160.87, 1.30, 96.11, 813.07, 85.58, 35.07, 12.23, 70
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-11-14
+ date     2023-11-22
  pandoc   3.1.1 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────────────────────────────────────────────

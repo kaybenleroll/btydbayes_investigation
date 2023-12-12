@@ -38,7 +38,6 @@ library(furrr)
 library(vctrs)
 library(fs)
 library(glue)
-library(rsyslog)
 library(forcats)
 library(snakecase)
 library(DataExplorer)
@@ -68,8 +67,6 @@ options(
 theme_set(theme_cowplot())
 
 set.seed(42)
-
-open_syslog("exploring_online_retail_transactions")
 
 plan(multisession)
 ```
@@ -143,12 +140,6 @@ First we load the dataset as well as some support datasets.
 
 ```{r load_dataset}
 #| echo: true
-
-syslog(
-  glue("Setting up data"),
-  level = "INFO"
-  )
-
 
 rawdata_tbl <- read_rds("data/rawdata_online_retail_tbl.rds")
 
@@ -445,15 +436,6 @@ if (length(drop_vars) > 0) {
 Now that we have loaded the data we can prepare it for some basic data
 exploration.
 
-```{r create_log_univariate_data_exploration}
-#| echo: true
-
-syslog(
-  glue("Performing univariate data exploration"),
-  level = "INFO"
-  )
-```
-
 
 ## Quick Univariate Data Summaries
 
@@ -713,15 +695,6 @@ for (plot_varname in datetime_vars) {
 
 We now move on to looking at bivariate plots of the data set.
 
-```{r create_log_bivariate_facet_plots}
-#| echo: true
-
-syslog(
-  glue("Performing bivariate facet plots"),
-  level = "INFO"
-  )
-```
-
 A natural way to explore relationships in data is to create univariate
 visualisations facetted by a categorical value.
 
@@ -871,14 +844,6 @@ rm(plot_var, plot_tbl)
 
 In this section we perform various data explorations.
 
-```{r create_log_custom_explorations}
-#| echo: true
-
-syslog(
-  glue("Performing custom data exploration"),
-  level = "INFO"
-  )
-```
 
 ## Custom Checks for Data Integrity
 
