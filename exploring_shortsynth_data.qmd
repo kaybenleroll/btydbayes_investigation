@@ -850,6 +850,7 @@ use_valid_end_date   <- as.Date("2023-01-01")
 
 customer_transactions_tbl <- data_tbl |>
   mutate(
+    orig_id     = customer_id,
     customer_id = fct_reorder(customer_id, tnx_timestamp, min)
     )
 
@@ -932,6 +933,22 @@ obs_validdata_tbl <- customer_fit_stats_tbl |>
 ```
 
 
+Finally, we want to ensure there is a proper lookup table for the original
+(non-factor) `customer_id` and the one that is a factor.
+
+```{r construct_customer_id_lookup}
+#| echo: TRUE
+
+customer_id_lookup_tbl <- customer_transactions_tbl |>
+  select(customer_id, orig_id) |>
+  distinct()
+
+customer_id_lookup_tbl |> glimpse()
+```
+
+
+
+
 # Output Cleaned Data
 
 Finally we output the various datasets we have constructed to disks.
@@ -943,6 +960,8 @@ Finally we output the various datasets we have constructed to disks.
 id_1000  |> write_rds("data/shortsynth_customer_subset_ids.rds")
 
 customer_summarystats_tbl |> write_rds("data/shortsynth_customer_summarystats_tbl.rds")
+
+
 
 customer_cohort_data_tbl |>
   write_rds("data/shortsynth_customer_cohort_data_tbl.rds")
@@ -967,9 +986,10 @@ list(
     use_valid_end_date   = use_valid_end_date
     ) |>
   write_rds("data/shortsynth_simulation_dates.rds")
+
+customer_id_lookup_tbl |>
+  write_rds("data/shortsynth_customer_id_lookup_tbl.rds")
 ```
-
-
 
 
 

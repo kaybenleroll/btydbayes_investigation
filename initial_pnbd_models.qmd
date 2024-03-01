@@ -198,11 +198,14 @@ We now want to load the short time-frame synthetic data.
 ```{r load_shortframe_synthetic_data}
 #| echo: TRUE
 
-customer_cohortdata_tbl   <- read_rds("data/synthdata_shortframe_cohort_tbl.rds")
+customer_cohortdata_tbl   <- read_rds("data/shortsynth_customer_cohort_data_tbl.rds")
 customer_cohortdata_tbl   |> glimpse()
 
-customer_simparams_tbl    <- read_rds("data/synthdata_shortframe_simparams_tbl.rds")
+customer_simparams_tbl    <- read_rds("data/rawsynthdata_shortframe_simparams_tbl.rds")
 customer_simparams_tbl    |> glimpse()
+
+customer_id_lookup_tbl    <- read_rds("data/shortsynth_customer_id_lookup_tbl.rds")
+customer_id_lookup_tbl    |> glimpse()
 
 customer_transactions_tbl <- read_rds("data/shortsynth_transaction_data_tbl.rds")
 customer_transactions_tbl |> glimpse()

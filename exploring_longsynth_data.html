@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Mick Cooney mickcooney@gmail.com">
-<meta name="dcterms.date" content="2023-11-23">
+<meta name="dcterms.date" content="2024-02-16">
 
 <title>Exploring the Synthetic Long-Timeframe Transaction Dataset</title>
 <style>
@@ -3092,7 +3092,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">November 23, 2023</p>
+      <p class="date">February 16, 2024</p>
     </div>
   </div>
   
@@ -3124,7 +3124,7 @@ vertical-align: -.125em;
 <details>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Data is loaded into dataset rawdata_tbl here</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>rawdata_tbl <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">&quot;data/synthdata_longframe_transactions_tbl.rds&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>rawdata_tbl <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="st">&quot;data/rawsynthdata_longframe_transactions_tbl.rds&quot;</span>)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(rawdata_tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
@@ -3930,21 +3930,23 @@ $ total_tnx_count &lt;int&gt; 3, 2, 9, 1, 4, 5, 80, 2, 3, 4, 16, 11, 22, 1, 2, 8
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>customer_transactions_tbl <span class="ot">&lt;-</span> data_tbl <span class="sc">|&gt;</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">customer_id =</span> <span class="fu">fct_reorder</span>(customer_id, tnx_timestamp, min)</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>customer_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">orig_id     =</span> customer_id,</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">customer_id =</span> <span class="fu">fct_reorder</span>(customer_id, tnx_timestamp, min)</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>customer_transactions_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Rows: 43,153
-Columns: 7
+Columns: 8
 $ customer_id   &lt;fct&gt; LFC201001_0001, LFC201001_0003, LFC201001_0002, LFC20100…
 $ tnx_timestamp &lt;dttm&gt; 2010-01-01 04:21:16, 2010-01-03 09:17:44, 2010-01-03 11…
 $ tnx_dow       &lt;fct&gt; Fri, Sun, Sun, Tue, Wed, Wed, Fri, Sat, Sun, Mon, Tue, T…
 $ tnx_month     &lt;fct&gt; Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, Jan, J…
 $ tnx_week      &lt;chr&gt; &quot;00&quot;, &quot;00&quot;, &quot;00&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;01&quot;, &quot;0…
 $ invoice_id    &lt;chr&gt; &quot;T20100101-0001&quot;, &quot;T20100103-0001&quot;, &quot;T20100103-0002&quot;, &quot;T…
-$ tnx_amount    &lt;dbl&gt; 82.97, 174.89, 126.14, 121.05, 99.23, 238.19, 54.69, 116…</code></pre>
+$ tnx_amount    &lt;dbl&gt; 82.97, 174.89, 126.14, 121.05, 99.23, 238.19, 54.69, 116…
+$ orig_id       &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0003&quot;, &quot;LFC201001_0002&quot;, &quot;L…</code></pre>
 </div>
 </div>
 <section id="construct-datasets" class="level2" data-number="7.1">
@@ -4041,6 +4043,23 @@ $ tnx_last_interval &lt;dbl&gt; 39.6614305, 46.7777234, 25.8559689, 43.6519743, 
 <span id="cb58-10"><a href="#cb58-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(customer_id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
+<p>Finally, we want to ensure there is a proper lookup table for the original (non-factor) <code>customer_id</code> and the one that is a factor.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>customer_id_lookup_tbl <span class="ot">&lt;-</span> customer_transactions_tbl <span class="sc">|&gt;</span></span>
+<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(customer_id, orig_id) <span class="sc">|&gt;</span></span>
+<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span>
+<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>customer_id_lookup_tbl <span class="sc">|&gt;</span> <span class="fu">glimpse</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 5,000
+Columns: 2
+$ customer_id &lt;fct&gt; LFC201001_0001, LFC201001_0003, LFC201001_0002, LFC201001_…
+$ orig_id     &lt;chr&gt; &quot;LFC201001_0001&quot;, &quot;LFC201001_0003&quot;, &quot;LFC201001_0002&quot;, &quot;LFC…</code></pre>
+</div>
+</div>
 </section>
 </section>
 <section id="output-cleaned-data" class="level1" data-number="8">
@@ -4049,33 +4068,36 @@ $ tnx_last_interval &lt;dbl&gt; 39.6614305, 46.7777234, 25.8559689, 43.6519743, 
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>id_1000  <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_subset_ids.rds&quot;</span>)</span>
-<span id="cb59-2"><a href="#cb59-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-3"><a href="#cb59-3" aria-hidden="true" tabindex="-1"></a>customer_summarystats_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_summarystats_tbl.rds&quot;</span>)</span>
-<span id="cb59-4"><a href="#cb59-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-5"><a href="#cb59-5" aria-hidden="true" tabindex="-1"></a>customer_cohort_data_tbl <span class="sc">|&gt;</span></span>
-<span id="cb59-6"><a href="#cb59-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_cohort_data_tbl.rds&quot;</span>)</span>
-<span id="cb59-7"><a href="#cb59-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-8"><a href="#cb59-8" aria-hidden="true" tabindex="-1"></a>customer_fit_stats_tbl <span class="sc">|&gt;</span></span>
-<span id="cb59-9"><a href="#cb59-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_fit_stats_tbl.rds&quot;</span>)</span>
-<span id="cb59-10"><a href="#cb59-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-11"><a href="#cb59-11" aria-hidden="true" tabindex="-1"></a>customer_valid_stats_tbl <span class="sc">|&gt;</span></span>
-<span id="cb59-12"><a href="#cb59-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_valid_stats_tbl.rds&quot;</span>)</span>
-<span id="cb59-13"><a href="#cb59-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-14"><a href="#cb59-14" aria-hidden="true" tabindex="-1"></a>customer_transactions_tbl <span class="sc">|&gt;</span></span>
-<span id="cb59-15"><a href="#cb59-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_transaction_data_tbl.rds&quot;</span>)</span>
-<span id="cb59-16"><a href="#cb59-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-17"><a href="#cb59-17" aria-hidden="true" tabindex="-1"></a>obs_fitdata_tbl   <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_obs_fitdata_tbl.rds&quot;</span>)</span>
-<span id="cb59-18"><a href="#cb59-18" aria-hidden="true" tabindex="-1"></a>obs_validdata_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_obs_validdata_tbl.rds&quot;</span>)</span>
-<span id="cb59-19"><a href="#cb59-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb59-20"><a href="#cb59-20" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(</span>
-<span id="cb59-21"><a href="#cb59-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_fit_start_date =</span> use_fit_start_date,</span>
-<span id="cb59-22"><a href="#cb59-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_fit_end_date   =</span> use_fit_end_date,</span>
-<span id="cb59-23"><a href="#cb59-23" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb59-24"><a href="#cb59-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_valid_start_date =</span> use_valid_start_date,</span>
-<span id="cb59-25"><a href="#cb59-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_valid_end_date   =</span> use_valid_end_date</span>
-<span id="cb59-26"><a href="#cb59-26" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
-<span id="cb59-27"><a href="#cb59-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_simulation_dates.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a>id_1000  <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_subset_ids.rds&quot;</span>)</span>
+<span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a>customer_summarystats_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_summarystats_tbl.rds&quot;</span>)</span>
+<span id="cb61-4"><a href="#cb61-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>customer_cohort_data_tbl <span class="sc">|&gt;</span></span>
+<span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_cohort_data_tbl.rds&quot;</span>)</span>
+<span id="cb61-7"><a href="#cb61-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-8"><a href="#cb61-8" aria-hidden="true" tabindex="-1"></a>customer_fit_stats_tbl <span class="sc">|&gt;</span></span>
+<span id="cb61-9"><a href="#cb61-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_fit_stats_tbl.rds&quot;</span>)</span>
+<span id="cb61-10"><a href="#cb61-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-11"><a href="#cb61-11" aria-hidden="true" tabindex="-1"></a>customer_valid_stats_tbl <span class="sc">|&gt;</span></span>
+<span id="cb61-12"><a href="#cb61-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_valid_stats_tbl.rds&quot;</span>)</span>
+<span id="cb61-13"><a href="#cb61-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-14"><a href="#cb61-14" aria-hidden="true" tabindex="-1"></a>customer_transactions_tbl <span class="sc">|&gt;</span></span>
+<span id="cb61-15"><a href="#cb61-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_transaction_data_tbl.rds&quot;</span>)</span>
+<span id="cb61-16"><a href="#cb61-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-17"><a href="#cb61-17" aria-hidden="true" tabindex="-1"></a>obs_fitdata_tbl   <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_obs_fitdata_tbl.rds&quot;</span>)</span>
+<span id="cb61-18"><a href="#cb61-18" aria-hidden="true" tabindex="-1"></a>obs_validdata_tbl <span class="sc">|&gt;</span> <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_obs_validdata_tbl.rds&quot;</span>)</span>
+<span id="cb61-19"><a href="#cb61-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-20"><a href="#cb61-20" aria-hidden="true" tabindex="-1"></a><span class="fu">list</span>(</span>
+<span id="cb61-21"><a href="#cb61-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_fit_start_date =</span> use_fit_start_date,</span>
+<span id="cb61-22"><a href="#cb61-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_fit_end_date   =</span> use_fit_end_date,</span>
+<span id="cb61-23"><a href="#cb61-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb61-24"><a href="#cb61-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_valid_start_date =</span> use_valid_start_date,</span>
+<span id="cb61-25"><a href="#cb61-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">use_valid_end_date   =</span> use_valid_end_date</span>
+<span id="cb61-26"><a href="#cb61-26" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb61-27"><a href="#cb61-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_simulation_dates.rds&quot;</span>)</span>
+<span id="cb61-28"><a href="#cb61-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb61-29"><a href="#cb61-29" aria-hidden="true" tabindex="-1"></a>customer_id_lookup_tbl <span class="sc">|&gt;</span></span>
+<span id="cb61-30"><a href="#cb61-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_rds</span>(<span class="st">&quot;data/longsynth_customer_id_lookup_tbl.rds&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -4084,7 +4106,7 @@ $ tnx_last_interval &lt;dbl&gt; 39.6614305, 46.7777234, 25.8559689, 43.6519743, 
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>sessioninfo<span class="sc">::</span><span class="fu">session_info</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>─ Session info ───────────────────────────────────────────────────────────────
@@ -4097,7 +4119,7 @@ $ tnx_last_interval &lt;dbl&gt; 39.6614305, 46.7777234, 25.8559689, 43.6519743, 
  collate  en_US.UTF-8
  ctype    en_US.UTF-8
  tz       Europe/Dublin
- date     2023-11-23
+ date     2024-02-16
  pandoc   3.1.1 @ /usr/local/bin/ (via rmarkdown)
 
 ─ Packages ───────────────────────────────────────────────────────────────────

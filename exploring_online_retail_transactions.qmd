@@ -1963,6 +1963,7 @@ customer_cohortdata_tbl |> glimpse()
 customer_transactions_tbl <- daily_spend_invoice_tbl |>
   transmute(
     tnx_timestamp = invoice_dttm,
+    orig_id       = customer_id,
     customer_id   = fct_reorder(customer_id, tnx_timestamp, min),
     invoice_id,
     tnx_amount    = invoice_spend
@@ -2076,6 +2077,18 @@ onlineretail_customer_subset_ids |> glimpse()
 ```
 
 
+Finally, we want to ensure there is a proper lookup table for the original
+(non-factor) `customer_id` and the one that is a factor.
+
+```{r construct_customer_id_lookup}
+#| echo: TRUE
+
+customer_id_lookup_tbl <- customer_transactions_tbl |>
+  select(customer_id, orig_id) |>
+  distinct()
+
+customer_id_lookup_tbl |> glimpse()
+```
 
 
 
@@ -2112,6 +2125,9 @@ list(
     use_valid_end_date   = use_valid_end_date
     ) |>
   write_rds("data/onlineretail_simulation_dates.rds")
+
+customer_id_lookup_tbl |>
+  write_rds("data/onlineretail_customer_id_lookup_tbl.rds")
 ```
 
 
