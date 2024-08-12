@@ -42,4 +42,3 @@ model {
     amt[i] ~ gamma(amt_r, amt_alpha[cust_id[i]]);
   }
 }
-

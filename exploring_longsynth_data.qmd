@@ -176,7 +176,7 @@ data_tbl <- data_tbl |>
   mutate(
     tnx_dow   = format(tnx_timestamp, "%a") |> fct_relevel(dow_order),
     tnx_month = format(tnx_timestamp, "%b") |> fct_relevel(month_order),
-    tnx_week  = format(tnx_timestamp, "%W"),
+    tnx_week  = format(tnx_timestamp, "%W") |> as.factor(),
 
     .after = tnx_timestamp
     )

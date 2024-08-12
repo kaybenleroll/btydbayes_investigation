@@ -11,11 +11,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends \
     byobu \
+    bzip2 \
     clang \
     ditaa \
     graphviz \
     htop \
-    less \
     libclang-dev \
     libglpk-dev \
     libgsl-dev \

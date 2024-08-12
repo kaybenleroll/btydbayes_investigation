@@ -1,4 +1,28 @@
 
+construct_btyd_data <- function(tnx_data_tbl, last_date) {
+  btyd_tnxdata_tbl <- tnx_data_tbl |>
+    drop_na(customer_id) |>
+    filter(
+      tnx_timestamp <= last_date |> as.POSIXct()
+      ) |>
+    mutate(
+      customer_id = fct_reorder(customer_id, tnx_timestamp, min)
+      )
+
+  cbs_data_tbl <- btyd_tnxdata_tbl |>
+    calculate_transaction_cbs_data(
+      last_date = use_fit_end_date |> as.POSIXct()
+      )
+
+  btyd_data_lst <- list(
+    tnxdata = btyd_tnxdata_tbl,
+    cbsdata = cbs_data_tbl
+    )
+
+  return(btyd_data_lst)
+}
+
+
 calculate_transaction_cbs_data <- function(tnx_data_tbl, last_date) {
   cbs_data_tbl <- tnx_data_tbl |>
     filter(tnx_timestamp <= last_date) |>

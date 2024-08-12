@@ -43,32 +43,36 @@ full_deps.dot:
 
 depgraph: full_deps.png
 
+exploration: exploring_shortsynth_data.html exploring_longsynth_data.html \
+  exploring_online_retail_transactions.html exploring_cdnow_dataset.html
+
 
 exploring_shortsynth_data.html: generate_transaction_datasets.html
+initial_pnbd_models.html: exploring_shortsynth_data.html
+construct_shortsynth_fixed_pnbd_models.html: exploring_shortsynth_data.html initial_pnbd_models.html
+construct_shortsynth_onehier_pnbd_models.html: construct_shortsynth_fixed_pnbd_models.html
+construct_shortsynth_twohier_pnbd_models.html: construct_shortsynth_onehier_pnbd_models.html
+
+
+
+
 exploring_longsynth_data.html: generate_transaction_datasets.html
 exploring_online_retail_transactions.html: retrieve_retail_data.html
 exploring_cdnow_dataset.html: retrieve_retail_data.html
 
-initial_pnbd_models.html: exploring_shortsynth_data.html
 
-construct_shortsynth_fixed_pnbd_models.html: exploring_shortsynth_data.html initial_pnbd_models.html
 construct_longsynth_fixed_pnbd_models.html: exploring_longsynth_data.html initial_pnbd_models.html
 construct_onlineretail_fixed_pnbd_models.html: exploring_online_retail_transactions.html initial_pnbd_models.html
 construct_cdnow_fixed_pnbd_models.html: exploring_cdnow_dataset.html initial_pnbd_models.html
 
-construct_shortsynth_onehier_pnbd_models.html: construct_shortsynth_fixed_pnbd_models.html
 construct_longsynth_onehier_pnbd_models.html: construct_longsynth_fixed_pnbd_models.html
 construct_onlineretail_onehier_pnbd_models.html: construct_onlineretail_fixed_pnbd_models.html
 construct_cdnow_onehier_pnbd_models.html: construct_cdnow_fixed_pnbd_models.html
 
-construct_shortsynth_twohier_pnbd_models.html: construct_shortsynth_onehier_pnbd_models.html
 construct_longsynth_twohier_pnbd_models.html: construct_longsynth_onehier_pnbd_models.html
 construct_onlineretail_twohier_pnbd_models.html: construct_onlineretail_onehier_pnbd_models.html
 construct_cdnow_twohier_pnbd_models.html: construct_cdnow_onehier_pnbd_models.html
 
-
-exploration: exploring_shortsynth_data.html exploring_longsynth_data.html \
-  exploring_online_retail_transactions.html exploring_cdnow_dataset.html
 
 mrproper: clean-cache clean-data clean-html clean-precompute clean-models
 	rm -fv data/*.xlsx
