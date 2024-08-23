@@ -894,18 +894,33 @@ id_1000  <- shuffle_tbl |> head(1000)  |> pull(customer_id) |> sort()
 
 
 
-```{r select_fit_dataset}
+```{r construct_model_fit_data}
 #| echo: true
 
-customer_fit_stats_tbl <- btyd_summarystats_tbl
-customer_fit_stats_tbl |> glimpse()
+customer_fit_tnxdata_tbl <- btyd_transactions_tbl
+customer_fit_tnxdata_tbl |> glimpse()
+
+customer_fit_summarystats_tbl <- btyd_summarystats_tbl
+customer_fit_summarystats_tbl |> glimpse()
+```
 
 
-customer_valid_stats_tbl <- customer_transactions_raw_tbl |>
-  semi_join(customer_fit_stats_tbl, by = "customer_id") |>
+```{r construct_model_validation_data}
+#| echo: true
+
+customer_valid_tnxdata_tbl <- customer_transactions_raw_tbl |>
+  inner_join(
+    customer_fit_summarystats_tbl |> select(customer_id, cust_id),
+    by = "customer_id"
+    ) |>
   filter(
     tnx_timestamp > (use_valid_start_date |> as.POSIXct())
-    ) |>
+    )
+
+customer_valid_tnxdata_tbl |> glimpse()
+
+
+customer_valid_summarystats_tbl <- customer_valid_tnxdata_tbl |>
   summarise(
     tnx_count = n(),
     tnx_last_interval = difftime(
@@ -915,43 +930,10 @@ customer_valid_stats_tbl <- customer_transactions_raw_tbl |>
         ) |>
       as.numeric(),
 
-    .by = customer_id
+    .by = c(customer_id, cust_id)
     )
 
-customer_valid_stats_tbl |> glimpse()
-```
-
-
-```{r construct_fit_valid_datasets}
-#| echo: true
-
-obs_fitdata_tbl <- customer_fit_stats_tbl |>
-  rename(tnx_count = x)
-  
-
-### We need to add all the zero count customers into the valid data
-obs_validdata_tbl <- customer_fit_stats_tbl |>
-  anti_join(customer_valid_stats_tbl, by = "customer_id") |>
-  transmute(customer_id, tnx_count = 0) |>
-  bind_rows(customer_valid_stats_tbl) |>
-  arrange(customer_id)
-```
-
-
-Finally, we want to ensure there is a proper lookup table for the original
-(non-factor) `customer_id` and the one that is a factor.
-
-```{r construct_customer_id_lookup}
-#| echo: TRUE
-
-customer_id_lookup_tbl <- btyd_summarystats_tbl |>
-  transmute(
-    customer_id,
-    orig_id = customer_id |> as.character()
-    ) |>
-  distinct()
-
-customer_id_lookup_tbl |> glimpse()
+customer_valid_summarystats_tbl |> glimpse()
 ```
 
 
@@ -965,26 +947,11 @@ Finally we output the various datasets we have constructed to disks.
 ```{r write_to_disk}
 #| echo: true
 
-id_1000  |> write_rds("data/shortsynth_customer_subset_ids.rds")
-
-btyd_summarystats_tbl |> write_rds("data/shortsynth_btyd_summarystats_tbl.rds")
-
-
-
 customer_cohort_data_tbl |>
   write_rds("data/shortsynth_customer_cohort_data_tbl.rds")
 
-customer_fit_stats_tbl |>
-  write_rds("data/shortsynth_customer_fit_stats_tbl.rds")
-
-customer_valid_stats_tbl |>
-  write_rds("data/shortsynth_customer_valid_stats_tbl.rds")
-
 customer_transactions_raw_tbl |>
   write_rds("data/shortsynth_transaction_data_tbl.rds")
-
-obs_fitdata_tbl   |> write_rds("data/shortsynth_obs_fitdata_tbl.rds")
-obs_validdata_tbl |> write_rds("data/shortsynth_obs_validdata_tbl.rds")
 
 list(
     use_fit_start_date = use_fit_start_date,
@@ -995,8 +962,21 @@ list(
     ) |>
   write_rds("data/shortsynth_simulation_dates.rds")
 
-customer_id_lookup_tbl |>
-  write_rds("data/shortsynth_customer_id_lookup_tbl.rds")
+
+id_1000  |> write_rds("data/shortsynth_customer_subset_ids.rds")
+
+
+customer_fit_tnxdata_tbl |>
+  write_rds("data/shortsynth_customer_fit_tnxdata_tbl.rds")
+
+customer_fit_summarystats_tbl |>
+  write_rds("data/shortsynth_customer_fit_summarystats_tbl.rds")
+
+customer_valid_tnxdata_tbl |>
+  write_rds("data/shortsynth_customer_valid_tnxdata_tbl.rds")
+
+customer_valid_summarystats_tbl |>
+  write_rds("data/shortsynth_customer_valid_summarystats_tbl.rds")
 ```
 
 

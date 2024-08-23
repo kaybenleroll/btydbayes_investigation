@@ -6,7 +6,9 @@ construct_btyd_data <- function(tnx_data_tbl, last_date) {
       tnx_timestamp <= last_date |> as.POSIXct()
       ) |>
     mutate(
-      customer_id = fct_reorder(customer_id, tnx_timestamp, min)
+      cust_id = fct_reorder(customer_id, tnx_timestamp, min),
+
+      .after = 'customer_id'
       )
 
   cbs_data_tbl <- btyd_tnxdata_tbl |>
@@ -26,7 +28,7 @@ construct_btyd_data <- function(tnx_data_tbl, last_date) {
 calculate_transaction_cbs_data <- function(tnx_data_tbl, last_date) {
   cbs_data_tbl <- tnx_data_tbl |>
     filter(tnx_timestamp <= last_date) |>
-    group_by(customer_id) |>
+    group_by(customer_id, cust_id) |>
     summarise(
       .groups = "drop",
 
@@ -198,14 +200,16 @@ generate_transaction_metadata <- function(data_tbl) {
 create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_tbl, bincount = 50) {
 
   validation_tbl <- stanfit |>
-    recover_types(data_tbl) |>
-    spread_draws(lambda[customer_id], mu[customer_id], p_alive[customer_id]) |>
+    recover_types(data_tbl |> select(-customer_id)) |>
+    spread_draws(lambda[cust_id], mu[cust_id], p_alive[cust_id]) |>
     ungroup() |>
-    inner_join(simparams_tbl, by = "customer_id") |>
+    inner_join(simparams_tbl, by = c("cust_id" = "customer_id")) |>
     select(
-      customer_id, draw_id = .draw, post_lambda = lambda, customer_lambda,
-      post_mu = mu, customer_mu, p_alive
-      )
+      customer_id = cust_id, draw_id = .draw, post_lambda = lambda,
+      customer_lambda, post_mu = mu, customer_mu, p_alive
+      ) |>
+    inner_join(data_tbl |> select(customer_id, cust_id), by = "customer_id") |>
+    select(customer_id, cust_id, everything())
 
   tmp_tbl <- validation_tbl |>
     calculate_distribution_qvals(post_lambda, customer_lambda, customer_id)
@@ -216,7 +220,7 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
     inner_join(tmp_tbl, by = "customer_id") |>
     select(
       customer_id, customer_lambda, qval_lambda = q_val, customer_mu, qval_mu
-    )
+      )
 
 
   unif_count <- qvalues_tbl |>
@@ -258,16 +262,32 @@ create_pnbd_posterior_validation_data <- function(stanfit, data_tbl, simparams_t
 
 construct_pnbd_posterior_statistics <- function(stanfit, fitdata_tbl) {
   post_stats_tbl <- stanfit |>
-    spread_draws(lambda[customer_id], mu[customer_id], p_alive[customer_id]) |>
+    spread_draws(lambda[cust_id], mu[cust_id], p_alive[cust_id]) |>
     ungroup() |>
-    inner_join(fitdata_tbl, by = "customer_id") |>
-    select(
-      customer_id, first_tnx_date, draw_id = .draw,
-      post_lambda = lambda, post_mu = mu, p_alive
+    inner_join(fitdata_tbl, by = "cust_id") |>
+    transmute(
+      customer_id = cust_id |> as.character(), cust_id, first_tnx_date,
+      draw_id = .draw, post_lambda = lambda, post_mu = mu, p_alive
       )
 
   return(post_stats_tbl)
 }
+
+
+construct_combined_model_posterior_statistics <- function(stanfit, fitdata_tbl) {
+  post_stats_tbl <- stanfit |>
+    spread_draws(lambda[cust_id], mu[cust_id], amt_mn[cust_id], p_alive[cust_id]) |>
+    ungroup() |>
+    inner_join(fitdata_tbl, by = "cust_id") |>
+    transmute(
+      customer_id = cust_id |> as.character(), cust_id, first_tnx_date,
+      draw_id = .draw, post_lambda = lambda, post_mu = mu, post_amtmn = amt_mn,
+      p_alive
+      )
+
+  return(post_stats_tbl)
+}
+
 
 
 run_simulations_chunk <- function(sim_param_tbl, sim_file, sim_func) {
