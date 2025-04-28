@@ -1,4 +1,4 @@
-FROM rocker/tidyverse:4.4.0
+FROM rocker/tidyverse:4.4.3
 
 #COPY build/Rprofile.site /usr/local/lib/R/etc/
 #COPY build/Renviron.site /usr/local/lib/R/etc/
