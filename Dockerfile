@@ -1,4 +1,4 @@
-FROM rocker/tidyverse:4.4.0
+FROM rocker/tidyverse:4.4.3
 
 #COPY build/Rprofile.site /usr/local/lib/R/etc/
 #COPY build/Renviron.site /usr/local/lib/R/etc/
@@ -98,7 +98,7 @@ RUN git clone https://github.com/lindenb/makefile2graph.git \
   && cd makefile2graph \
   && make \
   && make install
-  
+
 RUN cp -r $HOME/.R /home/rstudio \
   && chown -R rstudio:rstudio /home/rstudio/.R
 
@@ -133,5 +133,3 @@ ARG BUILD_DATE
 LABEL org.opencontainers.image.source="https://github.com/kaybenleroll/btydbayes_investigation" \
       org.opencontainers.image.authors="Mick Cooney <mickcooney@gmail.com>" \
       org.label-schema.build-date=$BUILD_DATE
-
-
